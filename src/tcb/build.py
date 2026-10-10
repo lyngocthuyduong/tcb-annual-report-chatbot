@@ -41,7 +41,7 @@ def _meta(n: N.Node) -> dict:
 
 
 def build(pdf_path: str, out_dir: str, embedder=None, embed_name: str = conf.EMBED_MODEL,
-          embed_rev: str = conf.EMBED_REV, force: bool = False) -> dict:
+          embed_rev: str = conf.EMBED_REV, force: bool = False, chunk_words: int | None = None) -> dict:
     out = Path(out_dir)
     if out.exists() and any(out.iterdir()) and not force:
         raise FileExistsError(f"{out} not empty (pass --force to overwrite)")
@@ -53,7 +53,7 @@ def build(pdf_path: str, out_dir: str, embedder=None, embed_name: str = conf.EMB
     t0 = time.time()
 
     halves, pm = pdf.load(pdf_path)
-    nodes, gloss = N.build_nodes(halves)
+    nodes, gloss = N.build_nodes(halves, chunk_words)
     images = parse.image_inventory(pdf_path)
     t_ingest = time.time() - t0
 
@@ -115,7 +115,7 @@ def build(pdf_path: str, out_dir: str, embedder=None, embed_name: str = conf.EMB
                    "printed_pages_footer": pm["footer"], "printed_pages_inferred": pm["inferred"]},
         "embedding": {"model": embed_name, "revision": embed_rev, "dim": dim, "normalize": True, "max_length": 512},
         "reranker_expected": {"model": conf.RERANK_MODEL, "revision": conf.RERANK_REV},
-        "chunking": {"unit": "half-page", "narrative_max_words": conf.CHUNK_MAX_WORDS,
+        "chunking": {"unit": "half-page", "narrative_max_words": chunk_words or conf.CHUNK_MAX_WORDS,
                      "table_rows_per_chunk": conf.TABLE_ROWS_PER_CHUNK, "glossary": "one-per-term"},
         "bm25": {"library": "bm25s", "version": ver("bm25s"), "tokenizer": conf.TOKENIZER,
                  "k1": conf.BM25_K1, "b": conf.BM25_B},

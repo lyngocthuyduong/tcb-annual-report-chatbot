@@ -221,3 +221,56 @@ def run_eval(set_path: str, out_dir: str, engine, label: str = "", include_unver
     (out / "config.json").write_text(json.dumps(cfg, ensure_ascii=False, indent=1), encoding="utf-8")
     (out / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=1), encoding="utf-8")
     return {"summary": summary, "config": cfg, "rows": rows, "dir": str(out)}
+
+
+# ------------------------------------------------------------------ run-to-run comparison
+def _load_run(d: str | Path) -> tuple[dict, dict, dict]:
+    d = Path(d)
+    rows = {}
+    for ln in (d / "results.jsonl").read_text(encoding="utf-8").splitlines():
+        if ln.strip():
+            r = json.loads(ln); rows[r["id"]] = r
+    return rows, json.loads((d / "summary.json").read_text(encoding="utf-8")), json.loads((d / "config.json").read_text(encoding="utf-8"))
+
+
+def compare(a_dir: str, b_dir: str) -> dict:
+    """A = baseline, B = candidate. Reports items fixed / regressed / verdict-changed and metric deltas."""
+    ra, sa, ca = _load_run(a_dir)
+    rb, sb, cb = _load_run(b_dir)
+    common = sorted(set(ra) & set(rb))
+    fixed = [i for i in common if not ra[i]["passed"] and rb[i]["passed"]]
+    regressed = [i for i in common if ra[i]["passed"] and not rb[i]["passed"]]
+    changed = [{"id": i, "from": ra[i]["verdict"], "to": rb[i]["verdict"]} for i in common
+               if ra[i]["verdict"] != rb[i]["verdict"] and (ra[i]["passed"] == rb[i]["passed"])]
+    def delta(path):
+        def get(s):
+            for k in path: s = s.get(k) if isinstance(s, dict) else None
+            return s
+        x, y = get(sa), get(sb)
+        return {"a": x, "b": y, "delta": round(y - x, 4) if isinstance(x, (int, float)) and isinstance(y, (int, float)) else None}
+    metrics = {"pass_rate": ["pass_rate"], "recall@8_final": ["retrieval", "recall@8_final"], "mrr_final": ["retrieval", "mrr_final"],
+               "fact_correct": ["answers", "fact_correct"], "citation_valid": ["answers", "citation_valid"],
+               "page_hit": ["answers", "page_hit"], "refusal_precision": ["refusal", "precision"], "refusal_recall": ["refusal", "recall"],
+               "false_answer_rate": ["refusal", "false_answer_rate"], "latency_p50_s": ["latency_s", "p50"],
+               "latency_p95_s": ["latency_s", "p95"], "cost_usd_per_question": ["cost_usd_per_question"]}
+    warn = []
+    for k in ("set_sha256", "provider", "model", "reranker", "tau_low", "rrf_k"):
+        if ca.get(k) != cb.get(k): warn.append(f"{k}: {ca.get(k)} -> {cb.get(k)}")
+    if ca.get("index_embedding") != cb.get("index_embedding") or ca.get("index_built_at") != cb.get("index_built_at"):
+        warn.append("index differs")
+    if ca.get("set_sha256") != cb.get("set_sha256"):
+        warn.append("DIFFERENT DATASET: deltas below are not like-for-like")
+    return {"a": str(a_dir), "b": str(b_dir), "n_common": len(common), "only_in_a": sorted(set(ra) - set(rb)),
+            "only_in_b": sorted(set(rb) - set(ra)), "fixed": fixed, "regressed": regressed, "verdict_changed": changed,
+            "metrics": {k: delta(v) for k, v in metrics.items()}, "config_differences": warn}
+
+
+def compare_text(c: dict) -> str:
+    L = [f"A={c['a']}  B={c['b']}  common={c['n_common']}"]
+    L += [f"! {w}" for w in c["config_differences"]]
+    L.append(f"fixed ({len(c['fixed'])}): {', '.join(c['fixed']) or '-'}")
+    L.append(f"REGRESSED ({len(c['regressed'])}): {', '.join(c['regressed']) or '-'}")
+    for x in c["verdict_changed"]: L.append(f"  {x['id']}: {x['from']} -> {x['to']}")
+    L.append("metric                      A        B        delta")
+    for k, m in c["metrics"].items(): L.append(f"{k:<26} {str(m['a']):<8} {str(m['b']):<8} {m['delta']}")
+    return "\n".join(L)

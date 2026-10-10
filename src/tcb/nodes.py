@@ -68,7 +68,7 @@ def _pack(texts: list[str], budget: int) -> list[str]:
     return chunks
 
 
-def half_nodes(h: Half, section: str) -> tuple[list[Node], list[tuple[str, str]]]:
+def half_nodes(h: Half, section: str, chunk_words: int | None = None) -> tuple[list[Node], list[tuple[str, str]]]:
     """-> (nodes, glossary entries) for one half-page."""
     nodes: list[Node] = []
     gloss: list[tuple[str, str]] = []
@@ -116,7 +116,7 @@ def half_nodes(h: Half, section: str) -> tuple[list[Node], list[tuple[str, str]]
 
     def flush_buf():
         nonlocal order
-        for t in _pack(buf, conf.CHUNK_MAX_WORDS):
+        for t in _pack(buf, chunk_words or conf.CHUNK_MAX_WORDS):
             if _words(t) >= 3:
                 nodes.append(Node(_cid(h.pdf_page_index, h.side, "n", order), crumb + t, content_type="narrative",
                                   bbox=[0, 0, 0, 0], **base))
@@ -137,13 +137,13 @@ def half_nodes(h: Half, section: str) -> tuple[list[Node], list[tuple[str, str]]
     return nodes, gloss
 
 
-def build_nodes(halves: list[Half]) -> tuple[list[Node], dict[str, dict]]:
+def build_nodes(halves: list[Half], chunk_words: int | None = None) -> tuple[list[Node], dict[str, dict]]:
     by_page = {(h.pdf_page_index, h.side): h for h in halves}
     nodes: list[Node] = []
     gloss: dict[str, dict] = {}
     for h in halves:
         sec = parse.section_of(by_page, h.pdf_page_index)
-        ns, gl = half_nodes(h, sec)
+        ns, gl = half_nodes(h, sec, chunk_words)
         nodes += ns
         for t, d in gl: gloss[t] = {"definition": d, "printed_page": h.printed_page}
     return nodes, gloss

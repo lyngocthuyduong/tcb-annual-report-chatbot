@@ -23,7 +23,7 @@ REQUIRED = ("index_format_version", "source", "embedding", "bm25", "counts", "fi
 
 
 def validate(index_dir: str | Path, embed_model: str = conf.EMBED_MODEL, embed_rev: str = conf.EMBED_REV,
-             check_snapshot: bool = False) -> dict:
+             check_snapshot: bool = False, strict_chunking: bool = True) -> dict:
     d = Path(index_dir)
     mf = d / "manifest.json"
     if not d.is_dir() or not mf.exists():
@@ -40,6 +40,10 @@ def validate(index_dir: str | Path, embed_model: str = conf.EMBED_MODEL, embed_r
     if e.get("model") != embed_model or e.get("revision") != embed_rev:
         raise IndexError_("embedding", f"index built with {e.get('model')}@{e.get('revision')}, "
                                        f"code expects {embed_model}@{embed_rev}")
+    ch = m.get("chunking", {})
+    if strict_chunking and (ch.get("narrative_max_words") != conf.CHUNK_MAX_WORDS or ch.get("table_rows_per_chunk") != conf.TABLE_ROWS_PER_CHUNK):
+        raise IndexError_("format", f"index chunking {ch.get('narrative_max_words')}/{ch.get('table_rows_per_chunk')} words/rows "
+                                    f"!= code {conf.CHUNK_MAX_WORDS}/{conf.TABLE_ROWS_PER_CHUNK} (experimental index?)")
     if m["bm25"].get("tokenizer") != conf.TOKENIZER:
         raise IndexError_("tokenizer", f"index tokenizer {m['bm25'].get('tokenizer')} != {conf.TOKENIZER}")
     if check_snapshot:

@@ -57,7 +57,7 @@ def cmd_check(a) -> int:
 
 def cmd_build(a) -> int:
     from .build import build
-    m = build(a.pdf, a.out, force=a.force)
+    m = build(a.pdf, a.out, force=a.force, chunk_words=a.chunk_words)
     print(json.dumps({"nodes": m["counts"], "files": len(m["files"])}, ensure_ascii=False))
     return 0
 
@@ -110,8 +110,33 @@ def cmd_batch(a) -> int:
 
 def cmd_eval(a) -> int:
     from . import ev
-    rep = ev.run_eval(a.set, a.out, _engine(), label=a.label)
+    if a.compare:                                           # no engine, no models: just diff two finished runs
+        c = ev.compare(*a.compare)
+        print(ev.compare_text(c))
+        from pathlib import Path
+        out = Path(a.out) / f"compare_{Path(a.compare[0]).name}_vs_{Path(a.compare[1]).name}.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(c, ensure_ascii=False, indent=1), encoding="utf-8")
+        return 1 if c["regressed"] else 0
+    if not a.set:
+        print("eval needs a dataset (or --compare RUN_A RUN_B)", file=sys.stderr); return 2
+    rep = ev.run_eval(a.set, a.out, _engine(), label=a.label, include_unverified=a.include_unverified)
     print(json.dumps(rep["summary"], ensure_ascii=False, indent=1))
+    return 0
+
+
+def cmd_exp(a) -> int:
+    from . import boot, exp
+    rt = boot.load_retriever(a.index, lenient=True)
+    ctx = exp.make_ctx(rt.ix, rt.rr, rt.gloss)
+    which = tuple(x.strip() for x in a.exp.split(",") if x.strip())
+    bad = [x for x in which if x not in exp.EXPS]
+    if bad:
+        print(f"unknown experiment(s) {bad}; choose from {exp.EXPS}", file=sys.stderr); return 2
+    res = exp.run_exp(a.sets, ctx, which, a.include_unverified, a.time_sample, progress=lambda s: print(s, flush=True) if a.verbose else None)
+    res["meta"]["index"] = str(a.index)
+    d = exp.write(res, a.out, a.label)
+    print(json.dumps(res["decisions"], ensure_ascii=False, indent=1)); print(f"written: {d}/exp.json  {d}/exp.md")
     return 0
 
 
@@ -145,6 +170,7 @@ def main(argv=None) -> int:
     sp = p.add_subparsers(dest="cmd", required=True)
     sp.add_parser("check").set_defaults(f=cmd_check)
     b = sp.add_parser("build"); b.add_argument("pdf"); b.add_argument("out"); b.add_argument("--force", action="store_true")
+    b.add_argument("--chunk-words", type=int, default=None, help="EXPERIMENT E6 only: narrative chunk size; such an index is rejected by `serve`/`validate`")
     b.set_defaults(f=cmd_build)
     v = sp.add_parser("validate"); v.add_argument("dir", nargs="?", default=str(conf.settings().index_dir))
     v.add_argument("--snapshot", action="store_true", help="also check baked model snapshot revision")
@@ -153,8 +179,16 @@ def main(argv=None) -> int:
     k.add_argument("--trace", action="store_true"); k.set_defaults(f=cmd_ask)
     sp.add_parser("chat").set_defaults(f=cmd_chat)
     bt = sp.add_parser("batch"); bt.add_argument("file"); bt.add_argument("--out", default="out/runs/batch"); bt.set_defaults(f=cmd_batch)
-    ev_ = sp.add_parser("eval"); ev_.add_argument("set"); ev_.add_argument("--out", default="out/runs/eval")
+    ev_ = sp.add_parser("eval"); ev_.add_argument("set", nargs="?"); ev_.add_argument("--out", default="out/runs/eval")
+    ev_.add_argument("--compare", nargs=2, metavar=("RUN_A", "RUN_B"), help="diff two finished run folders (A=baseline)")
+    ev_.add_argument("--include-unverified", action="store_true")
     ev_.add_argument("--label", default=""); ev_.set_defaults(f=cmd_eval)
+    ex = sp.add_parser("exp", help="M3 retrieval experiments (E2,E3,E3b,E4,E5,E7); no LLM, no token cost")
+    ex.add_argument("sets", nargs="+", help="verified dev/val JSON files, e.g. data/dev.json data/val.json")
+    ex.add_argument("--exp", default=",".join(__import__("tcb.exp", fromlist=["EXPS"]).EXPS)); ex.add_argument("--index", default=str(conf.settings().index_dir))
+    ex.add_argument("--out", default="out/exp"); ex.add_argument("--label", default="m3"); ex.add_argument("--include-unverified", action="store_true")
+    ex.add_argument("--time-sample", type=int, default=10, help="queries used to time reranking (E4)"); ex.add_argument("--verbose", action="store_true")
+    ex.set_defaults(f=cmd_exp)
     sm = sp.add_parser("smoke", help="Ollama smoke test (needs a running Ollama with the model pulled)")
     sm.add_argument("--out", default="out/smoke.json"); sm.set_defaults(f=cmd_smoke)
     sp.add_parser("serve").set_defaults(f=cmd_serve)
