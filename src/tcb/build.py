@@ -30,7 +30,8 @@ def real_embedder():
         raise ModelMissing(f"{path} missing. Models are baked into the Docker image (see Dockerfile); "
                            "run inside the image: docker compose run --rm app tcb build ...")
     from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-    return HuggingFaceEmbedding(model_name=str(path), normalize=True, embed_batch_size=8, max_length=512, device="cpu")
+    return HuggingFaceEmbedding(model_name=str(path), normalize=True, embed_batch_size=8, max_length=512,
+                                  device=os.getenv("TCB_DEVICE", "cpu"))   # "cuda" only to speed up the one-off index build (e.g. Colab)
 
 
 def _meta(n: N.Node) -> dict:
