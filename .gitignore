@@ -11,3 +11,6 @@ out/runs/
 *.log
 out/smoke*
 out/*.json
+models/
+out/idx/
+*.zip

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TCB AR 2025</title>
+<style>
+:root{--bg:#fff;--fg:#1a1a1a;--mut:#666;--line:#ddd;--acc:#c8102e}
+@media(prefers-color-scheme:dark){:root{--bg:#161616;--fg:#eee;--mut:#aaa;--line:#333}}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
+main{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:18px;margin:0 0 12px}
+#log{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+.m{padding:10px 12px;border:1px solid var(--line);border-radius:8px;white-space:pre-wrap;word-wrap:break-word}
+.u{align-self:flex-end;background:rgba(200,16,46,.08)}
+.b{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);margin-top:6px}
+.b.error{color:var(--acc)} .cites{font-size:13px;margin-top:6px} .cites a{color:var(--acc)}
+form{display:flex;gap:8px;position:sticky;bottom:0;background:var(--bg);padding:8px 0}
+input{flex:1;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit}
+button{padding:10px 16px;border:0;border-radius:8px;background:var(--acc);color:#fff;font:inherit;cursor:pointer}
+button:disabled{opacity:.5}
+</style></head><body><main>
+<h1>Báo cáo thường niên 2025 của Techcombank</h1>
+<div id="log"></div>
+<form id="f"><input id="q" placeholder="Đặt câu hỏi về báo cáo…" autocomplete="off" maxlength="2000" required><button id="s">Gửi</button></form>
+<script>
+let sid=null;const log=document.getElementById('log'),q=document.getElementById('q'),s=document.getElementById('s');
+function add(cls,text){const d=document.createElement('div');d.className='m '+cls;d.textContent=text;log.appendChild(d);d.scrollIntoView();return d}
+document.getElementById('f').onsubmit=async e=>{e.preventDefault();const text=q.value.trim();if(!text)return;
+ add('u',text);q.value='';s.disabled=true;const w=add('a','…');
+ try{const r=await fetch('/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({question:text,session_id:sid})});
+  const j=await r.json();sid=j.session_id||sid;
+  if(!r.ok&&!j.answer){w.textContent='Lỗi '+r.status+': '+JSON.stringify(j.detail||j);}else{
+   w.textContent=j.answer;
+   const b=document.createElement('div');b.className='b '+(j.status==='error'?'error':'');
+   b.textContent=j.status+' · '+j.provider+'/'+j.model;w.appendChild(b);
+   if(j.citations&&j.citations.length){const c=document.createElement('div');c.className='cites';
+    j.citations.forEach(x=>{const a=document.createElement('a');a.href='/pdf#page='+x.pdf_page;a.target='_blank';a.textContent='tr. '+x.page;a.title=x.snippet;
+     c.appendChild(a);c.appendChild(document.createTextNode('  '))});w.appendChild(c)}}
+ }catch(err){w.textContent='Không kết nối được máy chủ: '+err}
+ s.disabled=false;q.focus()};
+</script></main></body></html>

@@ -19,7 +19,53 @@ TABLE_ROWS_PER_CHUNK = 12
 BM25_K1, BM25_B = 1.5, 0.75  # bm25s defaults, recorded in manifest
 TOP_BM25 = TOP_DENSE = 40    # E3/E4 may revise before M3 freeze
 RRF_K = 60                   # E3b
-MODELS_DIR = Path("/models")  # baked into the image (Dockerfile); override only by editing code
+def _models_dir() -> Path:
+    """Where the two fixed models live. Docker: /models (baked). Local: $TCB_MODELS_DIR or <repo>/models.
+    This changes only the LOCATION; model identity/revision stay fixed above and are checked via <dir>/<model>/.rev."""
+    env = os.getenv("TCB_MODELS_DIR")
+    if env:
+        return Path(env)
+    return Path("/models") if Path("/models").exists() else Path(__file__).resolve().parents[2] / "models"
+
+
+MODELS_DIR = _models_dir()
+PDF_SHA256 = "2db3dfe6e7a05f889ec2e93bf16dda4b6a7f3334df440b7cb0761df2e89344d9"   # data/ar.pdf
+POPPLER_HINT = ("Install poppler and put it on PATH (or set POPPLER_BIN to its bin folder): "
+                "Windows: `conda install -c conda-forge poppler` or https://github.com/oschwartz10612/poppler-windows/releases ; "
+                "macOS: `brew install poppler` ; Ubuntu/Debian: `sudo apt install poppler-utils`")
+
+
+def poppler(name: str) -> str:
+    """Absolute path of a poppler tool (pdftotext, pdfimages) or a clear error."""
+    import shutil
+    b = os.getenv("POPPLER_BIN")
+    p = shutil.which(name, path=b) if b else None
+    p = p or shutil.which(name)
+    if not p:
+        raise RuntimeError(f"{name} not found. {POPPLER_HINT}")
+    return p
+
+
+def load_env(path: str | Path = ".env") -> list[str]:
+    """Local (non-Docker) runs: read KEY=VALUE lines from .env into os.environ WITHOUT overriding real env vars.
+    Docker Compose does this itself via env_file. Returns the keys that were set (never their values)."""
+    p = Path(path)
+    if not p.exists():
+        return []
+    done = []
+    for line in p.read_text(encoding="utf-8-sig").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, v = line.split("=", 1)
+        k, v = k.strip(), v.strip()
+        if v[:1] in "\"'" and v[-1:] == v[:1] and len(v) >= 2:
+            v = v[1:-1]
+        else:
+            v = v.split(" #", 1)[0].strip()
+        if k and v and k not in os.environ:
+            os.environ[k] = v; done.append(k)
+    return done
 
 
 @dataclass(frozen=True)
@@ -40,3 +86,11 @@ def settings() -> Settings:
         trace_dir=Path(os.getenv("TRACE_DIR", "out/trace")),
         log_level=os.getenv("LOG_LEVEL", "INFO"),
     )
+
+# ---- provisional, set by experiment E7 on the REAL index (M3). None = score-triggered retrieval retry disabled.
+TAU_LOW: float | None = None
+FINAL_EVIDENCE = 8           # E1..E8 passed to the LLM
+RERANK_POOL = 30             # fused candidates sent to the cross-encoder
+# $/1M tokens (in, out) -- public list prices checked 10 Oct 2026; used only for the cost estimate in traces
+PRICES = {"gpt-4o-mini": (0.15, 0.60), "claude-sonnet-5-5": (2.0, 10.0)}
+PROMPT_EVIDENCE_CHARS = 15000   # budget for evidence text in one prompt (~5k tokens @ ~3 chars/token; keeps local 8k-context models safe)

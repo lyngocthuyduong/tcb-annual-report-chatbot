@@ -6,6 +6,7 @@ import statistics
 import subprocess
 from dataclasses import dataclass, field
 
+from . import conf
 from .pdf import Block, Half, Word
 
 # ---------------------------------------------------------------- numbers
@@ -15,6 +16,10 @@ NOTE_REF = re.compile(r"^\d{1,2}(?:\.\d{1,2})?$")
 FORM = re.compile(r"B\d{2}[a-z]?/TCTD-HN")
 UNIT_RE = re.compile(r"(Nghìn tỷ đồng|Triệu đồng|Tỷ đồng|Nghìn đồng|Triệu USD|Triệu|Đồng|%)", re.I)
 DATE_RE = re.compile(r"\d{2}/\d{2}/\d{4}")
+YEAR_HDR = re.compile(r"^Năm (19|20)\d{2}\b")
+HDR_FRAG = re.compile(r"(?<!\()Thuyết minh|\b\d{1,2}/\d{1,2}/(?:19|20)\d{2}\b|Năm (?:19|20)\d{2}|Nghìn tỷ đồng|Triệu đồng|Tỷ đồng|Nghìn đồng|Triệu USD", re.I)
+YEAR_ONLY = re.compile(r"^(19|20)\d{2}$")
+UNIT_ONLY = re.compile(r"^(?:(?:Nghìn tỷ đồng|Triệu đồng|Tỷ đồng|Nghìn đồng|Triệu USD|Đồng)\s*)+$", re.I)
 SECTION_FS = "Báo cáo tài chính"
 
 
@@ -219,20 +224,46 @@ def tables(h: Half) -> tuple[list[Table], list[tuple[float, float]]]:
             r, lab, note, nums = parsed[i]
             if not nums:
                 txt = " ".join(w.text for w in lab).strip()
-                if txt: pending.append(txt)
+                only_year_row = len(rws) == 1 and re.fullmatch(r"(Thuyết minh)?", rws[0].label.strip()) and \
+                    all(c and YEAR_ONLY.match(c) for c in rws[0].cells)
+                if txt and UNIT_ONLY.match(txt) and (not rws or only_year_row):   # "Triệu đồng Triệu đồng" under the column titles
+                    for ci in range(min(ncol, len(UNIT_RE.findall(txt)))):
+                        units[ci] = units[ci] or UNIT_RE.findall(txt)[ci]
+                    continue
+                if txt:
+                    stripped = HDR_FRAG.sub(" ", txt)
+                    stripped = re.sub(r"\s+", " ", stripped).strip()
+                    if stripped != txt and i != first:                # repeated column header inside the table
+                        if not stripped or stripped.isupper(): continue   # drop it (and a caps section title glued to it)
+                        txt = stripped
+                    pending.append(txt)
                 continue
             cells: list[str | None] = [None] * ncol
             for w in nums:
                 ci = min(range(ncol), key=lambda k: abs((w.x1 - h.x_off) - cols[k]))
                 cells[ci] = w.text
             label = " ".join(w.text for w in lab).strip()
+            if label in ("", "Thuyết minh") and rws and all(c is None or YEAR_ONLY.match(c) for c in cells):
+                pending = []; continue                                # column-year row repeated inside the table
+            if pending and label and not label.isupper():             # caps section title glued above a normal row
+                while pending and pending[0].isupper() and len(pending[0].split()) >= 2:
+                    rws.append(Row(pending.pop(0), None, [None] * ncol, 0.0, r[0].y0))
             if pending and not label:  # wrapped label above the numbers
                 label = " ".join(pending); pending = []
             elif pending:
-                label = " ".join(pending) + " " + label; pending = []
+                if rws and pending[0][:1].islower():             # tail of the previous row's wrapped label
+                    rws[-1].label = (rws[-1].label + " " + " ".join(pending)).strip()
+                else:
+                    label = " ".join(pending) + " " + label
+                pending = []
             rws.append(Row(label, note.text if note else None, cells,
                            (lab[0].x0 - h.x_off) if lab else 0.0, r[0].y0))
+        if rws and re.fullmatch(r"(Thuyết minh)?", rws[0].label.strip()) and all(c and YEAR_ONLY.match(c) for c in rws[0].cells):
+            yrs = rws.pop(0).cells
+            headers = [f"Năm {y}" for y in yrs]                      # header row mis-read as data: promote it
         if not rws: continue
+        for ci in range(ncol):                                       # carry the column unit into the header text
+            if units[ci] and not UNIT_RE.search(headers[ci]): headers[ci] = f"{headers[ci]} {units[ci]}"
         # title + form code from the top of the page (above the zone)
         ztop_y = parsed[top][0][0].y0
         head = [w for w in words if w.y0 < ztop_y - 2]
@@ -244,7 +275,7 @@ def tables(h: Half) -> tuple[list[Table], list[tuple[float, float]]]:
         title = " ".join(" ".join(w.text for w in r) for r in tl[-4:]).strip() if zi == 0 else \
             " ".join(" ".join(w.text for w in r) for r in tl[-2:]).strip()
         title = re.sub(r"\s+", " ", title)
-        reliable = all(DATE_RE.search(x) for x in headers) or \
+        reliable = all(DATE_RE.search(x) or YEAR_HDR.search(x) for x in headers) or \
             (ncol <= 3 and all(len(x) <= 45 and not x.startswith("cột") for x in headers))
         yy = (parsed[top][0][0].y0 - 2, parsed[last][0][0].y1 + 2)
         out.append(Table(f"{form or 'T'}@{h.printed_page}.{zi}", form, title, "tiếp theo" in title.lower(),
@@ -289,7 +320,8 @@ def glossary(h: Half) -> list[tuple[str, str]]:
 # ---------------------------------------------------------------- images
 def image_inventory(pdf: str) -> dict:
     """pdfimages -list: per-page image count + physical-size share. Inventory only (no extraction)."""
-    txt = subprocess.run(["pdfimages", "-list", pdf], capture_output=True, text=True, check=True).stdout.splitlines()[2:]
+    txt = subprocess.run([conf.poppler("pdfimages"), "-list", pdf], capture_output=True, text=True, encoding="utf-8",
+                         errors="replace", check=True).stdout.splitlines()[2:]
     per: dict[int, dict] = {}
     for ln in txt:
         p = ln.split()

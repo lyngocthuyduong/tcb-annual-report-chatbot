@@ -6,6 +6,8 @@ import re
 import subprocess
 from dataclasses import dataclass, field
 
+from . import conf
+
 STRIP_Y = 40.0  # top furniture strip (page number + running header) lies above this y
 
 
@@ -73,7 +75,7 @@ class Half:
 
 # ---------------------------------------------------------------- reading
 def run_poppler(pdf: str) -> str:
-    return subprocess.run(["pdftotext", "-bbox-layout", pdf, "-"], check=True,
+    return subprocess.run([conf.poppler("pdftotext"), "-bbox-layout", pdf, "-"], check=True,
                           capture_output=True, text=True, encoding="utf-8").stdout
 
 

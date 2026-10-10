@@ -20,6 +20,7 @@ PDF → (poppler bbox) half-page split of each two-page spread with printed-page
 - bm25s default tokenizer: splits `1.192.344.137` and `14,6%`; replaced with `tcb-vi-v1` (numbers kept whole + canonical forms + folded diacritics).
 - First table-column anchoring mixed absolute and offset coordinates and lost the first column; fixed and covered by golden tests (B02 row "Tiền mặt, vàng": note 5, 4.360.821 / 3.384.770).
 - Complex note tables produce scrambled headers (47 of 107 table chunks); they are flagged `quality=low`, kept as text, and excluded from calculator quantities rather than guessed. The income statement and cash flow were initially in this group (year header row read as data, units merged into labels); fixed and covered by golden tests, so B01–B04 now yield quantities.
+- A Docker build on a 32 GB GitHub Codespace failed twice with `no space left on device` while exporting layers (models were copied into extra layers by `chown -R` and a safetensors convert). Fixed in the Dockerfile (`COPY --chown`, no convert); **not re-run**. The index is built once on Colab instead (README).
 - Real BGE-M3 / PyTorch / Docker could not be reached from the authoring sandbox, so the real index, image and live-provider paths are untested (below).
 
 ## Evaluation

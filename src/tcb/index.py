@@ -8,7 +8,7 @@ from . import conf
 from .build import sha256
 
 FIX = ("Re-fetch the repo (git pull / re-clone) so idx/ is intact. Rebuild only manually: "
-       "docker compose run --rm app tcb build data/ar.pdf idx.new (see README).")
+       "docker compose run --rm app tcb build data/ar.pdf out/idx, then replace idx/ (see README).")
 
 
 class IndexError_(RuntimeError):
@@ -23,7 +23,7 @@ REQUIRED = ("index_format_version", "source", "embedding", "bm25", "counts", "fi
 
 
 def validate(index_dir: str | Path, embed_model: str = conf.EMBED_MODEL, embed_rev: str = conf.EMBED_REV,
-             check_snapshot: bool = False) -> dict:
+             check_snapshot: bool = False, strict_chunking: bool = True) -> dict:
     d = Path(index_dir)
     mf = d / "manifest.json"
     if not d.is_dir() or not mf.exists():
@@ -40,11 +40,15 @@ def validate(index_dir: str | Path, embed_model: str = conf.EMBED_MODEL, embed_r
     if e.get("model") != embed_model or e.get("revision") != embed_rev:
         raise IndexError_("embedding", f"index built with {e.get('model')}@{e.get('revision')}, "
                                        f"code expects {embed_model}@{embed_rev}")
+    ch = m.get("chunking", {})
+    if strict_chunking and (ch.get("narrative_max_words") != conf.CHUNK_MAX_WORDS or ch.get("table_rows_per_chunk") != conf.TABLE_ROWS_PER_CHUNK):
+        raise IndexError_("format", f"index chunking {ch.get('narrative_max_words')}/{ch.get('table_rows_per_chunk')} words/rows "
+                                    f"!= code {conf.CHUNK_MAX_WORDS}/{conf.TABLE_ROWS_PER_CHUNK} (experimental index?)")
     if m["bm25"].get("tokenizer") != conf.TOKENIZER:
         raise IndexError_("tokenizer", f"index tokenizer {m['bm25'].get('tokenizer')} != {conf.TOKENIZER}")
     if check_snapshot:
         rev = conf.MODELS_DIR / "bge-m3" / ".rev"
-        if not rev.exists() or rev.read_text().strip() != embed_rev:
+        if not rev.exists() or rev.read_text(encoding="utf-8").strip() != embed_rev:
             raise IndexError_("snapshot", f"local bge-m3 snapshot revision != {embed_rev} (image/model mismatch)")
     # files: every listed file exists with the same sha256; no unlisted files
     listed = set(m["files"])
@@ -58,7 +62,7 @@ def validate(index_dir: str | Path, embed_model: str = conf.EMBED_MODEL, embed_r
     n = m["counts"]["nodes"]
     lines = sum(1 for _ in open(d / "nodes.jsonl", encoding="utf-8"))
     if lines != n: raise IndexError_("corrupt", f"nodes.jsonl has {lines} lines, manifest says {n}")
-    ids = json.loads((d / "bm25" / "ids.json").read_text())
+    ids = json.loads((d / "bm25" / "ids.json").read_text(encoding="utf-8"))
     if len(ids) != n: raise IndexError_("corrupt", f"bm25 ids {len(ids)} != {n}")
     ds = json.loads((d / "llamaindex" / "docstore.json").read_text(encoding="utf-8"))
     nd = len(ds.get("docstore/data", {}))
@@ -83,7 +87,7 @@ class Index:
         import bm25s
         from llama_index.core import StorageContext, load_index_from_storage
         bm = bm25s.BM25.load(str(d / "bm25"))
-        ids = json.loads((d / "bm25" / "ids.json").read_text())
+        ids = json.loads((d / "bm25" / "ids.json").read_text(encoding="utf-8"))
         vec = load_index_from_storage(StorageContext.from_defaults(persist_dir=str(d / "llamaindex")),
                                       embed_model=embedder)
         return cls(m, nodes, bm, ids, vec)

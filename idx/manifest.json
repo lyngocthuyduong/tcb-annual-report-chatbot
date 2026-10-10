@@ -1,0 +1,73 @@
+{
+ "index_format_version": 1,
+ "built_at": "2026-10-10T22:00:09Z",
+ "source": {
+  "document_id": "tcb-ar-2025",
+  "filename": "ar.pdf",
+  "sha256": "2db3dfe6e7a05f889ec2e93bf16dda4b6a7f3334df440b7cb0761df2e89344d9",
+  "pdf_pages": 197,
+  "halves": 393,
+  "printed_pages_footer": 380,
+  "printed_pages_inferred": 13
+ },
+ "embedding": {
+  "model": "BAAI/bge-m3",
+  "revision": "5617a9f61b028005a4858fdac845db406aefb181",
+  "dim": 1024,
+  "normalize": true,
+  "max_length": 512
+ },
+ "reranker_expected": {
+  "model": "BAAI/bge-reranker-v2-m3",
+  "revision": "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e"
+ },
+ "chunking": {
+  "unit": "half-page",
+  "narrative_max_words": 220,
+  "table_rows_per_chunk": 12,
+  "glossary": "one-per-term"
+ },
+ "bm25": {
+  "library": "bm25s",
+  "version": "0.3.13",
+  "tokenizer": "tcb-vi-v1",
+  "k1": 1.5,
+  "b": 0.75
+ },
+ "counts": {
+  "nodes": 1526,
+  "by_type": {
+   "kpi": 202,
+   "narrative": 1054,
+   "table": 107,
+   "glossary": 163
+  },
+  "glossary": 163
+ },
+ "runtime_requirements": {
+  "llama-index-core": "0.14.25",
+  "llama-index-embeddings-huggingface": "0.8.0",
+  "sentence-transformers": "6.1.0",
+  "bm25s": "0.3.13",
+  "torch": "2.14.1",
+  "transformers": "5.19.0"
+ },
+ "files": {
+  "bm25/data.csc.index.npy": "15e175ad7ebbc17ff2adcc3fd99cc42aaa094a32b09dfb5ce0aadc2dad2c0491",
+  "bm25/ids.json": "f39cb528758ec38dea90cf268ae541966915dec783475c15fa10276a1484806d",
+  "bm25/indices.csc.index.npy": "c679199708f1290d860204ec70d59de4d243fc610531fe30b64326e1306db459",
+  "bm25/indptr.csc.index.npy": "ab6b0224c2a2f57081e8dfe1ac3f04b164247fb49355c80626f67d3979d839ca",
+  "bm25/params.index.json": "daa32a070ab6050e2f7f07bc96c812343c681ac5f3fa41b71f640e13e5e68a2d",
+  "bm25/vocab.index.json": "9d793a111217dcde8063cf12b79668c5f04bfeb2e99b941f908c70c6980a2e90",
+  "gloss.json": "2f5eb083e9c1cb965cd00d5d2775db03d535be461119cf5bd0f03b547bc15ac8",
+  "llamaindex/default__vector_store.json": "1ccdf1740aa612b26b3f4249bb42d24aeedb5995c1c2cadfa894a2b5934bac55",
+  "llamaindex/docstore.json": "708c50ae22b531e47d458f5c8fd8e44e047883e79bc1f9df44ed451f973ce8c4",
+  "llamaindex/graph_store.json": "8e0a77744010862225c69da83c585f4f8a42fd551b044ce530dbb1eb6e16742c",
+  "llamaindex/image__vector_store.json": "d17ed74c1649a438e518a8dc56a7772913dfe1ea7a7605bce069c63872431455",
+  "llamaindex/index_store.json": "0c3ae6f6d57426859d5dabf83bca9cadcc4585c97f526e0448b8935c61eaef7e",
+  "nodes.jsonl": "d6294c133612d0931216177975f57df2fa6cb56b4eb973828d1e5802a7c0652d",
+  "pages.json": "de8c127e71f13845a0d4302fe3864b748a4759a2b00e9f1b38e34b0d3bde8aa6",
+  "report.json": "f6e45154e4389425b266a2df6018d4b952eca47aeaf0f1eeac62b7d9f238c099",
+  "tables.jsonl": "4532acd5d3fad5183a80c8c7464953d50acde7534b592fdaa152d3ecaf0ecd1c"
+ }
+}

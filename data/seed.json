@@ -1,0 +1,18 @@
+[
+ {"id": "seed-calc", "category": "key_figures", "type": "calc", "verified": false,
+  "question": "Tổng tài sản của Techcombank tăng bao nhiêu phần trăm so với cuối năm 2024?",
+  "gold_answer": "Tăng 21,8% (1.192.344.137 so với 978.798.549 triệu đồng).", "gold_printed_pages": [297], "alt_pages": [5],
+  "gold_facts": ["21,8"], "notes": "DRAFT by assistant from parsed text (B02 p.297, KPI p.5); needs human check against the PDF"},
+ {"id": "seed-table", "category": "financial_statements", "type": "single", "verified": false,
+  "question": "Tiền mặt, vàng của Techcombank tại ngày 31/12/2025 là bao nhiêu triệu đồng?",
+  "gold_answer": "4.360.821 triệu đồng.", "gold_printed_pages": [297], "gold_facts": ["4.360.821"],
+  "notes": "DRAFT by assistant from parsed text (B02 p.297); needs human check"},
+ {"id": "seed-followup", "category": "conversation", "type": "followup", "verified": false,
+  "history": [{"question": "Tổng tài sản của Techcombank tại ngày 31/12/2025 là bao nhiêu?", "answer": "Tổng tài sản là 1.192.344.137 triệu đồng. [tr. 297]"}],
+  "question": "Còn tại ngày 31/12/2024?",
+  "gold_answer": "978.798.549 triệu đồng.", "gold_printed_pages": [297], "gold_facts": ["978.798.549"],
+  "notes": "DRAFT by assistant; needs human check"},
+ {"id": "seed-refuse", "category": "unanswerable", "type": "refusal", "verified": false, "answerable": false,
+  "question": "Giá cổ phiếu TCB trên sàn HOSE hôm nay là bao nhiêu?",
+  "gold_answer": "Không có trong báo cáo.", "notes": "DRAFT by assistant; needs human check"}
+]

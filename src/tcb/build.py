@@ -30,7 +30,8 @@ def real_embedder():
         raise ModelMissing(f"{path} missing. Models are baked into the Docker image (see Dockerfile); "
                            "run inside the image: docker compose run --rm app tcb build ...")
     from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-    return HuggingFaceEmbedding(model_name=str(path), normalize=True, embed_batch_size=8, max_length=512, device="cpu")
+    return HuggingFaceEmbedding(model_name=str(path), normalize=True, embed_batch_size=8, max_length=512,
+                                  device=os.getenv("TCB_DEVICE", "cpu"))   # "cuda" only to speed up the one-off index build (e.g. Colab)
 
 
 def _meta(n: N.Node) -> dict:
@@ -41,7 +42,7 @@ def _meta(n: N.Node) -> dict:
 
 
 def build(pdf_path: str, out_dir: str, embedder=None, embed_name: str = conf.EMBED_MODEL,
-          embed_rev: str = conf.EMBED_REV, force: bool = False) -> dict:
+          embed_rev: str = conf.EMBED_REV, force: bool = False, chunk_words: int | None = None) -> dict:
     out = Path(out_dir)
     if out.exists() and any(out.iterdir()) and not force:
         raise FileExistsError(f"{out} not empty (pass --force to overwrite)")
@@ -53,7 +54,7 @@ def build(pdf_path: str, out_dir: str, embedder=None, embed_name: str = conf.EMB
     t0 = time.time()
 
     halves, pm = pdf.load(pdf_path)
-    nodes, gloss = N.build_nodes(halves)
+    nodes, gloss = N.build_nodes(halves, chunk_words)
     images = parse.image_inventory(pdf_path)
     t_ingest = time.time() - t0
 
@@ -78,7 +79,7 @@ def build(pdf_path: str, out_dir: str, embedder=None, embed_name: str = conf.EMB
     bm.index([vi.tokens(n.text) for n in nodes], show_progress=False)
     (out / "bm25").mkdir(exist_ok=True)
     bm.save(str(out / "bm25"))
-    (out / "bm25" / "ids.json").write_text(json.dumps([n.chunk_id for n in nodes]))
+    (out / "bm25" / "ids.json").write_text(json.dumps([n.chunk_id for n in nodes]), encoding="utf-8", newline="\n")
     t_bm25 = time.time() - t2
 
     # ---- plain artifacts
@@ -86,9 +87,9 @@ def build(pdf_path: str, out_dir: str, embedder=None, embed_name: str = conf.EMB
     pages: dict = {}
     for h in halves:
         pages.setdefault(str(h.pdf_page_index), {})[h.side] = {"printed": h.printed_page, "source": h.page_source}
-    (out / "pages.json").write_text(json.dumps(pages, ensure_ascii=False))
-    (out / "gloss.json").write_text(json.dumps(gloss, ensure_ascii=False, indent=0))
-    with open(out / "tables.jsonl", "w", encoding="utf-8") as f:
+    (out / "pages.json").write_text(json.dumps(pages, ensure_ascii=False), encoding="utf-8", newline="\n")
+    (out / "gloss.json").write_text(json.dumps(gloss, ensure_ascii=False, indent=0), encoding="utf-8", newline="\n")
+    with open(out / "tables.jsonl", "w", encoding="utf-8", newline="\n") as f:
         for n in nodes:
             if n.content_type == "table":
                 f.write(json.dumps({"table_id": n.table_id, "chunk_id": n.chunk_id, "form_code": n.form_code,
@@ -100,7 +101,7 @@ def build(pdf_path: str, out_dir: str, embedder=None, embed_name: str = conf.EMB
               "seconds": {"ingest": round(t_ingest, 1), "embed": round(t_embed, 1), "bm25": round(t_bm25, 1)},
               "hardware": {"cpu": platform.processor() or platform.machine(), "cores": os.cpu_count(),
                            "python": platform.python_version()}}
-    (out / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=1))
+    (out / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
 
     # ---- manifest (hashes every other file)
     import importlib.metadata as md
@@ -115,7 +116,7 @@ def build(pdf_path: str, out_dir: str, embedder=None, embed_name: str = conf.EMB
                    "printed_pages_footer": pm["footer"], "printed_pages_inferred": pm["inferred"]},
         "embedding": {"model": embed_name, "revision": embed_rev, "dim": dim, "normalize": True, "max_length": 512},
         "reranker_expected": {"model": conf.RERANK_MODEL, "revision": conf.RERANK_REV},
-        "chunking": {"unit": "half-page", "narrative_max_words": conf.CHUNK_MAX_WORDS,
+        "chunking": {"unit": "half-page", "narrative_max_words": chunk_words or conf.CHUNK_MAX_WORDS,
                      "table_rows_per_chunk": conf.TABLE_ROWS_PER_CHUNK, "glossary": "one-per-term"},
         "bm25": {"library": "bm25s", "version": ver("bm25s"), "tokenizer": conf.TOKENIZER,
                  "k1": conf.BM25_K1, "b": conf.BM25_B},
@@ -127,5 +128,5 @@ def build(pdf_path: str, out_dir: str, embedder=None, embed_name: str = conf.EMB
     for p in sorted(out.rglob("*")):
         if p.is_file() and p.name != "manifest.json":
             manifest["files"][p.relative_to(out).as_posix()] = sha256(p)
-    (out / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=1))
+    (out / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
     return manifest

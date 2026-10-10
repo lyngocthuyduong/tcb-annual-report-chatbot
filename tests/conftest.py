@@ -59,3 +59,20 @@ def built(tmp_path_factory, doc, embedder):
     out = tmp_path_factory.mktemp("idx") / "idx"
     m = build.build(str(PDF), str(out), embedder=embedder, embed_name="TEST-HASH", embed_rev="test")
     return out, m
+
+
+def pytest_collection_modifyitems(items):
+    """Default category by file when a test file has not marked itself."""
+    unit_files = {"test_vi.py", "test_conf.py", "test_calc.py", "test_cite.py", "test_llm.py", "test_eval.py", "test_api.py"}
+    for it in items:
+        if any(m.name in ("unit", "integ", "live", "live_openai", "live_ollama", "live_models") for m in it.iter_markers()):
+            continue
+        it.add_marker(pytest.mark.unit if it.path.name in unit_files else pytest.mark.integ)
+
+
+@pytest.fixture(scope="session")
+def tindex(built, embedder):
+    """Index loaded from the TEST-HASH index in tmp. Never the submission index."""
+    from tcb.index import Index
+    out, _ = built
+    return Index.load(out, embedder, embed_model="TEST-HASH", embed_rev="test")
