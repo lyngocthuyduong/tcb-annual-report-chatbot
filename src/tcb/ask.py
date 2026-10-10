@@ -83,7 +83,11 @@ class Engine:
             tr.update(standalone=standalone, rewrite_mode=mode)
 
             res = self._retrieve(standalone, tr)
-            nodes = self.rt.top_nodes(res)
+            nodes, used = [], 0
+            for n in self.rt.top_nodes(res):                # rank order; stop at the prompt budget (always keep the best one)
+                if nodes and used + len(n["text"]) > conf.PROMPT_EVIDENCE_CHARS: break
+                nodes.append(n); used += len(n["text"])
+            tr["evidence_chars"] = used
             evs = cite.evidence_from(nodes)
             qmap = self._quantities(nodes, evs)
             tr["evidence"] = [{"eid": e.eid, "chunk_id": e.chunk_id, "page": e.page, "pdf_page": e.pdf_page,

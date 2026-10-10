@@ -47,3 +47,4 @@ FINAL_EVIDENCE = 8           # E1..E8 passed to the LLM
 RERANK_POOL = 30             # fused candidates sent to the cross-encoder
 # $/1M tokens (in, out) -- public list prices checked 10 Oct 2026; used only for the cost estimate in traces
 PRICES = {"gpt-4o-mini": (0.15, 0.60), "claude-sonnet-5-5": (2.0, 10.0)}
+PROMPT_EVIDENCE_CHARS = 15000   # budget for evidence text in one prompt (~5k tokens @ ~3 chars/token; keeps local 8k-context models safe)

@@ -162,3 +162,10 @@ def test_session_keeps_last_turns():
     s = chat.Session()
     for i in range(7): s.add(chat.Turn(str(i), str(i), "a", "answered"))
     assert [t.question for t in s.turns] == ["3", "4", "5", "6"]
+
+
+def test_prompt_budget_trims_lowest_ranked_evidence_but_keeps_best(N, monkeypatch):
+    from tcb import conf
+    monkeypatch.setattr(conf, "PROMPT_EVIDENCE_CHARS", 100)
+    a, p = run(N, lambda rq, i: {"status": "not_in_report", "claims": []})
+    assert len(a.trace["evidence"]) == 1 and a.trace["evidence"][0]["page"] == 297        # best-ranked kept

@@ -16,7 +16,7 @@ Document Intelligence + Retrieval + Evaluation. The report is a 196-page spread 
 PDF → (poppler bbox) half-page split of each two-page spread with printed-page recovery (footer, or inferred for dividers) → KPI-tile grouping, coordinate-based FS table rows (units, notes, nil/negative cells), glossary entries → typed nodes with provenance → LlamaIndex dense index (BGE-M3) + bm25s over a Vietnamese-number-aware tokenizer → manifest with sha256 per file, validated fail-closed at start-up. Query: optional follow-up rewrite → glossary expansion → BM25 top-40 + dense top-40 → RRF (k=60) → BGE-reranker-v2-m3 → 8 evidence blocks + extracted quantities → the LLM returns a JSON plan (claims with evidence ids, calculator calls) → deterministic validation (ids, no page numbers in text, every number must appear in the cited evidence) → calculator (Decimal, unit/period checks) → refusal policy → answer with `[tr. N]` from node metadata. One repair retry on the same provider; provider errors are surfaced, never swapped.
 
 ## What I tried that did not work
-- pdfplumber for layout: dropped for `pdftotext -bbox-layout` (reliable word boxes on the spread layout; parsed with a regex because the output is not well-formed XML).
+- planned pdfplumber layout extraction replaced by `pdftotext -bbox-layout` (reliable word boxes on the spread layout; parsed with a regex because the output is not well-formed XML).
 - bm25s default tokenizer: splits `1.192.344.137` and `14,6%`; replaced with `tcb-vi-v1` (numbers kept whole + canonical forms + folded diacritics).
 - First table-column anchoring mixed absolute and offset coordinates and lost the first column; fixed and covered by golden tests (B02 row "Tiền mặt, vàng": note 5, 4.360.821 / 3.384.770).
 - Complex note tables produce scrambled headers; they are flagged `quality=low`, kept as text, and excluded from calculator quantities rather than guessed.
@@ -28,7 +28,7 @@ PDF → (poppler bbox) half-page split of each two-page spread with printed-page
 - What the numbers made you change: nothing yet (no quality numbers exist).
 
 ## Cost and latency
-- Ingestion: parse + node build measured only with the hash embedder (seconds, CPU); real-embedding cost/time **NOT MEASURED**. Estimated 1,542 chunks on CPU.
+- Ingestion: parse + node build measured only with the hash embedder (seconds, CPU); real-embedding cost/time **NOT MEASURED**. 1,542 nodes to embed.
 - Per query: **NOT MEASURED**. Traces record tokens, calls, latency and a list-price cost estimate per question (gpt-4o-mini $0.15/$0.60 per 1M tokens; claude-sonnet-5-5 $2/$10; Ollama $0).
 - Models used: BAAI/bge-m3 (embedding), BAAI/bge-reranker-v2-m3 (rerank); generation: gpt-4o-mini by default, claude-sonnet-5-5 or Ollama `qwen2.5:7b` selectable.
 

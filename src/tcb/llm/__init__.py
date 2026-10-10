@@ -26,7 +26,12 @@ def get(env=None) -> Provider:
         raise ConfigError(name, model, "LLM_TIMEOUT_S must be a positive number")
     if name == "ollama":
         from .ollama import OllamaProvider
-        return OllamaProvider(e.get("OLLAMA_BASE_URL") or "http://host.docker.internal:11434", model, timeout)
+        try:
+            ctx = int(e.get("OLLAMA_NUM_CTX") or 8192)
+            if ctx < 2048: raise ValueError
+        except ValueError:
+            raise ConfigError(name, model, "OLLAMA_NUM_CTX must be an integer >= 2048")
+        return OllamaProvider(e.get("OLLAMA_BASE_URL") or "http://host.docker.internal:11434", model, timeout, num_ctx=ctx)
     key_var = "OPENAI_API_KEY" if name == "openai" else "ANTHROPIC_API_KEY"
     key = (e.get(key_var) or "").strip()
     if not key:

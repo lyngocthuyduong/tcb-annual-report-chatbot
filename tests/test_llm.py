@@ -145,6 +145,12 @@ def test_ollama_ok_and_body():
     assert r.text == GOOD and (r.provider, r.model, r.in_tokens, r.out_tokens) == ("ollama", "qwen2.5:7b", 11, 4)
     assert seen["url"] == "http://o:11434/api/chat" and seen["body"]["format"] == plan.SCHEMA
     assert seen["body"]["stream"] is False and seen["body"]["options"]["temperature"] == 0
+    assert seen["body"]["options"]["num_ctx"] == 8192          # default Ollama context would truncate the prompt
+
+
+def test_ollama_num_ctx_env():
+    assert llm.get({"PROVIDER": "ollama", "OLLAMA_NUM_CTX": "16384"}).num_ctx == 16384
+    with pytest.raises(ConfigError): llm.get({"PROVIDER": "ollama", "OLLAMA_NUM_CTX": "100"})
 
 
 def test_ollama_unreachable_timeout_missing_model():
