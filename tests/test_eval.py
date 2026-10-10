@@ -120,9 +120,9 @@ def test_run_eval_end_to_end_writes_machine_readable_artifacts(tmp_path):
     assert s["submission_grade"] is False and rep["config"]["index_embedding"]["model"] == "TEST-HASH"
     d = tmp_path / "runs" / "t"
     assert {p.name for p in d.iterdir()} == {"traces.jsonl", "results.jsonl", "summary.json", "config.json"}
-    tr = [json.loads(l) for l in (d / "traces.jsonl").read_text().splitlines()]
+    tr = [json.loads(l) for l in (d / "traces.jsonl").read_text(encoding="utf-8").splitlines()]
     assert len(tr) == 3 and tr[0]["answer"]["trace"]["retrieval"]["reranked"] and tr[0]["score"]["verdict"] == "pass"
-    cfg = json.loads((d / "config.json").read_text())
+    cfg = json.loads((d / "config.json").read_text(encoding="utf-8"))
     assert cfg["provider"] == "scripted" and len(cfg["set_sha256"]) == 64
     rep2 = ev.run_eval(str(sp), str(tmp_path / "runs"), e, label="t2", include_unverified=True)
     assert rep2["summary"]["n"] == 3 and rep2["summary"]["attribution"].get("generation:wrong_or_missing_fact") == 1

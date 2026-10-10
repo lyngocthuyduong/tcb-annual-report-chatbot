@@ -1,13 +1,26 @@
-"""tcb CLI: check | build | validate | ask | chat | batch | eval | smoke | serve."""
+"""tcb CLI: doctor | models | check | build | validate | ask | chat | batch | eval | smoke | serve."""
 from __future__ import annotations
 
 import argparse
 import json
-import resource
 import sys
 import time
 
 from . import conf
+
+
+def peak_rss_mb() -> int | None:
+    """Peak resident memory of this process; None where the OS gives no cheap answer (Windows without psutil)."""
+    try:
+        import resource                                   # Unix only
+        kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        return round(kb / (1024 * 1024) if sys.platform == "darwin" else kb / 1024)   # macOS reports bytes, Linux KiB
+    except ImportError:
+        try:
+            import psutil
+            return round(psutil.Process().memory_info().peak_wset / 1e6)
+        except Exception:
+            return None
 
 
 def cmd_check(a) -> int:
@@ -18,7 +31,7 @@ def cmd_check(a) -> int:
         if not p.exists():
             print(f"FAIL: {p} missing (models are baked into the image)", file=sys.stderr); return 3
         r = (p / ".rev")
-        out[f"{name}_snapshot_rev_ok"] = r.exists() and r.read_text().strip() == rev
+        out[f"{name}_snapshot_rev_ok"] = r.exists() and r.read_text(encoding="utf-8").strip() == rev
     t = time.time()
     from sentence_transformers import CrossEncoder, SentenceTransformer
     m = SentenceTransformer(str(conf.MODELS_DIR / "bge-m3"), device="cpu")
@@ -36,7 +49,7 @@ def cmd_check(a) -> int:
                     ("Tỷ lệ CASA năm 2025?", "Giải thưởng Nơi làm việc tốt nhất Đông Nam Á.")])
     out["rerank_s"] = round(time.time() - t, 2); out["rerank_scores"] = [float(x) for x in s]
     out["rerank_pos_gt_neg"] = bool(s[0] > s[1])
-    out["peak_rss_mb"] = round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024)
+    out["peak_rss_mb"] = peak_rss_mb()
     print(json.dumps(out, indent=1, ensure_ascii=False))
     return 0 if out["embed_dim"] == conf.EMBED_DIM and out["rerank_pos_gt_neg"] and out["embed_snapshot_rev_ok"] \
         and out["rerank_snapshot_rev_ok"] else 1
@@ -107,6 +120,17 @@ def cmd_smoke(a) -> int:
     return smoke.run(a.out)
 
 
+def cmd_doctor(a) -> int:
+    from . import doctor
+    return doctor.run(a.json)
+
+
+def cmd_models(a) -> int:
+    from . import models
+    {"download": models.download, "convert": models.convert}[a.action]()
+    return 0
+
+
 def cmd_serve(a) -> int:
     import uvicorn
     from .api import create_app
@@ -134,7 +158,12 @@ def main(argv=None) -> int:
     sm = sp.add_parser("smoke", help="Ollama smoke test (needs a running Ollama with the model pulled)")
     sm.add_argument("--out", default="out/smoke.json"); sm.set_defaults(f=cmd_smoke)
     sp.add_parser("serve").set_defaults(f=cmd_serve)
+    dr = sp.add_parser("doctor", help="check this machine: python, packages, poppler, PDF, models, index, keys, RAM/disk, Docker")
+    dr.add_argument("--json", action="store_true"); dr.set_defaults(f=cmd_doctor)
+    mo = sp.add_parser("models", help="download/convert the two fixed models into TCB_MODELS_DIR (needs network)")
+    mo.add_argument("action", choices=["download", "convert"]); mo.set_defaults(f=cmd_models)
     a = p.parse_args(argv)
+    conf.load_env()                                         # local runs: pick up ./.env (Docker uses env_file)
     from .index import IndexError_
     from .llm import ConfigError
     try:

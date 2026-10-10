@@ -26,8 +26,8 @@ def load_engine(env=None, index_dir=None, embedder=None, reranker=None, provider
 
 
 def ix_model(d):  # injected-embedder path (tests): trust the manifest's own identity
-    return json.loads((Path(d) / "manifest.json").read_text())["embedding"]["model"]
+    return json.loads((Path(d) / "manifest.json").read_text(encoding="utf-8"))["embedding"]["model"]
 
 
 def ix_rev(d):
-    return json.loads((Path(d) / "manifest.json").read_text())["embedding"]["revision"]
+    return json.loads((Path(d) / "manifest.json").read_text(encoding="utf-8"))["embedding"]["revision"]

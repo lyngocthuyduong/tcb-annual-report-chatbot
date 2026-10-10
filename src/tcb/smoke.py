@@ -42,5 +42,5 @@ def _report(out, executed, model, dt, quality, reason, g=None) -> int:
         print(f"Ollama smoke test: Not Executed. Reason: {reason}. Setup: model={model}.")
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     Path(out).write_text(json.dumps({"executed": executed, "model": model, "latency_s": dt and round(dt, 2), "quality": quality,
-                                     "reason": reason, "plan": g.plan.model_dump() if g else None}, ensure_ascii=False, indent=1))
+                                     "reason": reason, "plan": g.plan.model_dump() if g else None}, ensure_ascii=False, indent=1), encoding="utf-8")
     return 0 if executed and quality.startswith("pass") else 6

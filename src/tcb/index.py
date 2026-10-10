@@ -44,7 +44,7 @@ def validate(index_dir: str | Path, embed_model: str = conf.EMBED_MODEL, embed_r
         raise IndexError_("tokenizer", f"index tokenizer {m['bm25'].get('tokenizer')} != {conf.TOKENIZER}")
     if check_snapshot:
         rev = conf.MODELS_DIR / "bge-m3" / ".rev"
-        if not rev.exists() or rev.read_text().strip() != embed_rev:
+        if not rev.exists() or rev.read_text(encoding="utf-8").strip() != embed_rev:
             raise IndexError_("snapshot", f"local bge-m3 snapshot revision != {embed_rev} (image/model mismatch)")
     # files: every listed file exists with the same sha256; no unlisted files
     listed = set(m["files"])
@@ -58,7 +58,7 @@ def validate(index_dir: str | Path, embed_model: str = conf.EMBED_MODEL, embed_r
     n = m["counts"]["nodes"]
     lines = sum(1 for _ in open(d / "nodes.jsonl", encoding="utf-8"))
     if lines != n: raise IndexError_("corrupt", f"nodes.jsonl has {lines} lines, manifest says {n}")
-    ids = json.loads((d / "bm25" / "ids.json").read_text())
+    ids = json.loads((d / "bm25" / "ids.json").read_text(encoding="utf-8"))
     if len(ids) != n: raise IndexError_("corrupt", f"bm25 ids {len(ids)} != {n}")
     ds = json.loads((d / "llamaindex" / "docstore.json").read_text(encoding="utf-8"))
     nd = len(ds.get("docstore/data", {}))
@@ -83,7 +83,7 @@ class Index:
         import bm25s
         from llama_index.core import StorageContext, load_index_from_storage
         bm = bm25s.BM25.load(str(d / "bm25"))
-        ids = json.loads((d / "bm25" / "ids.json").read_text())
+        ids = json.loads((d / "bm25" / "ids.json").read_text(encoding="utf-8"))
         vec = load_index_from_storage(StorageContext.from_defaults(persist_dir=str(d / "llamaindex")),
                                       embed_model=embedder)
         return cls(m, nodes, bm, ids, vec)

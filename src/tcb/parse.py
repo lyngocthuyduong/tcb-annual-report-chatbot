@@ -6,6 +6,7 @@ import statistics
 import subprocess
 from dataclasses import dataclass, field
 
+from . import conf
 from .pdf import Block, Half, Word
 
 # ---------------------------------------------------------------- numbers
@@ -289,7 +290,8 @@ def glossary(h: Half) -> list[tuple[str, str]]:
 # ---------------------------------------------------------------- images
 def image_inventory(pdf: str) -> dict:
     """pdfimages -list: per-page image count + physical-size share. Inventory only (no extraction)."""
-    txt = subprocess.run(["pdfimages", "-list", pdf], capture_output=True, text=True, check=True).stdout.splitlines()[2:]
+    txt = subprocess.run([conf.poppler("pdfimages"), "-list", pdf], capture_output=True, text=True, encoding="utf-8",
+                         errors="replace", check=True).stdout.splitlines()[2:]
     per: dict[int, dict] = {}
     for ln in txt:
         p = ln.split()

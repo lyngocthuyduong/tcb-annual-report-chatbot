@@ -21,7 +21,7 @@ def download() -> None:
     for sub, repo, rev, ignore in SPECS:
         d = conf.MODELS_DIR / sub
         snapshot_download(repo_id=repo, revision=rev, local_dir=str(d), ignore_patterns=ignore)
-        (d / ".rev").write_text(rev)
+        (d / ".rev").write_text(rev, encoding="utf-8")
         print(f"ok {repo}@{rev[:7]} -> {d}")
 
 

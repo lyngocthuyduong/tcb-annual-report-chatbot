@@ -38,7 +38,7 @@ def test_chat_answer_has_citation_and_trace_file(tmp_path):
     r = c.post("/chat", json={"question": "CASA bao nhiêu?"}); j = r.json()
     assert r.status_code == 200 and j["status"] == "answered" and j["answer"].endswith("[tr. 5]") and j["session_id"]
     assert j["citations"][0]["pdf_page"] == 3 and "trace" not in j
-    rec = json.loads((tmp_path / "tr" / "chat.jsonl").read_text().splitlines()[0])
+    rec = json.loads((tmp_path / "tr" / "chat.jsonl").read_text(encoding="utf-8").splitlines()[0])
     assert rec["trace"]["llm"]["calls"] == 1 and rec["trace"]["decision"]["reason"] == "grounded"
 
 
@@ -78,7 +78,7 @@ def test_validation_and_evidence_and_pdf(tmp_path):
 # ---------------- smoke command: both honest branches ----------------
 def test_smoke_not_executed_when_ollama_unreachable(tmp_path, capsys):
     rc = smoke.run(str(tmp_path / "s.json"), {"OLLAMA_BASE_URL": "http://127.0.0.1:9", "LLM_TIMEOUT_S": "2"})
-    out = capsys.readouterr().out; j = json.loads((tmp_path / "s.json").read_text())
+    out = capsys.readouterr().out; j = json.loads((tmp_path / "s.json").read_text(encoding="utf-8"))
     assert rc == 6 and out.startswith("Ollama smoke test: Not Executed. Reason: Ollama unreachable") and j["executed"] is False
 
 

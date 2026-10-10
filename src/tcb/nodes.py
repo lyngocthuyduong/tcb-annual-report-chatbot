@@ -150,6 +150,6 @@ def build_nodes(halves: list[Half]) -> tuple[list[Node], dict[str, dict]]:
 
 
 def dump_jsonl(nodes: list[Node], path) -> None:
-    with open(path, "w", encoding="utf-8") as f:
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
         for n in nodes:
             f.write(json.dumps(asdict(n), ensure_ascii=False) + "\n")

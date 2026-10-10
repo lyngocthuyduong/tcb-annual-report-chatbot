@@ -78,7 +78,7 @@ def build(pdf_path: str, out_dir: str, embedder=None, embed_name: str = conf.EMB
     bm.index([vi.tokens(n.text) for n in nodes], show_progress=False)
     (out / "bm25").mkdir(exist_ok=True)
     bm.save(str(out / "bm25"))
-    (out / "bm25" / "ids.json").write_text(json.dumps([n.chunk_id for n in nodes]))
+    (out / "bm25" / "ids.json").write_text(json.dumps([n.chunk_id for n in nodes]), encoding="utf-8", newline="\n")
     t_bm25 = time.time() - t2
 
     # ---- plain artifacts
@@ -86,9 +86,9 @@ def build(pdf_path: str, out_dir: str, embedder=None, embed_name: str = conf.EMB
     pages: dict = {}
     for h in halves:
         pages.setdefault(str(h.pdf_page_index), {})[h.side] = {"printed": h.printed_page, "source": h.page_source}
-    (out / "pages.json").write_text(json.dumps(pages, ensure_ascii=False))
-    (out / "gloss.json").write_text(json.dumps(gloss, ensure_ascii=False, indent=0))
-    with open(out / "tables.jsonl", "w", encoding="utf-8") as f:
+    (out / "pages.json").write_text(json.dumps(pages, ensure_ascii=False), encoding="utf-8", newline="\n")
+    (out / "gloss.json").write_text(json.dumps(gloss, ensure_ascii=False, indent=0), encoding="utf-8", newline="\n")
+    with open(out / "tables.jsonl", "w", encoding="utf-8", newline="\n") as f:
         for n in nodes:
             if n.content_type == "table":
                 f.write(json.dumps({"table_id": n.table_id, "chunk_id": n.chunk_id, "form_code": n.form_code,
@@ -100,7 +100,7 @@ def build(pdf_path: str, out_dir: str, embedder=None, embed_name: str = conf.EMB
               "seconds": {"ingest": round(t_ingest, 1), "embed": round(t_embed, 1), "bm25": round(t_bm25, 1)},
               "hardware": {"cpu": platform.processor() or platform.machine(), "cores": os.cpu_count(),
                            "python": platform.python_version()}}
-    (out / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=1))
+    (out / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
 
     # ---- manifest (hashes every other file)
     import importlib.metadata as md
@@ -127,5 +127,5 @@ def build(pdf_path: str, out_dir: str, embedder=None, embed_name: str = conf.EMB
     for p in sorted(out.rglob("*")):
         if p.is_file() and p.name != "manifest.json":
             manifest["files"][p.relative_to(out).as_posix()] = sha256(p)
-    (out / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=1))
+    (out / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
     return manifest

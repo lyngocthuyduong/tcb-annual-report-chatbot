@@ -71,7 +71,7 @@ def test_unlisted_file(built, tmp_path):
 
 def test_format_version(built, tmp_path):
     d = clone(built, tmp_path)
-    m = json.loads((d / "manifest.json").read_text()); m["index_format_version"] = 99
+    m = json.loads((d / "manifest.json").read_text(encoding="utf-8")); m["index_format_version"] = 99
     (d / "manifest.json").write_text(json.dumps(m))
     with pytest.raises(IndexError_) as e: index.validate(d, **EMB)
     assert e.value.code == "format"
@@ -79,7 +79,7 @@ def test_format_version(built, tmp_path):
 
 def test_count_mismatch(built, tmp_path):
     d = clone(built, tmp_path)
-    m = json.loads((d / "manifest.json").read_text()); m["counts"]["nodes"] += 1
+    m = json.loads((d / "manifest.json").read_text(encoding="utf-8")); m["counts"]["nodes"] += 1
     (d / "manifest.json").write_text(json.dumps(m))
     with pytest.raises(IndexError_) as e: index.validate(d, **EMB)
     assert e.value.code == "corrupt"

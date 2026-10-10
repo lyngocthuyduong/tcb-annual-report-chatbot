@@ -50,7 +50,7 @@ def test_real_ollama_smoke(tmp_path):
     import json
     from tcb import smoke
     rc = smoke.run(str(tmp_path / "s.json"))
-    j = json.loads((tmp_path / "s.json").read_text())
+    j = json.loads((tmp_path / "s.json").read_text(encoding="utf-8"))
     if not j["executed"]:
         pytest.skip(f"Ollama smoke Not Executed: {j['reason']}")      # a skip, never a pass
     assert rc == 0, f"Ollama ran but quality={j['quality']}"
