@@ -19,11 +19,13 @@ class Answer:
     provider: str = ""
     model: str = ""
     error: str | None = None
+    error_kind: str | None = None
     trace: dict = field(default_factory=dict)
 
     def to_dict(self, trace: bool = False) -> dict:
         d = {"question": self.question, "standalone": self.standalone, "status": self.status, "answer": self.answer,
-             "citations": self.citations, "provider": self.provider, "model": self.model, "error": self.error}
+             "citations": self.citations, "provider": self.provider, "model": self.model, "error": self.error,
+             "error_kind": self.error_kind}
         if trace: d["trace"] = self.trace
         return d
 
@@ -143,10 +145,10 @@ class Engine:
                 ans.status, ans.error = "error", f"citation outside retrieved evidence: {leak}"
             tr["citation_leak"] = leak
         except LLMError as e:
-            ans.status, ans.error = "error", str(e)
+            ans.status, ans.error, ans.error_kind = "error", str(e), e.kind
             ans.answer = f"Không thể tạo câu trả lời vì lỗi nhà cung cấp LLM ({e.provider}/{e.model}, {e.kind}). Không tự động chuyển sang nhà cung cấp khác."
         except (FileNotFoundError, RuntimeError) as e:
-            ans.status, ans.error = "error", f"{type(e).__name__}: {e}"
+            ans.status, ans.error, ans.error_kind = "error", f"{type(e).__name__}: {e}", "retrieval"
             ans.answer = "Không thể truy xuất: " + str(e)
         tin = sum(c.in_tokens or 0 for c in calls); tout = sum(c.out_tokens or 0 for c in calls)
         tr["llm"] = {"provider": self.prov.name, "model": self.prov.model, "calls": len(calls),
