@@ -1,0 +1,42 @@
+[project]
+name = "tcb"
+version = "0.1.0"
+description = "Evidence-first Vietnamese chatbot over the Techcombank Annual Report 2025"
+requires-python = ">=3.12"
+dependencies = [
+  "llama-index-core==0.14.25",
+  "llama-index-embeddings-huggingface==0.8.0",
+  "sentence-transformers==6.1.0",
+  "transformers==5.19.0",
+  "torch==2.14.1",
+  "bm25s==0.3.13",
+  "pydantic>=2.9",
+  "fastapi==0.143.0",
+  "uvicorn==0.54.0",
+  "openai==3.28.0",
+  "anthropic==1.13.0",
+  "httpx==0.28.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+tcb = "tcb.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "tests"]
+testpaths = ["tests"]
+markers = [
+  "live: needs network/keys/models (opt-in)",
+  "live_openai: real OpenAI call",
+  "live_ollama: real Ollama call",
+]
+addopts = "-m 'not live and not live_openai and not live_ollama'"

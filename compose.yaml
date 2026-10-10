@@ -1,0 +1,17 @@
+services:
+  app:
+    build: .
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      APP_HOST: 0.0.0.0
+      INDEX_DIR: /app/idx
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./idx:/app/idx:ro
+      - ./data:/app/data
+      - ./out:/app/out
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
