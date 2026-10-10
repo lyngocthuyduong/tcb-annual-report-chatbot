@@ -1,9 +1,9 @@
 # Local (no Docker) setup for Windows PowerShell. Run:  powershell -ExecutionPolicy Bypass -File setup.ps1
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
-$py = if (Get-Command py -ErrorAction SilentlyContinue) { @("py", "-3.12") } else { @("python") }
-& $py[0] $py[1..($py.Length-1)] -c "import sys; sys.exit(0 if sys.version_info >= (3,12) else 'Python >= 3.12 required (install from python.org)')"
-if (-not (Test-Path .venv)) { & $py[0] $py[1..($py.Length-1)] -m venv .venv }
+function Run-Py { if (Get-Command py -ErrorAction SilentlyContinue) { py -3.12 @args } else { python @args } }
+Run-Py -c "import sys; sys.exit(0 if sys.version_info >= (3,12) else 'Python >= 3.12 required (install from python.org)')"
+if (-not (Test-Path .venv)) { Run-Py -m venv .venv }
 . .\.venv\Scripts\Activate.ps1
 python -m pip install -q --upgrade pip
 python -m pip install -q "torch==2.14.1" --index-url https://download.pytorch.org/whl/cpu
