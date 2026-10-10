@@ -19,7 +19,9 @@ COPY pyproject.toml ./
 COPY src ./src
 RUN pip install --no-deps .
 COPY --from=models /models /models
-RUN python -m tcb.models convert && chown -R app:app /models
+# No .bin->safetensors convert here: it would add a second ~2.3 GB layer (the .bin stays in the COPY layer). torch 2.14 can load .bin;
+# if `tcb check` ever refuses it, run `python -m tcb.models convert` as a fallback. UNVERIFIED until the first real `tcb check`.
+RUN chown -R app:app /models
 COPY tests ./tests
 RUN mkdir -p out idx data && chown -R app:app /app
 USER app
