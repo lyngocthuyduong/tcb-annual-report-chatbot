@@ -1,0 +1,8 @@
+{
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": ["tests"],
+  "python.analysis.extraPaths": ["src", "tests"],
+  "terminal.integrated.env.windows": { "PYTHONUTF8": "1" },
+  "files.eol": "\n",
+  "files.encoding": "utf8"
+}

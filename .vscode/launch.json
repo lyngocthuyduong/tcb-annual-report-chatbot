@@ -1,0 +1,9 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    { "name": "tcb doctor", "type": "debugpy", "request": "launch", "module": "tcb.cli", "args": ["doctor"], "console": "integratedTerminal", "env": {"PYTHONUTF8": "1"} },
+    { "name": "tcb check", "type": "debugpy", "request": "launch", "module": "tcb.cli", "args": ["check"], "console": "integratedTerminal", "env": {"PYTHONUTF8": "1"} },
+    { "name": "tcb build", "type": "debugpy", "request": "launch", "module": "tcb.cli", "args": ["build", "data/ar.pdf", "out/idx", "--force"], "console": "integratedTerminal", "env": {"PYTHONUTF8": "1"} },
+    { "name": "tcb serve", "type": "debugpy", "request": "launch", "module": "tcb.cli", "args": ["serve"], "console": "integratedTerminal", "env": {"PYTHONUTF8": "1"} }
+  ]
+}

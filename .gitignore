@@ -9,3 +9,5 @@ idx.new/
 out/trace/
 out/runs/
 *.log
+out/smoke*
+out/*.json

@@ -1,0 +1,6 @@
+*.pdf binary
+*.sh text eol=lf
+*.json text eol=lf
+*.jsonl text eol=lf
+# Last rule wins: the index is hash-verified byte-for-byte; git must never rewrite its line endings (Windows autocrlf).
+idx/** -text -diff
