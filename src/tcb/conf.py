@@ -40,3 +40,10 @@ def settings() -> Settings:
         trace_dir=Path(os.getenv("TRACE_DIR", "out/trace")),
         log_level=os.getenv("LOG_LEVEL", "INFO"),
     )
+
+# ---- provisional, set by experiment E7 on the REAL index (M3). None = score-triggered retrieval retry disabled.
+TAU_LOW: float | None = None
+FINAL_EVIDENCE = 8           # E1..E8 passed to the LLM
+RERANK_POOL = 30             # fused candidates sent to the cross-encoder
+# $/1M tokens (in, out) -- public list prices checked 10 Oct 2026; used only for the cost estimate in traces
+PRICES = {"gpt-4o-mini": (0.15, 0.60), "claude-sonnet-5-5": (2.0, 10.0)}

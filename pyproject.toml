@@ -35,8 +35,11 @@ where = ["src"]
 pythonpath = ["src", "tests"]
 testpaths = ["tests"]
 markers = [
-  "live: needs network/keys/models (opt-in)",
-  "live_openai: real OpenAI call",
-  "live_ollama: real Ollama call",
+  "unit: pure unit / mocked providers (proves logic only, NOT that a real model or provider works)",
+  "integ: real parsed PDF + hash-embedder test index in tmp (NOT the submission index)",
+  "live: real models/network (opt-in: pytest -m live)",
+  "live_openai: real OpenAI call (needs OPENAI_API_KEY)",
+  "live_ollama: real Ollama call (needs a running Ollama with the model)",
+  "live_models: real BGE-M3/reranker from /models",
 ]
-addopts = "-m 'not live and not live_openai and not live_ollama'"
+addopts = "-m 'not live and not live_openai and not live_ollama and not live_models'"
