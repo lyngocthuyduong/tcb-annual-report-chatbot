@@ -64,3 +64,43 @@ def test_low_quality_tables_yield_no_quantities(doc):
     from tcb import num
     low = [n for n in doc["nodes"] if n.content_type == "table" and n.quality == "low"]
     assert low and all(num.from_node(asdict(n), lambda: "Q") == [] for n in low)
+
+
+def _qs(doc, page, label):
+    from dataclasses import asdict
+    from tcb import num
+    k = [0]
+    def nid(): k[0] += 1; return f"Q{k[0]}"
+    out = []
+    for n in doc["nodes"]:
+        if n.printed_page_number == page and n.content_type == "table":
+            out += [q for q in num.from_node(asdict(n), nid) if q.label.startswith(label)]
+    return out
+
+
+def test_income_statement_b03_is_high_with_year_headers(doc):
+    t = [n for n in doc["nodes"] if n.printed_page_number == 300 and n.content_type == "table"]
+    assert t and all(n.quality == "high" for n in t)
+    hdrs = {h for n in t for r in n.rows for h in r["cells"]}
+    assert hdrs == {"Năm 2025 Triệu đồng", "Năm 2024 Triệu đồng"}
+    row = next(r for n in t for r in n.rows if r["label"] == "Tổng thu nhập hoạt động")
+    assert list(row["cells"].values()) == ["53.391.125", "46.990.397"]
+    row = next(r for n in t for r in n.rows if r["label"] == "Tổng lợi nhuận trước thuế")
+    assert list(row["cells"].values()) == ["32.538.066", "27.538.368"]
+
+
+def test_income_statement_quantities_and_growth(doc):
+    from tcb import calc
+    qs = _qs(doc, 300, "Tổng thu nhập hoạt động")
+    cur = next(q for q in qs if q.period.year == 2025); prev = next(q for q in qs if q.period.year == 2024)
+    assert (cur.dim, cur.scale) == ("VND", 10**6)
+    assert calc.convert(cur, "nghìn tỷ đồng").text == "53,391 nghìn tỷ đồng"
+    assert calc.growth_pct(cur, prev).text == "13,6%"
+    pbt = _qs(doc, 300, "Tổng lợi nhuận trước thuế")
+    assert calc.growth_pct(next(q for q in pbt if q.period.year == 2025), next(q for q in pbt if q.period.year == 2024)).text == "18,2%"
+
+
+def test_cash_flow_b04_has_year_headers(doc):
+    t = [n for n in doc["nodes"] if n.printed_page_number == 301 and n.content_type == "table"]
+    assert t and all(n.quality == "high" for n in t)
+    assert all(h.startswith("Năm 20") for n in t for r in n.rows for h in r["cells"])
