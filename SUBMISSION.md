@@ -19,7 +19,7 @@ PDF → (poppler bbox) half-page split of each two-page spread with printed-page
 - planned pdfplumber layout extraction replaced by `pdftotext -bbox-layout` (reliable word boxes on the spread layout; parsed with a regex because the output is not well-formed XML).
 - bm25s default tokenizer: splits `1.192.344.137` and `14,6%`; replaced with `tcb-vi-v1` (numbers kept whole + canonical forms + folded diacritics).
 - First table-column anchoring mixed absolute and offset coordinates and lost the first column; fixed and covered by golden tests (B02 row "Tiền mặt, vàng": note 5, 4.360.821 / 3.384.770).
-- Complex note tables produce scrambled headers; they are flagged `quality=low`, kept as text, and excluded from calculator quantities rather than guessed.
+- Complex note tables produce scrambled headers (47 of 107 table chunks); they are flagged `quality=low`, kept as text, and excluded from calculator quantities rather than guessed. The income statement and cash flow were initially in this group (year header row read as data, units merged into labels); fixed and covered by golden tests, so B01–B04 now yield quantities.
 - Real BGE-M3 / PyTorch / Docker could not be reached from the authoring sandbox, so the real index, image and live-provider paths are untested (below).
 
 ## Evaluation
@@ -28,7 +28,7 @@ PDF → (poppler bbox) half-page split of each two-page spread with printed-page
 - What the numbers made you change: nothing yet (no quality numbers exist).
 
 ## Cost and latency
-- Ingestion: parse + node build measured only with the hash embedder (seconds, CPU); real-embedding cost/time **NOT MEASURED**. 1,542 nodes to embed.
+- Ingestion: parse + node build measured only with the hash embedder (seconds, CPU); real-embedding cost/time **NOT MEASURED**. 1,526 nodes to embed.
 - Per query: **NOT MEASURED**. Traces record tokens, calls, latency and a list-price cost estimate per question (gpt-4o-mini $0.15/$0.60 per 1M tokens; claude-sonnet-5-5 $2/$10; Ollama $0).
 - Models used: BAAI/bge-m3 (embedding), BAAI/bge-reranker-v2-m3 (rerank); generation: gpt-4o-mini by default, claude-sonnet-5-5 or Ollama `qwen2.5:7b` selectable.
 
@@ -37,7 +37,7 @@ Another orchestration framework (LlamaIndex is used for ingestion/retrieval only
 
 ## With 10x time and budget
 1. Build the real index, run E1–E8 (RRF k, chunk size, reranker pool) and freeze τ_low (E7) on a larger human-verified dev/val set.
-2. Recover the 70 low-quality note tables with a layout model and enable calculator quantities for them.
+2. Recover the 47 low-quality note tables with a layout model and enable calculator quantities for them.
 3. Judge model calibrated against ≥40 human labels; multi-document support.
 
 ## Demo video
