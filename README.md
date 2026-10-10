@@ -49,6 +49,7 @@ import os; from google.colab import userdata; os.environ["GH_TOKEN"] = userdata.
 !git clone -q -b cont https://x-access-token:$GH_TOKEN@github.com/lyngocthuyduong/tcb-annual-report-chatbot
 %cd tcb-annual-report-chatbot
 !pip install -q -e .
+!pip uninstall -y -q torchvision torchaudio     # Colab's torchvision is built for another torch -> import error in transformers
 # cell 2 — models (≈4.5 GB, to /content/models) + M0 gate
 import os
 os.environ["TCB_MODELS_DIR"] = "/content/models"
