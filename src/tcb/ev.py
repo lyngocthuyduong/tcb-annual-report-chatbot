@@ -32,6 +32,7 @@ class Item(BaseModel):
     gold_facts: list[str] = Field(default_factory=list)      # each must appear in the answer; "a | b" = either
     history: list[Turn_] = Field(default_factory=list)       # prior turns for follow-up items
     verified: bool = False                                    # human-verified against the PDF
+    expect_status: Literal["", "ambiguous"] = ""              # "ambiguous": the right behaviour is a clarifying question
     notes: str = ""
 
 
@@ -95,6 +96,8 @@ def attribute(item: Item, ans: dict, hits: dict | None, fact: bool | None, cite_
     st = ans["status"]
     if st == "error":
         return f"system:{ans.get('error_kind') or 'error'}"
+    if item.expect_status:
+        return "pass" if st == item.expect_status else f"refusal:expected_{item.expect_status}"
     if not item.answerable:
         return "pass" if st == "not_in_report" else "refusal:under_refusal"
     if cite_bad:
@@ -129,7 +132,7 @@ def score_item(item: Item, ans: dict, page_of: Callable[[str], int | None]) -> d
     if hits and hits["rerank"]: rr = 1 / hits["rerank"]
     llm_ = tr.get("llm", {})
     return {"id": item.id, "category": item.category, "type": item.type, "answerable": item.answerable,
-            "verified": item.verified, "status": ans["status"], "verdict": verdict, "passed": verdict == "pass",
+            "expect_status": item.expect_status, "verified": item.verified, "status": ans["status"], "verdict": verdict, "passed": verdict == "pass",
             "fact_ok": fact, "fact_method": method, "cited_pages": cited, "gold_pages": sorted(gold),
             "citation_valid": not bad, "page_hit": bool(set(cited) & gold) if gold else None,
             "page_precision": (len(set(cited) & gold) / len(cited)) if (gold and cited) else None,
@@ -150,7 +153,7 @@ def _pct(xs, p):
 
 def summarize(rows: list[dict]) -> dict:
     ans = [r for r in rows if r["answerable"]]
-    un = [r for r in rows if not r["answerable"]]
+    un = [r for r in rows if not r["answerable"] and not r.get("expect_status")]
     gold = [r for r in ans if r["stage_ranks"]]
     refused = [r for r in rows if r["status"] == "not_in_report"]
     def recall(stage, k):
@@ -167,10 +170,10 @@ def summarize(rows: list[dict]) -> dict:
                     "page_hit": _rate([r["page_hit"] for r in ans]),
                     "page_precision": round(statistics.mean([r["page_precision"] for r in ans if r["page_precision"] is not None]), 4)
                     if any(r["page_precision"] is not None for r in ans) else None},
-        "refusal": {"precision": _rate([not r["answerable"] for r in refused]),
+        "refusal": {"precision": _rate([not r["answerable"] and not r.get("expect_status") for r in refused]),
                     "recall": _rate([r["status"] == "not_in_report" for r in un]),
                     "n_unanswerable": len(un), "false_answer_rate": _rate([r["status"] in ("answered", "partial") for r in un])},
-        "latency_s": {"mean": round(statistics.mean([r["latency_s"] for r in rows if r["latency_s"] is not None]), 3) if rows else None,
+        "latency_s": {"mean": round(statistics.mean(xs), 3) if (xs := [r["latency_s"] for r in rows if r["latency_s"] is not None]) else None,
                       "p50": _pct([r["latency_s"] for r in rows], .5), "p95": _pct([r["latency_s"] for r in rows], .95)},
         "cost_usd_total": round(sum(r["cost_usd"] or 0 for r in rows), 5),
         "cost_usd_per_question": round(sum(r["cost_usd"] or 0 for r in rows) / len(rows), 6) if rows else None,

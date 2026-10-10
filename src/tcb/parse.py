@@ -17,6 +17,7 @@ FORM = re.compile(r"B\d{2}[a-z]?/TCTD-HN")
 UNIT_RE = re.compile(r"(Nghìn tỷ đồng|Triệu đồng|Tỷ đồng|Nghìn đồng|Triệu USD|Triệu|Đồng|%)", re.I)
 DATE_RE = re.compile(r"\d{2}/\d{2}/\d{4}")
 YEAR_HDR = re.compile(r"^Năm (19|20)\d{2}\b")
+HDR_FRAG = re.compile(r"(?<!\()Thuyết minh|\b\d{1,2}/\d{1,2}/(?:19|20)\d{2}\b|Năm (?:19|20)\d{2}|Nghìn tỷ đồng|Triệu đồng|Tỷ đồng|Nghìn đồng|Triệu USD", re.I)
 YEAR_ONLY = re.compile(r"^(19|20)\d{2}$")
 UNIT_ONLY = re.compile(r"^(?:(?:Nghìn tỷ đồng|Triệu đồng|Tỷ đồng|Nghìn đồng|Triệu USD|Đồng)\s*)+$", re.I)
 SECTION_FS = "Báo cáo tài chính"
@@ -229,13 +230,24 @@ def tables(h: Half) -> tuple[list[Table], list[tuple[float, float]]]:
                     for ci in range(min(ncol, len(UNIT_RE.findall(txt)))):
                         units[ci] = units[ci] or UNIT_RE.findall(txt)[ci]
                     continue
-                if txt: pending.append(txt)
+                if txt:
+                    stripped = HDR_FRAG.sub(" ", txt)
+                    stripped = re.sub(r"\s+", " ", stripped).strip()
+                    if stripped != txt and i != first:                # repeated column header inside the table
+                        if not stripped or stripped.isupper(): continue   # drop it (and a caps section title glued to it)
+                        txt = stripped
+                    pending.append(txt)
                 continue
             cells: list[str | None] = [None] * ncol
             for w in nums:
                 ci = min(range(ncol), key=lambda k: abs((w.x1 - h.x_off) - cols[k]))
                 cells[ci] = w.text
             label = " ".join(w.text for w in lab).strip()
+            if label in ("", "Thuyết minh") and rws and all(c is None or YEAR_ONLY.match(c) for c in cells):
+                pending = []; continue                                # column-year row repeated inside the table
+            if pending and label and not label.isupper():             # caps section title glued above a normal row
+                while pending and pending[0].isupper() and len(pending[0].split()) >= 2:
+                    rws.append(Row(pending.pop(0), None, [None] * ncol, 0.0, r[0].y0))
             if pending and not label:  # wrapped label above the numbers
                 label = " ".join(pending); pending = []
             elif pending:

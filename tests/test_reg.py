@@ -104,3 +104,11 @@ def test_cash_flow_b04_has_year_headers(doc):
     t = [n for n in doc["nodes"] if n.printed_page_number == 301 and n.content_type == "table"]
     assert t and all(n.quality == "high" for n in t)
     assert all(h.startswith("Năm 20") for n in t for r in n.rows for h in r["cells"])
+
+
+def test_no_header_text_leaks_into_statement_labels(doc):
+    labels = [(n.printed_page_number, r["label"]) for n in doc["nodes"] if n.content_type == "table"
+              and n.printed_page_number in range(297, 303) for r in n.rows]
+    leaks = [(p, l) for p, l in labels if "Triệu đồng" in l or l.startswith("Thuyết minh") or "31/12/2025" in l]
+    assert not leaks, leaks
+    assert any(l == "LƯU CHUYỂN TIỀN TỪ HOẠT ĐỘNG KINH DOANH" for _, l in labels), "section title is its own row"

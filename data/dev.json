@@ -1,0 +1,668 @@
+[
+ {
+  "id": "a-rate",
+  "category": "ambiguous",
+  "type": "refusal",
+  "answerable": false,
+  "expect_status": "ambiguous",
+  "question": "Tỷ lệ đó là bao nhiêu?",
+  "gold_answer": "Cần hỏi lại: tỷ lệ nào, năm nào.",
+  "verified": false,
+  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+ },
+ {
+  "id": "c-02",
+  "category": "financial_statements",
+  "type": "calc",
+  "question": "Tiền gửi và cấp tín dụng cho các tổ chức tín dụng (“TCTD”) khác tại ngày 31/12/2025 tăng hay giảm bao nhiêu phần trăm so với ngày 31/12/2024?",
+  "gold_answer": "35,9% (114.958.312 so với 84.590.474 triệu đồng).",
+  "gold_printed_pages": [
+   297
+  ],
+  "gold_facts": [
+   "35,9"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "c-03",
+  "category": "financial_statements",
+  "type": "calc",
+  "question": "TỔNG VỐN CHỦ SỞ HỮU tại ngày 31/12/2025 tăng hay giảm bao nhiêu phần trăm so với ngày 31/12/2024?",
+  "gold_answer": "21,3% (179.501.442 so với 147.939.621 triệu đồng).",
+  "gold_printed_pages": [
+   298
+  ],
+  "gold_facts": [
+   "21,3"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "c-07",
+  "category": "financial_statements",
+  "type": "calc",
+  "question": "Thu nhập từ góp vốn, mua cổ phần năm 2025 tăng hay giảm bao nhiêu phần trăm so với năm 2024?",
+  "gold_answer": "-39,3% (39.201 so với 64.561 triệu đồng).",
+  "gold_printed_pages": [
+   300
+  ],
+  "gold_facts": [
+   "-39,3"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "c-08",
+  "category": "financial_statements",
+  "type": "calc",
+  "question": "Các khoản lãi, phí phải trả tại ngày 31/12/2025 tăng hay giảm bao nhiêu phần trăm so với ngày 31/12/2024?",
+  "gold_answer": "29,8% (9.448.719 so với 7.281.567 triệu đồng).",
+  "gold_printed_pages": [
+   298
+  ],
+  "gold_facts": [
+   "29,8"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "c-09",
+  "category": "financial_statements",
+  "type": "calc",
+  "question": "Tiền gửi tại các TCTD khác tại ngày 31/12/2025 tăng hay giảm bao nhiêu phần trăm so với ngày 31/12/2024?",
+  "gold_answer": "44,4% (108.143.393 so với 74.887.085 triệu đồng).",
+  "gold_printed_pages": [
+   297
+  ],
+  "gold_facts": [
+   "44,4"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "c-10",
+  "category": "financial_statements",
+  "type": "calc",
+  "question": "Thu nhập lãi và các khoản thu nhập tương tự năm 2025 tăng hay giảm bao nhiêu phần trăm so với năm 2024?",
+  "gold_answer": "13,2% (68.017.450 so với 60.089.462 triệu đồng).",
+  "gold_printed_pages": [
+   300
+  ],
+  "gold_facts": [
+   "13,2"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "c-11",
+  "category": "financial_statements",
+  "type": "calc",
+  "question": "Cam kết trong nghiệp vụ thư tín dụng (L/C) tại ngày 31/12/2025 tăng hay giảm bao nhiêu phần trăm so với ngày 31/12/2024?",
+  "gold_answer": "69,0% (64.314.200 so với 38.065.747 triệu đồng).",
+  "gold_printed_pages": [
+   299
+  ],
+  "gold_facts": [
+   "69,0"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "c-12",
+  "category": "financial_statements",
+  "type": "calc",
+  "question": "Tiền gửi các tổ chức tài chính, các TCTD khác tại ngày 31/12/2025 tăng hay giảm bao nhiêu phần trăm so với ngày 31/12/2024?",
+  "gold_answer": "15,0% (83.014.313 so với 72.210.834 triệu đồng).",
+  "gold_printed_pages": [
+   298
+  ],
+  "gold_facts": [
+   "15,0"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "f-01",
+  "category": "conversation",
+  "type": "followup",
+  "history": [
+   {
+    "question": "Tiền thu được từ góp vốn của cổ đông không kiểm soát của Techcombank năm 2025 là bao nhiêu triệu đồng?",
+    "answer": "Tiền thu được từ góp vốn của cổ đông không kiểm soát năm 2025 là 12.106.839 triệu đồng. [tr. 302]"
+   }
+  ],
+  "question": "Còn năm 2024 thì sao?",
+  "gold_answer": "2.253 triệu đồng.",
+  "gold_printed_pages": [
+   302
+  ],
+  "gold_facts": [
+   "2.253"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "f-02",
+  "category": "conversation",
+  "type": "followup",
+  "history": [
+   {
+    "question": "Tài sản và chứng từ khác của Techcombank tại ngày 31/12/2025 là bao nhiêu triệu đồng?",
+    "answer": "Tài sản và chứng từ khác tại ngày 31/12/2025 là 148.708.761 triệu đồng. [tr. 299]"
+   }
+  ],
+  "question": "Còn ngày 31/12/2024 thì sao?",
+  "gold_answer": "166.251.765 triệu đồng.",
+  "gold_printed_pages": [
+   299
+  ],
+  "gold_facts": [
+   "166.251.765"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "f-03",
+  "category": "conversation",
+  "type": "followup",
+  "history": [
+   {
+    "question": "Lãi thuần từ hoạt động dịch vụ của Techcombank năm 2025 là bao nhiêu triệu đồng?",
+    "answer": "Lãi thuần từ hoạt động dịch vụ năm 2025 là 8.771.995 triệu đồng. [tr. 300]"
+   }
+  ],
+  "question": "Còn năm 2024 thì sao?",
+  "gold_answer": "8.042.248 triệu đồng.",
+  "gold_printed_pages": [
+   300
+  ],
+  "gold_facts": [
+   "8.042.248"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "h-auto",
+  "category": "digital",
+  "type": "single",
+  "question": "Hơn bao nhiêu phần trăm hành trình bán lẻ cốt lõi của Techcombank đã được tự động hóa hoàn toàn?",
+  "gold_answer": "Hơn 56%.",
+  "gold_printed_pages": [
+   120
+  ],
+  "gold_facts": [
+   "56"
+  ],
+  "verified": false,
+  "notes": "DRAFT by assistant; verify against the PDF"
+ },
+ {
+  "id": "h-credit",
+  "category": "financial_review",
+  "type": "single",
+  "question": "Tổng dư nợ tín dụng (bao gồm trái phiếu doanh nghiệp) của Techcombank năm 2025 là bao nhiêu tỷ đồng?",
+  "gold_answer": "824.104 tỷ đồng.",
+  "gold_printed_pages": [
+   256
+  ],
+  "gold_facts": [
+   "824.104"
+  ],
+  "verified": false,
+  "notes": "DRAFT by assistant; verify against the PDF"
+ },
+ {
+  "id": "h-credit-g",
+  "category": "financial_review",
+  "type": "calc",
+  "question": "Tổng dư nợ tín dụng (bao gồm trái phiếu doanh nghiệp) năm 2025 tăng bao nhiêu phần trăm so với năm 2024?",
+  "gold_answer": "Tăng khoảng 20,7% (824.104 so với 683.028 tỷ đồng).",
+  "gold_printed_pages": [
+   256
+  ],
+  "gold_facts": [
+   "20,7"
+  ],
+  "verified": false,
+  "notes": "DRAFT by assistant; verify against the PDF"
+ },
+ {
+  "id": "h-fu-roa",
+  "category": "conversation",
+  "type": "followup",
+  "history": [
+   {
+    "question": "Tỷ lệ an toàn vốn (CAR) của Techcombank năm 2025 là bao nhiêu?",
+    "answer": "Tỷ lệ an toàn vốn năm 2025 là 14,6%. [tr. 5]"
+   }
+  ],
+  "question": "Còn tỷ suất sinh lời trên tài sản thì sao?",
+  "gold_answer": "2,4%.",
+  "gold_printed_pages": [
+   5
+  ],
+  "gold_facts": [
+   "2,4"
+  ],
+  "verified": false,
+  "notes": "DRAFT by assistant; verify against the PDF"
+ },
+ {
+  "id": "h-kpi-car",
+  "category": "key_figures",
+  "type": "single",
+  "question": "Tỷ lệ an toàn vốn (CAR) của Techcombank năm 2025 là bao nhiêu?",
+  "gold_answer": "14,6%.",
+  "gold_printed_pages": [
+   5
+  ],
+  "gold_facts": [
+   "14,6"
+  ],
+  "verified": false,
+  "notes": "DRAFT by assistant; verify against the PDF"
+ },
+ {
+  "id": "h-kpi-pbt",
+  "category": "key_figures",
+  "type": "single",
+  "question": "Lợi nhuận trước thuế của Techcombank năm 2025 là bao nhiêu?",
+  "gold_answer": "32,5 nghìn tỷ đồng (32.538.066 triệu đồng).",
+  "gold_printed_pages": [
+   5
+  ],
+  "alt_pages": [
+   300
+  ],
+  "gold_facts": [
+   "32,5 | 32.538.066 | 32,538"
+  ],
+  "verified": false,
+  "notes": "DRAFT by assistant; verify against the PDF"
+ },
+ {
+  "id": "h-kpi-roa",
+  "category": "key_figures",
+  "type": "single",
+  "question": "Tỷ suất sinh lời trên tài sản (ROA) của Techcombank năm 2025 là bao nhiêu?",
+  "gold_answer": "2,4%, dẫn đầu ngành.",
+  "gold_printed_pages": [
+   5
+  ],
+  "gold_facts": [
+   "2,4"
+  ],
+  "verified": false,
+  "notes": "DRAFT by assistant; verify against the PDF"
+ },
+ {
+  "id": "h-kpi-tnhd",
+  "category": "key_figures",
+  "type": "single",
+  "question": "Tổng thu nhập hoạt động của Techcombank năm 2025 là bao nhiêu nghìn tỷ đồng?",
+  "gold_answer": "53,4 nghìn tỷ đồng (53.391.125 triệu đồng).",
+  "gold_printed_pages": [
+   5
+  ],
+  "alt_pages": [
+   300
+  ],
+  "gold_facts": [
+   "53,4 | 53.391.125 | 53,391"
+  ],
+  "verified": false,
+  "notes": "DRAFT by assistant; verify against the PDF"
+ },
+ {
+  "id": "t-02",
+  "category": "financial_statements",
+  "type": "single",
+  "question": "TỔNG NỢ PHẢI TRẢ VÀ VỐN CHỦ SỞ HỮU của Techcombank tại ngày 31/12/2025 là bao nhiêu triệu đồng?",
+  "gold_answer": "1.192.344.137 triệu đồng.",
+  "gold_printed_pages": [
+   298
+  ],
+  "gold_facts": [
+   "1.192.344.137"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "t-03",
+  "category": "financial_statements",
+  "type": "single",
+  "question": "Chứng khoán đầu tư sẵn sàng để bán của Techcombank tại ngày 31/12/2025 là bao nhiêu triệu đồng?",
+  "gold_answer": "145.942.288 triệu đồng.",
+  "gold_printed_pages": [
+   297
+  ],
+  "gold_facts": [
+   "145.942.288"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "t-04",
+  "category": "financial_statements",
+  "type": "single",
+  "question": "Lãi thuần từ mua bán chứng khoán đầu tư của Techcombank năm 2025 là bao nhiêu triệu đồng?",
+  "gold_answer": "2.846.321 triệu đồng.",
+  "gold_printed_pages": [
+   300
+  ],
+  "gold_facts": [
+   "2.846.321"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "t-07",
+  "category": "financial_statements",
+  "type": "single",
+  "question": "Phát hành giấy tờ có giá của Techcombank tại ngày 31/12/2025 là bao nhiêu triệu đồng?",
+  "gold_answer": "215.330.128 triệu đồng.",
+  "gold_printed_pages": [
+   298
+  ],
+  "gold_facts": [
+   "215.330.128"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "t-08",
+  "category": "financial_statements",
+  "type": "single",
+  "question": "Lợi nhuận chưa phân phối của Techcombank tại ngày 31/12/2025 là bao nhiêu triệu đồng?",
+  "gold_answer": "62.773.576 triệu đồng.",
+  "gold_printed_pages": [
+   298
+  ],
+  "gold_facts": [
+   "62.773.576"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "t-09",
+  "category": "financial_statements",
+  "type": "single",
+  "question": "Tiền thu từ thanh lý tài sản cố định của Techcombank năm 2025 là bao nhiêu triệu đồng?",
+  "gold_answer": "3.503 triệu đồng.",
+  "gold_printed_pages": [
+   302
+  ],
+  "gold_facts": [
+   "3.503"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "t-10",
+  "category": "financial_statements",
+  "type": "single",
+  "question": "Thu nhập từ hoạt động dịch vụ của Techcombank năm 2025 là bao nhiêu triệu đồng?",
+  "gold_answer": "12.526.963 triệu đồng.",
+  "gold_printed_pages": [
+   300
+  ],
+  "gold_facts": [
+   "12.526.963"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "t-13",
+  "category": "financial_statements",
+  "type": "single",
+  "question": "Lưu chuyển tiền thuần từ hoạt động kinh doanh của Techcombank năm 2025 là bao nhiêu triệu đồng?",
+  "gold_answer": "39.923.618 triệu đồng.",
+  "gold_printed_pages": [
+   301
+  ],
+  "gold_facts": [
+   "39.923.618"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "t-14",
+  "category": "financial_statements",
+  "type": "single",
+  "question": "Chứng khoán đầu tư của Techcombank tại ngày 31/12/2025 là bao nhiêu triệu đồng?",
+  "gold_answer": "145.526.404 triệu đồng.",
+  "gold_printed_pages": [
+   297
+  ],
+  "gold_facts": [
+   "145.526.404"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "t-16",
+  "category": "financial_statements",
+  "type": "single",
+  "question": "Vốn khác của Techcombank tại ngày 31/12/2025 là bao nhiêu triệu đồng?",
+  "gold_answer": "7.764.086 triệu đồng.",
+  "gold_printed_pages": [
+   298
+  ],
+  "gold_facts": [
+   "7.764.086"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "t-17",
+  "category": "financial_statements",
+  "type": "single",
+  "question": "Tổng thu nhập hoạt động của Techcombank năm 2025 là bao nhiêu triệu đồng?",
+  "gold_answer": "53.391.125 triệu đồng.",
+  "gold_printed_pages": [
+   300
+  ],
+  "gold_facts": [
+   "53.391.125"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "t-18",
+  "category": "financial_statements",
+  "type": "single",
+  "question": "Tài sản cố định của Techcombank tại ngày 31/12/2025 là bao nhiêu triệu đồng?",
+  "gold_answer": "12.122.934 triệu đồng.",
+  "gold_printed_pages": [
+   297
+  ],
+  "gold_facts": [
+   "12.122.934"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "t-20",
+  "category": "financial_statements",
+  "type": "single",
+  "question": "Các khoản nợ khác của Techcombank tại ngày 31/12/2025 là bao nhiêu triệu đồng?",
+  "gold_answer": "26.877.242 triệu đồng.",
+  "gold_printed_pages": [
+   298
+  ],
+  "gold_facts": [
+   "26.877.242"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "t-22",
+  "category": "financial_statements",
+  "type": "single",
+  "question": "Lãi thuần từ hoạt động khác của Techcombank năm 2025 là bao nhiêu triệu đồng?",
+  "gold_answer": "1.884.342 triệu đồng.",
+  "gold_printed_pages": [
+   300
+  ],
+  "gold_facts": [
+   "1.884.342"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "t-23",
+  "category": "financial_statements",
+  "type": "single",
+  "question": "Lãi thuần từ mua bán chứng khoán kinh doanh của Techcombank năm 2025 là bao nhiêu triệu đồng?",
+  "gold_answer": "51.974 triệu đồng.",
+  "gold_printed_pages": [
+   300
+  ],
+  "gold_facts": [
+   "51.974"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "t-24",
+  "category": "financial_statements",
+  "type": "single",
+  "question": "Các khoản phải trả và công nợ khác của Techcombank tại ngày 31/12/2025 là bao nhiêu triệu đồng?",
+  "gold_answer": "17.428.523 triệu đồng.",
+  "gold_printed_pages": [
+   298
+  ],
+  "gold_facts": [
+   "17.428.523"
+  ],
+  "verified": false,
+  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+ },
+ {
+  "id": "u-cam",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "Techcombank có bao nhiêu chi nhánh tại Campuchia?",
+  "gold_answer": "Không có trong báo cáo.",
+  "verified": false,
+  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+ },
+ {
+  "id": "u-fx",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "Tỷ giá USD/VND ngày 15/3/2026 là bao nhiêu?",
+  "gold_answer": "Không có trong báo cáo.",
+  "verified": false,
+  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+ },
+ {
+  "id": "u-gdp27",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "Dự báo tăng trưởng GDP của Việt Nam năm 2027 là bao nhiêu?",
+  "gold_answer": "Không có trong báo cáo.",
+  "verified": false,
+  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+ },
+ {
+  "id": "u-mb",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "MB Bank có tổng cộng bao nhiêu nhân viên?",
+  "gold_answer": "Không có trong báo cáo.",
+  "verified": false,
+  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+ },
+ {
+  "id": "u-momo",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "Ví Momo có bao nhiêu người dùng hoạt động hàng tháng?",
+  "gold_answer": "Không có trong báo cáo.",
+  "verified": false,
+  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+ },
+ {
+  "id": "u-price",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "Giá cổ phiếu TCB trên sàn HOSE trong phiên giao dịch ngày hôm nay là bao nhiêu?",
+  "gold_answer": "Không có trong báo cáo.",
+  "verified": false,
+  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+ },
+ {
+  "id": "u-rate",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "Lãi suất điều hành hiện nay của Ngân hàng Nhà nước là bao nhiêu?",
+  "gold_answer": "Không có trong báo cáo.",
+  "verified": false,
+  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+ },
+ {
+  "id": "u-vcbchair",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "Chủ tịch Hội đồng quản trị của Vietcombank là ai?",
+  "gold_answer": "Không có trong báo cáo.",
+  "verified": false,
+  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+ },
+ {
+  "id": "u-wc",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "Techcombank tài trợ bao nhiêu tiền cho World Cup 2026?",
+  "gold_answer": "Không có trong báo cáo.",
+  "verified": false,
+  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+ },
+ {
+  "id": "u-weather",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "Thời tiết Hà Nội ngày mai thế nào?",
+  "gold_answer": "Không có trong báo cáo.",
+  "verified": false,
+  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+ }
+]

@@ -1,4 +1,4 @@
-"""tcb CLI: doctor | models | check | build | validate | ask | chat | batch | eval | smoke | serve."""
+"""tcb CLI: doctor | models | check | build | validate | ask | chat | batch | eval | exp | vset | smoke | serve."""
 from __future__ import annotations
 
 import argparse
@@ -53,6 +53,22 @@ def cmd_check(a) -> int:
     print(json.dumps(out, indent=1, ensure_ascii=False))
     return 0 if out["embed_dim"] == conf.EMBED_DIM and out["rerank_pos_gt_neg"] and out["embed_snapshot_rev_ok"] \
         and out["rerank_snapshot_rev_ok"] else 1
+
+
+def cmd_vset(a) -> int:
+    from . import nodes as nodes_, pdf, vset
+    def parsed():
+        halves, _ = pdf.load(a.pdf)
+        return nodes_.build_nodes(halves)[0]
+    if a.action == "gen":
+        print(json.dumps(vset.gen(parsed(), out_dir=a.out), ensure_ascii=False)); return 0
+    if a.action == "export":
+        print(f"{vset.export_csv(a.file, a.csv)} items -> {a.csv}"); return 0
+    if a.action == "apply":
+        print(json.dumps(vset.apply_csv(a.file, a.csv), ensure_ascii=False)); return 0
+    bad = vset.check(a.file, parsed())
+    print("\n".join(bad) if bad else f"OK: gold facts of {a.file} are on their gold pages")
+    return 1 if bad else 0
 
 
 def cmd_build(a) -> int:
@@ -189,6 +205,10 @@ def main(argv=None) -> int:
     ex.add_argument("--out", default="out/exp"); ex.add_argument("--label", default="m3"); ex.add_argument("--include-unverified", action="store_true")
     ex.add_argument("--time-sample", type=int, default=10, help="queries used to time reranking (E4)"); ex.add_argument("--verbose", action="store_true")
     ex.set_defaults(f=cmd_exp)
+    vs = sp.add_parser("vset", help="dev/val candidate sets: gen | export | apply | check (human review via CSV)")
+    vs.add_argument("action", choices=["gen", "export", "apply", "check"]); vs.add_argument("file", nargs="?", default="data/dev.json")
+    vs.add_argument("--csv", default="out/review.csv"); vs.add_argument("--pdf", default="data/ar.pdf")
+    vs.add_argument("--out", default="data"); vs.set_defaults(f=cmd_vset)
     sm = sp.add_parser("smoke", help="Ollama smoke test (needs a running Ollama with the model pulled)")
     sm.add_argument("--out", default="out/smoke.json"); sm.set_defaults(f=cmd_smoke)
     sp.add_parser("serve").set_defaults(f=cmd_serve)
