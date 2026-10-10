@@ -21,7 +21,6 @@ RUN pip install --no-deps .
 COPY --from=models /models /models
 RUN python -m tcb.models convert && chown -R app:app /models
 COPY tests ./tests
-COPY data/q10.json data/seed.json ./data/
 RUN mkdir -p out idx data && chown -R app:app /app
 USER app
 EXPOSE 8000
