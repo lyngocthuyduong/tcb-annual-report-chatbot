@@ -1,17 +1,63 @@
+# Online (default):   docker compose up --build                       (needs PROVIDER + API key in .env)
+# Offline LLM:        docker compose --profile offline up --build app-offline
+#                     (local Ollama + qwen2.5:7b; the model is pulled once, ~4.7 GB; no external LLM API is called)
+# The two modes are separate services: there is NO automatic fallback from one to the other.
+x-app: &app
+  build: .
+  volumes:
+    - ./idx:/app/idx:ro
+    - ./data:/app/data
+    - ./out:/app/out
+  ports:
+    - "127.0.0.1:8000:8000"
+
 services:
   app:
-    build: .
+    <<: *app
     env_file:
       - path: .env
         required: false
     environment:
       APP_HOST: 0.0.0.0
       INDEX_DIR: /app/idx
-    ports:
-      - "127.0.0.1:8000:8000"
-    volumes:
-      - ./idx:/app/idx:ro
-      - ./data:/app/data
-      - ./out:/app/out
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  ollama:
+    profiles: [offline]
+    image: ollama/ollama:latest
+    volumes:
+      - ollama:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  ollama-pull:
+    profiles: [offline]
+    image: ollama/ollama:latest
+    depends_on:
+      ollama: {condition: service_healthy}
+    environment:
+      OLLAMA_HOST: ollama:11434
+    entrypoint: ["ollama", "pull", "qwen2.5:7b"]
+
+  app-offline:
+    <<: *app
+    profiles: [offline]
+    depends_on:
+      ollama-pull: {condition: service_completed_successfully}
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      APP_HOST: 0.0.0.0
+      INDEX_DIR: /app/idx
+      PROVIDER: ollama
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: qwen2.5:7b
+      LLM_TIMEOUT_S: "300"
+
+volumes:
+  ollama:

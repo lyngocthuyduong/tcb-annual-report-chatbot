@@ -8,7 +8,7 @@ from . import conf
 from .build import sha256
 
 FIX = ("Re-fetch the repo (git pull / re-clone) so idx/ is intact. Rebuild only manually: "
-       "docker compose run --rm app tcb build data/ar.pdf idx.new (see README).")
+       "docker compose run --rm app tcb build data/ar.pdf out/idx, then replace idx/ (see README).")
 
 
 class IndexError_(RuntimeError):

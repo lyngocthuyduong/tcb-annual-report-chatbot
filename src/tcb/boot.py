@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 from . import ask, conf, find, llm
-from .index import Index
+from .index import Index, validate
 
 
 def load_engine(env=None, index_dir=None, embedder=None, reranker=None, provider=None) -> ask.Engine:
@@ -15,7 +15,8 @@ def load_engine(env=None, index_dir=None, embedder=None, reranker=None, provider
     d = Path(index_dir or conf.settings().index_dir)
     if embedder is None:
         from .build import real_embedder
-        embedder = real_embedder()
+        validate(d)                                    # fail closed first (exit 3), cheap: hashes only, no models
+        embedder = real_embedder()                     # ModelMissing (exit 5) if /models is absent
         ix = Index.load(d, embedder, check_snapshot=True)
     else:
         ix = Index.load(d, embedder, embed_model=ix_model(d), embed_rev=ix_rev(d))
