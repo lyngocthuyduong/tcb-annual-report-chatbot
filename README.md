@@ -97,7 +97,3 @@ Only `verified:true` items count in `tcb eval` / `tcb exp`.
 
 ## Known gaps
 τ_low is unset (`conf.TAU_LOW=None`): the score-triggered retrieval retry is disabled until E7 runs on the real index. Low-quality note tables (47 of 107 table chunks; the four primary statements B01–B04 are all high) are kept as text but yield no calculator quantities. Number grounding ignores integers ≤ 12.
-
-## Codespaces
-
-`.devcontainer/` uses a slim Python 3.12 image (the default Codespaces image already takes ~26 GB of the 32 GB disk and lacks `python3-venv`). Create the codespace from this branch, then `./setup.sh`. Keep model weights outside the repo (`export TCB_MODELS_DIR=$HOME/models`).
