@@ -44,7 +44,9 @@ Runtime > Change runtime type > T4 GPU.   Secrets (key icon) > add HF_TOKEN (opt
 ```python
 # cell 1 — setup (python must be >= 3.12:  !python --version)
 !apt-get -qq install -y poppler-utils
-!git clone -q -b cont https://github.com/lyngocthuyduong/tcb-annual-report-chatbot
+# private repo: Secrets > add GH_TOKEN = fine-grained GitHub token, this repo only, Contents: Read-only (public repo: drop the token part)
+import os; from google.colab import userdata; os.environ["GH_TOKEN"] = userdata.get("GH_TOKEN")
+!git clone -q -b cont https://x-access-token:$GH_TOKEN@github.com/lyngocthuyduong/tcb-annual-report-chatbot
 %cd tcb-annual-report-chatbot
 !pip install -q -e .
 # cell 2 — models (≈4.5 GB, to /content/models) + M0 gate
