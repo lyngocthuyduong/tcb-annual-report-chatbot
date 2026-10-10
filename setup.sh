@@ -14,7 +14,6 @@ python -m pip install -q --upgrade pip
 python -m pip install -q "torch==2.14.1" --index-url https://download.pytorch.org/whl/cpu
 python -m pip install -q -e ".[dev]"
 [ -f .env ] || cp .env.example .env
-python -m tcb.cli models download      # ~6 GB, network, one-off
-python -m tcb.cli models convert
 python -m tcb.cli doctor
-echo "next: python -m tcb.cli check && python -m tcb.cli build data/ar.pdf out/idx"
+echo "models are NOT downloaded (≈4.5 GB). Only needed to serve/eval:  python -m tcb.cli models download   (set TCB_MODELS_DIR outside the repo)"
+echo "index: build it on Colab (README) and unzip it into idx/ ;  then:  python -m tcb.cli validate idx"

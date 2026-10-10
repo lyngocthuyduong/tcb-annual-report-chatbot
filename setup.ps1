@@ -12,7 +12,6 @@ if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 if (-not (Get-Command pdftotext -ErrorAction SilentlyContinue) -and -not $env:POPPLER_BIN) {
   Write-Host "poppler missing: conda install -c conda-forge poppler  (or download poppler-windows, then set POPPLER_BIN to its bin folder)" -ForegroundColor Yellow
 }
-python -m tcb.cli models download
-python -m tcb.cli models convert
 python -m tcb.cli doctor
-Write-Host "next: python -m tcb.cli check ; python -m tcb.cli build data/ar.pdf out/idx"
+Write-Host "models are NOT downloaded (~4.5 GB). Only needed to serve/eval: python -m tcb.cli models download  (set TCB_MODELS_DIR outside the repo)"
+Write-Host "index: build it on Colab (see README), unzip into idx/, then: python -m tcb.cli validate idx"

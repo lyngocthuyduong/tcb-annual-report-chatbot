@@ -36,13 +36,33 @@ docker compose run --rm app tcb ask "Tỷ lệ CASA năm 2025?" --json
 ```
 `eval` writes `traces.jsonl` (full per-question trace), `results.jsonl` (per-item score + verdict), `summary.json`, `config.json` (provider, model, index, `submission_grade`). Items count only if `"verified": true` in the dataset (see `src/tcb/ev.py` for the schema); `data/seed.json` holds 4 **unverified** drafts for a pipeline check (`include_unverified`).
 
-## Build the index (one-off, networked machine) — not done yet
-```bash
-docker compose build && docker compose run --rm app tcb check          # must pass first (real models)
-mkdir -p out && chmod a+w out
-docker compose run --rm app tcb build data/ar.pdf out/idx && rm -rf idx && mv out/idx idx
-docker compose run --rm app tcb validate /app/idx --snapshot           # then commit idx/ (~43 MB)
+## Build the index (one-off, on Colab — not done yet)
+Why Colab: the Docker build exhausted a 32 GB Codespace disk (layer export), and the index needs the real models only once. Runtime: GPU (T4, free) for the build; the result is `idx/` (~43 MB).
+```text
+Runtime > Change runtime type > T4 GPU.   Secrets (key icon) > add HF_TOKEN (optional, avoids Hugging Face rate limits)
 ```
+```python
+# cell 1 — setup (python must be >= 3.12:  !python --version)
+!apt-get -qq install -y poppler-utils
+!git clone -q -b cont https://github.com/lyngocthuyduong/tcb-annual-report-chatbot
+%cd tcb-annual-report-chatbot
+!pip install -q -e .
+# cell 2 — models (≈4.5 GB, to /content/models) + M0 gate
+import os
+os.environ["TCB_MODELS_DIR"] = "/content/models"
+try:
+    from google.colab import userdata; os.environ["HF_TOKEN"] = userdata.get("HF_TOKEN")
+except Exception: pass
+!python -m tcb.models download
+!tcb check | tee check.json            # must end with rerank_pos_gt_neg true; if the bge-m3 .bin is refused: !python -m tcb.models convert, then rerun
+# cell 3 — build + validate + pack (GPU only speeds up the build; same model/revision)
+os.environ["TCB_DEVICE"] = "cuda"
+!tcb build data/ar.pdf out/idx
+!tcb validate out/idx --snapshot
+!cd out && zip -rq ../idx.zip idx && ls -la ../idx.zip
+from google.colab import files; files.download("idx.zip"); files.download("check.json")
+```
+Then in the repo: `unzip idx.zip` (creates `idx/`), `tcb validate idx`, `git add idx && git commit`. `idx/report.json` holds ingest/embed timings for SUBMISSION. Docker build (`docker compose build`, `./smoke.sh`) is a separate, final check — do it once, on a machine with ≥ 40 GB free.
 
 ## Tests — what each category does and does NOT prove
 | Command | Category | Proves | Does not prove |
