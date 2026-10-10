@@ -1,0 +1,654 @@
+{
+"AEM": {
+"definition": "Adobe Experience Manager",
+"printed_page": 386
+},
+"AGM": {
+"definition": "Đại hội đồng cổ đông thường niên",
+"printed_page": 386
+},
+"AI": {
+"definition": "Trí tuệ nhân tạo",
+"printed_page": 386
+},
+"AIP": {
+"definition": "Azure Information Protection",
+"printed_page": 386
+},
+"ALCO": {
+"definition": "Uỷ ban quản lý tài sản - nợ",
+"printed_page": 386
+},
+"ALM": {
+"definition": "Quản lý tài sản Nợ - Có",
+"printed_page": 386
+},
+"AML": {
+"definition": "Phòng chống rửa tiền",
+"printed_page": 386
+},
+"ANTT": {
+"definition": "An ninh thông tin",
+"printed_page": 386
+},
+"APE": {
+"definition": "Phí bảo hiểm quy năm",
+"printed_page": 386
+},
+"API": {
+"definition": "Giao diện lập trình ứng dụng",
+"printed_page": 386
+},
+"APM": {
+"definition": "Theo dõi hiệu suất ứng dụng",
+"printed_page": 386
+},
+"APT": {
+"definition": "Tấn công có chủ đích",
+"printed_page": 386
+},
+"ASEAN": {
+"definition": "Hiệp hội các quốc gia Đông Nam Á",
+"printed_page": 386
+},
+"ATM/CDM": {
+"definition": "Máy rút tiền tự động/Máy nộp tiền tự động",
+"printed_page": 386
+},
+"AUM": {
+"definition": "Tổng tài sản quản lý",
+"printed_page": 386
+},
+"Auto ML": {
+"definition": "Công nghệ học máy tự động",
+"printed_page": 386
+},
+"AWS": {
+"definition": "Amazon Web Services",
+"printed_page": 386
+},
+"B1": {
+"definition": "Nợ nhóm 1 (Nợ đủ tiêu chuẩn)",
+"printed_page": 386
+},
+"B2": {
+"definition": "Nợ nhóm 2 (Nợ cần chú ý)",
+"printed_page": 386
+},
+"B3": {
+"definition": "Nợ nhóm 3 (Nợ dưới tiêu chuẩn)",
+"printed_page": 386
+},
+"B4": {
+"definition": "Nợ nhóm 4 (Nợ nghi ngờ)",
+"printed_page": 386
+},
+"B5": {
+"definition": "Nợ nhóm 5 (Nợ có khả năng mất vốn)",
+"printed_page": 386
+},
+"Banca": {
+"definition": "Bảo hiểm Bancassurance",
+"printed_page": 386
+},
+"BB": {
+"definition": "Khối Khách hàng Doanh nghiệp",
+"printed_page": 386
+},
+"BEI": {
+"definition": "Chỉ số sức khỏe thương hiệu",
+"printed_page": 386
+},
+"BG": {
+"definition": "Bảo lãnh ngân hàng",
+"printed_page": 386
+},
+"BI": {
+"definition": "Trí tuệ doanh nghiệp",
+"printed_page": 386
+},
+"BKS": {
+"definition": "Ban Kiểm soát",
+"printed_page": 386
+},
+"BOD": {
+"definition": "Hội đồng quản trị",
+"printed_page": 386
+},
+"CAR": {
+"definition": "Tỷ lệ an toàn vốn",
+"printed_page": 386
+},
+"CASA": {
+"definition": "Tiền gửi không kỳ hạn",
+"printed_page": 386
+},
+"CBNV": {
+"definition": "Cán bộ nhân viên",
+"printed_page": 386
+},
+"CCR": {
+"definition": "Rủi ro tín dụng đối tác",
+"printed_page": 386
+},
+"CD": {
+"definition": "Chứng chỉ tiền gửi",
+"printed_page": 386
+},
+"CDBL": {
+"definition": "Chứng chỉ tiền gửi Bảo Lộc",
+"printed_page": 386
+},
+"CDP": {
+"definition": "Nền tảng dữ liệu khách hàng",
+"printed_page": 386
+},
+"CEO": {
+"definition": "Tổng Giám đốc",
+"printed_page": 386
+},
+"CI/CD": {
+"definition": "Tích hợp liên tục/Triển khai liên tục",
+"printed_page": 386
+},
+"CIBG": {
+"definition": "Khối Ngân hàng doanh nghiệp và Định chế tài chính",
+"printed_page": 386
+},
+"CIR": {
+"definition": "Tỷ lệ chi phí trên thu nhập",
+"printed_page": 386
+},
+"CNTT": {
+"definition": "Công nghệ thông tin",
+"printed_page": 386
+},
+"CoF": {
+"definition": "Chi phí huy động",
+"printed_page": 386
+},
+"COSO": {
+"definition": "Ủy ban Các tổ chức bảo trợ",
+"printed_page": 386
+},
+"CRM": {
+"definition": "Hệ thống quản lý quan hệ khách hàng",
+"printed_page": 386
+},
+"CSAT": {
+"definition": "Chỉ số hài lòng khách hàng",
+"printed_page": 386
+},
+"CST": {
+"definition": "Đội ngũ chăm sóc khách hàng",
+"printed_page": 386
+},
+"CVA": {
+"definition": "Điều chỉnh định giá tín dụng",
+"printed_page": 386
+},
+"CVP": {
+"definition": "Định vị giá trị khách hàng",
+"printed_page": 386
+},
+"DCM": {
+"definition": "Thị trường vốn nợ",
+"printed_page": 386
+},
+"DDoS": {
+"definition": "Tấn công từ chối dịch vụ phân tán",
+"printed_page": 386
+},
+"ĐGĐCĐ": {
+"definition": "Đại hội đồng cổ đông thường niên",
+"printed_page": 386
+},
+"DLP": {
+"definition": "Chống Thất thoát Dữ liệu",
+"printed_page": 386
+},
+"DnA": {
+"definition": "Khối Dữ liệu và Phân tích",
+"printed_page": 386
+},
+"Doanh nghiệp siêu nhỏ (MSME)": {
+"definition": "Khách hàng có tổng doanh thu từ hoạt động bán hàng và dịch vụ của năm tài chính gần nhất dưới 20 tỷ đồng",
+"printed_page": 386
+},
+"Doanh nghiệp vừa và nhỏ (SME)": {
+"definition": "Khách hàng có tổng doanh thu từ hoạt động bán hàng và dịch vụ của năm tài chính gần nhất từ 20 - 200 tỷ đồng",
+"printed_page": 386
+},
+"DSO": {
+"definition": "Phát triển – Bảo mật – Vận hành",
+"printed_page": 386
+},
+"EES": {
+"definition": "Khảo sát mức độ gắn bó của nhân viên",
+"printed_page": 386
+},
+"eKYC": {
+"definition": "Xác minh danh tính khách hàng thông qua ứng dụng công nghệ điện tử",
+"printed_page": 386
+},
+"ERP": {
+"definition": "Hoạch định tài nguyên doanh nghiệp",
+"printed_page": 386
+},
+"ESG": {
+"definition": "Môi trường, xã hội và quản trị",
+"printed_page": 386
+},
+"ETF": {
+"definition": "Quỹ hoán đổi danh mục",
+"printed_page": 386
+},
+"EVP": {
+"definition": "Định vị giá trị nhân viên",
+"printed_page": 386
+},
+"EVE": {
+"definition": "Giá trị kinh tế của vốn chủ sở hữu",
+"printed_page": 386
+},
+"EW": {
+"definition": "Hệ thống cảnh báo sớm",
+"printed_page": 386
+},
+"EXCO": {
+"definition": "Ủy ban Điều hành",
+"printed_page": 386
+},
+"FDI": {
+"definition": "Đầu tư trực tiếp nước ngoài",
+"printed_page": 386
+},
+"FMCG": {
+"definition": "Hàng tiêu dùng nhanh",
+"printed_page": 386
+},
+"FRTB": {
+"definition": "Tổng rà soát danh mục kinh doanh",
+"printed_page": 386
+},
+"FX": {
+"definition": "Ngoại hối",
+"printed_page": 386
+},
+"GDP": {
+"definition": "Tổng sản phẩm nội địa",
+"printed_page": 386
+},
+"GenAI": {
+"definition": "Trí tuệ nhân tạo tạo sinh",
+"printed_page": 386
+},
+"GTS": {
+"definition": "Khối Ngân hàng Giao dịch Toàn cầu",
+"printed_page": 386
+},
+"HĐQT": {
+"definition": "Hội đồng quản trị",
+"printed_page": 386
+},
+"HNX": {
+"definition": "Sở Giao dịch Chứng khoán Hà Nội",
+"printed_page": 386
+},
+"HoSE": {
+"definition": "Sở Giao dịch Chứng khoán Thành phố Hồ Chí Minh",
+"printed_page": 386
+},
+"HUST": {
+"definition": "Đại học Bách khoa Hà Nội",
+"printed_page": 386
+},
+"IB": {
+"definition": "Ngân hàng đầu tư",
+"printed_page": 386
+},
+"ICAAP": {
+"definition": "Quy trình đánh giá tính đầy đủ vốn nội bộ",
+"printed_page": 386
+},
+"ICMA": {
+"definition": "Hiệp hội thị trường vốn quốc tế",
+"printed_page": 386
+},
+"IFC": {
+"definition": "Tổ chức Tài chính Quốc tế",
+"printed_page": 386
+},
+"ILAAP": {
+"definition": "Quy trình đánh giá an toàn thanh khoản nội bộ",
+"printed_page": 386
+},
+"IMA": {
+"definition": "Mô hình nội bộ",
+"printed_page": 386
+},
+"IPO": {
+"definition": "Phát hành lần đầu ra công chúng",
+"printed_page": 386
+},
+"IRB": {
+"definition": "Khung phương pháp xếp hạng tín dụng nội bộ",
+"printed_page": 386
+},
+"IRRBB": {
+"definition": "Rủi ro lãi suất trên sổ ngân hàng",
+"printed_page": 387
+},
+"Khách hàng đại chúng (mass)": {
+"definition": "Khách hàng có thu nhập hộ gia đình hàng năm dưới 0,3 tỷ đồng",
+"printed_page": 387
+},
+"Khách hàng thu nhập cao (affluent)": {
+"definition": "Khách hàng có thu nhập hộ gia đình hàng năm trên 1,3 tỷ đồng",
+"printed_page": 387
+},
+"Khách hàng thu nhập khá hoặc trung bình (mass affluent)": {
+"definition": "Khách hàng có thu nhập hộ gia đình hàng năm từ 0,3 - 1,3 tỷ đồng",
+"printed_page": 387
+},
+"KTNB": {
+"definition": "Kiểm toán nội bộ",
+"printed_page": 387
+},
+"LACE": {
+"definition": "Công cụ chọn lọc khách hàng tiềm năng",
+"printed_page": 387
+},
+"LC": {
+"definition": "Thư tín dụng",
+"printed_page": 387
+},
+"LCP": {
+"definition": "Chiến lược dự phòng rủi ro thanh khoản",
+"printed_page": 387
+},
+"LCR": {
+"definition": "Tỷ lệ đảm bảo thanh khoản",
+"printed_page": 387
+},
+"LDR": {
+"definition": "Tỷ lệ dư nợ cho vay so với tổng tiền gửi",
+"printed_page": 387
+},
+"LLM": {
+"definition": "Mô hình ngôn ngữ lớn",
+"printed_page": 387
+},
+"LOS": {
+"definition": "Giải pháp khởi tạo cho vay",
+"printed_page": 387
+},
+"MDP": {
+"definition": "Công ty CP Thanh toán số Mobifone",
+"printed_page": 387
+},
+"ML": {
+"definition": "Công nghệ học máy",
+"printed_page": 387
+},
+"MOA": {
+"definition": "Ngân hàng giao dịch chính",
+"printed_page": 387
+},
+"MTB": {
+"definition": "Ngân hàng giao dịch chính",
+"printed_page": 387
+},
+"NAPAS": {
+"definition": "Công ty Cổ phần Thanh toán Quốc gia Việt Nam",
+"printed_page": 387
+},
+"NAV": {
+"definition": "Tổng giá trị tài sản ròng",
+"printed_page": 387
+},
+"NBA": {
+"definition": "Next Best Action (Hành động tốt nhất tiếp theo)",
+"printed_page": 387
+},
+"NBO": {
+"definition": "Next Best Offer (Ưu đãi tốt nhất tiếp theo)",
+"printed_page": 387
+},
+"NFI": {
+"definition": "Thu từ hoạt động dịch vụ",
+"printed_page": 387
+},
+"NHNN": {
+"definition": "Ngân hàng Nhà nước Việt Nam",
+"printed_page": 387
+},
+"NII": {
+"definition": "Thu nhập lãi thuần",
+"printed_page": 387
+},
+"NIM": {
+"definition": "Biên lãi ròng",
+"printed_page": 387
+},
+"NPL": {
+"definition": "Nợ xấu",
+"printed_page": 387
+},
+"NPS": {
+"definition": "Chỉ số gắn kết khách hàng",
+"printed_page": 387
+},
+"NSFR": {
+"definition": "Tỷ lệ nguồn vốn ổn định ròng",
+"printed_page": 387
+},
+"O2O": {
+"definition": "Từ trực tuyến đến trực tiếp (Online-to-offline)",
+"printed_page": 387
+},
+"OECD": {
+"definition": "Tổ chức Hợp tác và Phát triển Kinh tế",
+"printed_page": 387
+},
+"OTC": {
+"definition": "Giao dịch qua quầy",
+"printed_page": 387
+},
+"PBT": {
+"definition": "Thu nhập trước thuế",
+"printed_page": 387
+},
+"PCI DSS": {
+"definition": "Bộ tiêu chuẩn bảo mật dữ liệu thẻ thanh toán",
+"printed_page": 387
+},
+"PDPD": {
+"definition": "Nghị định về bảo vệ dữ liệu cá nhân",
+"printed_page": 387
+},
+"PFE": {
+"definition": "Rủi ro tín dụng tiềm tàng",
+"printed_page": 387
+},
+"QLRR": {
+"definition": "Quản lý rủi ro",
+"printed_page": 387
+},
+"QTRR": {
+"definition": "Quản trị rủi ro",
+"printed_page": 387
+},
+"RBG": {
+"definition": "Khối Ngân hàng Bán lẻ",
+"printed_page": 387
+},
+"RM": {
+"definition": "Chuyên viên quan hệ khách hàng",
+"printed_page": 387
+},
+"RMPB": {
+"definition": "Sổ tay quản lý khách hàng",
+"printed_page": 387
+},
+"ROA": {
+"definition": "Tỷ lệ thu nhập trên tài sản",
+"printed_page": 387
+},
+"ROE": {
+"definition": "Tỷ lệ thu nhập trên vốn chủ sở hữu",
+"printed_page": 387
+},
+"ROI": {
+"definition": "Tỷ suất hoàn vốn",
+"printed_page": 387
+},
+"ROMI": {
+"definition": "Lợi nhuận đầu tư vào tiếp thị",
+"printed_page": 387
+},
+"RoRWA": {
+"definition": "Lợi nhuận trên tài sản có rủi ro",
+"printed_page": 387
+},
+"RWA": {
+"definition": "Tài sản có rủi ro",
+"printed_page": 387
+},
+"S&P": {
+"definition": "Standard & Poor's Global Rating",
+"printed_page": 387
+},
+"SA": {
+"definition": "Phương pháp tiếp cận tiêu chuẩn",
+"printed_page": 387
+},
+"SaaS": {
+"definition": "Phần mềm dạng dịch vụ",
+"printed_page": 387
+},
+"SCA": {
+"definition": "Hệ thống phân tích thông tin trên mạng",
+"printed_page": 387
+},
+"SDMS": {
+"definition": "Hệ thống quản lý dữ liệu khoa học",
+"printed_page": 387
+},
+"SOAR": {
+"definition": "Điều Phối An Ninh, Tự Động Hoá và Phản Hồi",
+"printed_page": 387
+},
+"SOP": {
+"definition": "Quy trình vận hành tiêu chuẩn",
+"printed_page": 387
+},
+"TAS": {
+"definition": "Hoạt động Team Active Saturday",
+"printed_page": 387
+},
+"TC Life": {
+"definition": "Công ty cổ phần Bảo hiểm nhân thọ Kỹ Thương",
+"printed_page": 387
+},
+"TCA": {
+"definition": "Công ty cổ phần TC Advisors",
+"printed_page": 387
+},
+"TCBF": {
+"definition": "Quỹ đầu tư trái phiếu Techcom",
+"printed_page": 387
+},
+"TCBS": {
+"definition": "Công ty Cổ phần Chứng khoán Kỹ Thương",
+"printed_page": 387
+},
+"TCC": {
+"definition": "Công ty Cổ phần Quản lý quỹ Kỹ Thương",
+"printed_page": 387
+},
+"TCEF": {
+"definition": "Quỹ đầu tư cổ phiếu Techcom",
+"printed_page": 387
+},
+"TCFF": {
+"definition": "Quỹ đầu tư cân bằng linh hoạt Techcom",
+"printed_page": 387
+},
+"TCFIN": {
+"definition": "Quỹ đầu tư cổ phiếu ngân hàng và tài chính Techcom",
+"printed_page": 387
+},
+"TCGI": {
+"definition": "Công ty cổ phần Bảo hiểm Phi nhân thọ Techcom",
+"printed_page": 387
+},
+"TCREIT": {
+"definition": "Quỹ đầu tư bất động sản Techcom",
+"printed_page": 387
+},
+"TCRES": {
+"definition": "Quỹ đầu tư cổ phiếu bất động sản Techcom",
+"printed_page": 387
+},
+"TCSME": {
+"definition": "Quỹ đầu tư cổ phiếu các doanh nghiệp vừa và nhỏ Techcom",
+"printed_page": 387
+},
+"TCTD": {
+"definition": "Tổ chức tín dụng",
+"printed_page": 387
+},
+"TCW": {
+"definition": "Techcomway",
+"printed_page": 387
+},
+"TDDC": {
+"definition": "Trung tâm khám phá dữ liệu Techcombank",
+"printed_page": 387
+},
+"TechAMC": {
+"definition": "Công ty TNHH Một thành viên Quản lý nợ và Khai thác tài sản – Ngân hàng TMCP Kỹ thương Việt Nam",
+"printed_page": 387
+},
+"TFG": {
+"definition": "Chương trình Techcombank Future Gen",
+"printed_page": 387
+},
+"TGĐ": {
+"definition": "Tổng Giám đốc",
+"printed_page": 387
+},
+"TOI": {
+"definition": "Tổng thu nhập hoạt động",
+"printed_page": 387
+},
+"UBNS": {
+"definition": "Ủy ban Nhân sự",
+"printed_page": 387
+},
+"UPAS LC": {
+"definition": "Thư tín dụng trả chậm có điều khoản thanh toán ngay",
+"printed_page": 387
+},
+"VAC": {
+"definition": "Kênh tư vấn giải pháp tài chính trực tuyến",
+"printed_page": 387
+},
+"VaR": {
+"definition": "Giá trị chịu rủi ro",
+"printed_page": 387
+},
+"VAT": {
+"definition": "Thuế giá trị gia tăng",
+"printed_page": 387
+},
+"VNSI": {
+"definition": "Chỉ số phát triển bền vững",
+"printed_page": 387
+},
+"VSDC": {
+"definition": "Tổng công ty Lưu ký và Bù trừ chứng khoán Việt Nam",
+"printed_page": 387
+}
+}
