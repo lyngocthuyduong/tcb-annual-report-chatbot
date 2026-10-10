@@ -1,4 +1,4 @@
-# tcb — Vietnamese chatbot over the Techcombank Annual Report 2025
+# TCB — Vietnamese Chatbot over the Techcombank Annual Report 2025
 
 Evidence-first: every answer cites printed pages `[tr. N]`; refuses when the report lacks the answer.
 Status: **M0–M2 done** (ingestion + index build/validate). Retrieval, LLM, chat, eval: next steps.
