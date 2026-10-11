@@ -57,12 +57,12 @@ drive.mount("/content/drive")
 %cd /content/tcb
 !mkdir -p /content/drive/MyDrive/tcb-out && rm -rf out && ln -s /content/drive/MyDrive/tcb-out out   # results survive the VM
 os.environ["TCB_MODELS_DIR"] = "/content/models"
-for env, name in [("HF_TOKEN", "hf_token"), ("OPENAI_API_KEY", "openai_key"), ("ANTHROPIC_API_KEY", "anthropic_key")]:
+for env, name in [("HF_TOKEN", "hf_token"), ("ANTHROPIC_API_KEY", "anthropic_key"), ("OPENAI_API_KEY", "openai_key")]:
     try: os.environ[env] = userdata.get(name)
     except Exception: print("no secret:", name)
-import torch; os.environ["TCB_DEVICE"] = "cuda" if torch.cuda.is_available() else "cpu"   # speed only; written into config.json
-os.environ["PROVIDER"] = "openai"                # openai | anthropic | ollama
-print("device:", os.environ["TCB_DEVICE"])
+os.environ["TCB_DEVICE"] = "cpu"                 # "cuda" only for tcb exp / tcb eval (reranking), one GPU process at a time (T4 = 15 GB); written into config.json
+os.environ["PROVIDER"] = "anthropic"             # anthropic | openai | ollama
+os.environ["ANTHROPIC_MODEL"] = "claude-haiku-5-5"   # dev loops; claude-sonnet-5-5 for the final run
 ```
 ```python
 # CELL 3 — once per VM: models (≈4.5 GB, a few minutes) + M0 gate
