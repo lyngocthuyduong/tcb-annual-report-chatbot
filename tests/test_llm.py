@@ -118,7 +118,7 @@ def test_anthropic_tool_json():
     c = FakeAnth(res); r = AnthropicProvider("k", "claude-sonnet-5-5", 5, client=c).generate(REQ)
     assert json.loads(r.text)["status"] == "answered" and r.in_tokens == 7
     kw = c.calls[0]
-    assert kw["tool_choice"] == {"type": "tool", "name": "emit_plan"} and kw["temperature"] == 0 and kw["system"] == "sys"
+    assert kw["tool_choice"] == {"type": "tool", "name": "emit_plan"} and "temperature" not in kw and kw["system"] == "sys"
 
 
 @pytest.mark.parametrize("exc,cls", [

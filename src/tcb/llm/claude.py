@@ -20,14 +20,13 @@ class AnthropicProvider:
 
     def generate(self, req: LLMRequest) -> LLMResponse:
         import anthropic
-        kw = {}
+        kw = {}   # no temperature: anthropic SDK 1.13 `messages.create` has no such parameter (sampling is the API default)
         if req.schema:  # forced tool call = schema-constrained JSON
             kw["tools"] = [{"name": TOOL, "description": "Return the answer plan.", "input_schema": req.schema}]
             kw["tool_choice"] = {"type": "tool", "name": TOOL}
         t = time.time()
         try:
             r = self.client.messages.create(model=self.model, system=req.system, max_tokens=req.max_tokens,
-                                            temperature=req.temperature,
                                             messages=[{"role": "user", "content": req.user}], **kw)
         except anthropic.APITimeoutError as e:
             raise ProviderTimeout(self.name, self.model, str(e))
