@@ -2,6 +2,7 @@
 Every stage's ranking is kept so eval can attribute a miss to the stage that lost the gold page."""
 from __future__ import annotations
 
+import os
 import re
 import time
 from dataclasses import dataclass, field
@@ -26,7 +27,7 @@ class CrossEncoderReranker:
             if not self.path.exists():
                 raise FileNotFoundError(f"{self.path} missing: reranker is baked into the Docker image (never downloaded at run time)")
             from sentence_transformers import CrossEncoder
-            self._m = CrossEncoder(str(self.path), device="cpu", max_length=self.max_length)
+            self._m = CrossEncoder(str(self.path), device=os.getenv("TCB_DEVICE", "cpu"), max_length=self.max_length)   # cpu = what ships; cuda only for faster Colab runs
         return [float(x) for x in self._m.predict([(query, t) for t in texts], batch_size=8)]
 
 

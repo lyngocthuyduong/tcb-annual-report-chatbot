@@ -4,6 +4,7 @@ The script SUGGESTS decisions by the plan's rules; it never edits conf.py. Token
 from __future__ import annotations
 
 import json
+import os
 import statistics
 import time
 from dataclasses import dataclass, field
@@ -138,7 +139,7 @@ def run_exp(set_paths: list[str], ctx: Ctx, which: tuple[str, ...] = EXPS, inclu
     if need_rr and ctx.reranker is None:
         raise ValueError("E4/E5/E7 need a reranker")
     res: dict = {"meta": {"n_answerable": len(ans), "n_unanswerable": len(una), "sets": sorted({s for s, _ in items}),
-                          "include_unverified": include_unverified, "experiments": list(which)}, "decisions": {}}
+                          "include_unverified": include_unverified, "experiments": list(which), "device": os.getenv("TCB_DEVICE", "cpu")}, "decisions": {}}
     expq = lambda q: find.expand(q, ctx.gloss)
 
     # ---- first stage per answerable item (cached)

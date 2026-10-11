@@ -6,11 +6,7 @@ __pycache__/
 *.egg-info/
 build/
 idx.new/
-out/trace/
-out/runs/
-*.log
-out/smoke*
-out/*.json
+out
 models/
-out/idx/
+*.log
 *.zip
