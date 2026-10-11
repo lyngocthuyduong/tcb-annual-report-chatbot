@@ -67,6 +67,8 @@ def test_end_to_end_shipped_index_real_models_real_provider():
     from tcb.boot import load_engine
     e = load_engine(index_dir=idx)
     a = e.ask("Tỷ lệ CASA của Techcombank năm 2025 là bao nhiêu?")
-    assert a.status == "answered" and "40,4" in a.answer and "[tr. 5]" in a.answer
+    import re   # 40,4% is stated on printed pp. 5 (highlights), 49 and 53 (verified in the PDF text): any of them is a correct citation
+    pages = {int(n) for m in re.findall(r"\[tr\. ([\d, ]+)\]", a.answer) for n in re.findall(r"\d+", m)}
+    assert a.status == "answered" and "40,4" in a.answer and pages & {5, 49, 53}, (a.status, a.error, a.answer)
     r = e.ask("Techcombank dự báo lợi nhuận trước thuế năm 2027 là bao nhiêu?")
     assert r.status == "not_in_report" and "[tr." not in r.answer
