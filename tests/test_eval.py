@@ -42,7 +42,7 @@ def test_schema_rules(tmp_path):
 
 def test_shipped_datasets_load():
     qs = ev.load_items("data/q10.json"); assert len(qs) == 10 and all(q.verified for q in qs)
-    sd = ev.load_items("data/seed.json"); assert sd and not any(s.verified for s in sd)
+    assert ev.load_items("data/dev.json") and ev.load_items("data/val.json")      # drafts until human-verified (tcb vset apply)
 
 
 def test_facts_alternatives_and_units():
