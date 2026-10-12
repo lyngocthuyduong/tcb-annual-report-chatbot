@@ -91,7 +91,7 @@ def test_full_run_structure_and_outputs(ctx, tmp_path):
     assert res["meta"]["n_answerable"] == 8 and res["meta"]["n_unanswerable"] == 6          # unverified x1 excluded
     for key in ("E2", "E3", "E3b", "E4", "E5", "E7"): assert key in res, key
     assert set(res["E2"]) == {"default", "vi", "vi+bigram"} and set(res["E3"]) == {"bm25", "dense", "rrf60", "rsf"}
-    assert set(res["E3b"]) == {"10", "30", "60", "100"} and set(res["E4"]["quality"]) == {f"N{n}_k{k}" for n in (20, 40) for k in (5, 8, 12)}
+    assert set(res["E3b"]) == {"10", "30", "60", "100"} and set(res["E4"]["quality"]) == {f"N{n}_k{k}" for n in exp.RERANK_NS for k in (5, 8, 12)}
     assert set(res["E2"]["vi"]) == {"dev", "val", "all"}
     # the lexical side must find the exact-number question's page (tokenizer keeps 1.192.344.137 whole)
     assert res["E2"]["vi"]["all"]["R@20"] > 0

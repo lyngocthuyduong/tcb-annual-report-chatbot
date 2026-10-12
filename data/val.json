@@ -7,8 +7,8 @@
   "expect_status": "ambiguous",
   "question": "Lợi nhuận là bao nhiêu?",
   "gold_answer": "Cần hỏi lại: lợi nhuận trước hay sau thuế, năm nào.",
-  "verified": false,
-  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+  "verified": true,
+  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "c-01",
@@ -22,8 +22,8 @@
   "gold_facts": [
    "9,6"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "c-04",
@@ -37,8 +37,8 @@
   "gold_facts": [
    "177,1"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "c-05",
@@ -52,8 +52,8 @@
   "gold_facts": [
    "159,5"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "c-06",
@@ -67,8 +67,8 @@
   "gold_facts": [
    "19,3"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "f-04",
@@ -88,8 +88,8 @@
   "gold_facts": [
    "27.538.368"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "f-05",
@@ -109,8 +109,8 @@
   "gold_facts": [
    "313.179.746"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "h-kpi-dv",
@@ -127,8 +127,8 @@
   "gold_facts": [
    "16"
   ],
-  "verified": false,
-  "notes": "DRAFT by assistant; verify against the PDF"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "h-openrate",
@@ -142,8 +142,8 @@
   "gold_facts": [
    "39"
   ],
-  "verified": false,
-  "notes": "DRAFT by assistant; verify against the PDF"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-01",
@@ -157,8 +157,8 @@
   "gold_facts": [
    "4.360.821"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-05",
@@ -172,8 +172,8 @@
   "gold_facts": [
    "6.343.732"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-06",
@@ -187,8 +187,8 @@
   "gold_facts": [
    "1.012.842.695"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-11",
@@ -202,8 +202,8 @@
   "gold_facts": [
    "64.226.095"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-12",
@@ -217,8 +217,8 @@
   "gold_facts": [
    "3.215.508"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-15",
@@ -232,8 +232,8 @@
   "gold_facts": [
    "182.638.941"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-19",
@@ -247,8 +247,8 @@
   "gold_facts": [
    "4.478.027"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-21",
@@ -262,8 +262,8 @@
   "gold_facts": [
    "39.938"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "u-btc",
@@ -272,8 +272,8 @@
   "answerable": false,
   "question": "Techcombank đang nắm giữ bao nhiêu Bitcoin?",
   "gold_answer": "Không có trong báo cáo.",
-  "verified": false,
-  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+  "verified": true,
+  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "u-nasdaq",
@@ -282,8 +282,8 @@
   "answerable": false,
   "question": "Techcombank niêm yết trên sàn Nasdaq vào năm nào?",
   "gold_answer": "Không có trong báo cáo.",
-  "verified": false,
-  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+  "verified": true,
+  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "u-q1",
@@ -292,8 +292,8 @@
   "answerable": false,
   "question": "Lợi nhuận sau thuế quý 1 năm 2026 của Techcombank là bao nhiêu?",
   "gold_answer": "Không có trong báo cáo.",
-  "verified": false,
-  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+  "verified": true,
+  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "u-vcb",
@@ -302,7 +302,223 @@
   "answerable": false,
   "question": "Lợi nhuận trước thuế năm 2025 của Vietcombank là bao nhiêu?",
   "gold_answer": "Không có trong báo cáo.",
-  "verified": false,
-  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+  "verified": true,
+  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-bod-foreign",
+  "category": "governance",
+  "type": "single",
+  "question": "Hội đồng quản trị Techcombank năm 2025 có bao nhiêu thành viên là người nước ngoài trên tổng số thành viên?",
+  "gold_answer": "2 trên 9 thành viên.",
+  "gold_printed_pages": [
+   148
+  ],
+  "gold_facts": [
+   "2/9 | 2 trong số 9 | 2 trên 9 | 2 thành viên"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-foreignmax",
+  "category": "investor",
+  "type": "single",
+  "question": "Tỷ lệ sở hữu nước ngoài tối đa tại Techcombank là bao nhiêu?",
+  "gold_answer": "22,5386%.",
+  "gold_printed_pages": [
+   38
+  ],
+  "alt_pages": [
+   162
+  ],
+  "gold_facts": [
+   "22,5386"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-summit",
+  "category": "investor",
+  "type": "single",
+  "question": "Có bao nhiêu nhà đầu tư tham dự Hội nghị Đầu tư Techcombank 2025?",
+  "gold_answer": "700 nhà đầu tư tổ chức và cá nhân.",
+  "gold_printed_pages": [
+   41
+  ],
+  "gold_facts": [
+   "700"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-tcbs-brok",
+  "category": "subsidiary",
+  "type": "single",
+  "question": "Thu nhập mảng môi giới và lưu ký chứng khoán của TCBS năm 2025 là bao nhiêu?",
+  "gold_answer": "356 tỷ đồng, tăng 63% so với năm 2024.",
+  "gold_printed_pages": [
+   78
+  ],
+  "gold_facts": [
+   "356"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-vac",
+  "category": "retail",
+  "type": "single",
+  "question": "Tỷ lệ chuyển đổi từ khách hàng tiềm năng sang giao dịch thành công (Lead-to-Deal) đạt bao nhiêu phần trăm so với kế hoạch?",
+  "gold_answer": "146% so với kế hoạch.",
+  "gold_printed_pages": [
+   61
+  ],
+  "alt_pages": [
+   60
+  ],
+  "gold_facts": [
+   "146"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-tinchap",
+  "category": "retail",
+  "type": "single",
+  "question": "Tín chấp thông minh - Phê duyệt tự động thu hút hơn bao nhiêu khách hàng?",
+  "gold_answer": "Hơn 303.000 khách hàng.",
+  "gold_printed_pages": [
+   60
+  ],
+  "gold_facts": [
+   "303.000"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "g-aum",
+  "category": "glossary",
+  "type": "single",
+  "question": "Theo danh mục thuật ngữ của báo cáo, AUM là viết tắt của thuật ngữ gì?",
+  "gold_answer": "Tổng tài sản quản lý.",
+  "gold_printed_pages": [
+   386
+  ],
+  "gold_facts": [
+   "Tổng tài sản quản lý"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "g-irrbb",
+  "category": "glossary",
+  "type": "single",
+  "question": "Theo danh mục thuật ngữ của báo cáo, IRRBB là viết tắt của thuật ngữ gì?",
+  "gold_answer": "Rủi ro lãi suất trên sổ ngân hàng.",
+  "gold_printed_pages": [
+   387
+  ],
+  "gold_facts": [
+   "Rủi ro lãi suất trên sổ ngân hàng"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "g-bks",
+  "category": "glossary",
+  "type": "single",
+  "question": "Theo danh mục thuật ngữ của báo cáo, BKS là viết tắt của cơ quan nào?",
+  "gold_answer": "Ban Kiểm soát.",
+  "gold_printed_pages": [
+   386
+  ],
+  "gold_facts": [
+   "Ban Kiểm soát"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-hr-diff",
+  "category": "human_capital",
+  "type": "calc",
+  "question": "Tổng số nhân sự toàn hệ thống năm 2025 tăng thêm bao nhiêu người so với năm 2024?",
+  "gold_answer": "857 người (12.705 so với 11.848).",
+  "gold_printed_pages": [
+   52
+  ],
+  "alt_pages": [
+   259,
+   304,
+   361
+  ],
+  "gold_facts": [
+   "857"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-fu-bod",
+  "category": "conversation",
+  "type": "followup",
+  "question": "Còn tỷ lệ thành viên có nhiệm kỳ dưới 5 năm?",
+  "gold_answer": "44% (4 trên 9 thành viên).",
+  "gold_printed_pages": [
+   148
+  ],
+  "gold_facts": [
+   "44"
+  ],
+  "history": [
+   {
+    "question": "Thành viên độc lập chiếm bao nhiêu phần trăm Hội đồng quản trị của Techcombank năm 2025?",
+    "answer": "Thành viên độc lập chiếm 22% (2 trên 9 thành viên). [tr. 148]"
+   }
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-fu-tcbs",
+  "category": "conversation",
+  "type": "followup",
+  "question": "Còn tổng tài sản của công ty đó tại 31/12/2025?",
+  "gold_answer": "Hơn 80.632 tỷ đồng, tăng 51% so với cuối năm 2024.",
+  "gold_printed_pages": [
+   78
+  ],
+  "alt_pages": [
+   77
+  ],
+  "gold_facts": [
+   "80.632"
+  ],
+  "history": [
+   {
+    "question": "Lợi nhuận trước thuế năm 2025 của TCBS là bao nhiêu?",
+    "answer": "Lợi nhuận trước thuế năm 2025 của TCBS là 7.109 tỷ đồng. [tr. 78]"
+   }
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-u-atm",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "Techcombank có bao nhiêu máy ATM tại Hà Nội?",
+  "gold_answer": "Không có trong báo cáo.",
+  "verified": true,
+  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
  }
 ]

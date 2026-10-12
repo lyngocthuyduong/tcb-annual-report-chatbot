@@ -18,7 +18,7 @@ from . import conf, ev, find, vi
 KS = (5, 8, 20, 40)
 EXPS = ("E2", "E3", "E3b", "E4", "E5", "E7")
 RRF_KS = (10, 30, 60, 100)
-RERANK_NS = (20, 40)
+RERANK_NS = (10, 15, 20, 30, 40)
 FINAL_KS = (5, 8, 12)
 
 
@@ -124,7 +124,7 @@ def _by_set(rows: list[dict], fn) -> dict:
 
 
 def run_exp(set_paths: list[str], ctx: Ctx, which: tuple[str, ...] = EXPS, include_unverified: bool = False,
-            time_sample: int = 10, progress: Callable[[str], None] = lambda s: None) -> dict:
+            time_sample: int = 10, progress: Callable[[str], None] = lambda s: None, timer: object | None = None) -> dict:
     items: list[tuple[str, ev.Item]] = []
     for p in set_paths:
         for it in ev.load_items(p):
@@ -139,7 +139,7 @@ def run_exp(set_paths: list[str], ctx: Ctx, which: tuple[str, ...] = EXPS, inclu
     if need_rr and ctx.reranker is None:
         raise ValueError("E4/E5/E7 need a reranker")
     res: dict = {"meta": {"n_answerable": len(ans), "n_unanswerable": len(una), "sets": sorted({s for s, _ in items}),
-                          "include_unverified": include_unverified, "experiments": list(which), "device": os.getenv("TCB_DEVICE", "cpu")}, "decisions": {}}
+                          "include_unverified": include_unverified, "experiments": list(which), "device": os.getenv("TCB_DEVICE", "cpu"), "time_device": getattr(timer, "device", None)}, "decisions": {}}
     expq = lambda q: find.expand(q, ctx.gloss)
 
     # ---- first stage per answerable item (cached)
@@ -216,12 +216,15 @@ def run_exp(set_paths: list[str], ctx: Ctx, which: tuple[str, ...] = EXPS, inclu
                 e4[f"N{n}_k{k}"] = table(lambda i, n=n, k=k: rank([c for c, _ in reranked(i, n)][:k], fs[i]["gold"]), FINAL_KS)
         # latency: time real rerank calls on a sample (CPU cost is the point of this experiment)
         lat = {}
+        timer = timer or ctx.reranker                 # may be a separate CPU reranker while quality ran on a GPU
         sample = [it for _, it in ans][:max(0, time_sample)]
+        if sample:
+            timer.score(fs[sample[0].id]["qx"], [ctx.nodes[c]["text"] for c in pools[sample[0].id][:4]])     # warm-up: model load is not rerank time
         for n in RERANK_NS:
             ts = []
             for it in sample:
                 pool = pools[it.id][:n]
-                t = time.time(); ctx.reranker.score(fs[it.id]["qx"], [ctx.nodes[c]["text"] for c in pool]); ts.append(time.time() - t)
+                t = time.time(); timer.score(fs[it.id]["qx"], [ctx.nodes[c]["text"] for c in pool]); ts.append(time.time() - t)
             lat[f"N{n}"] = {"mean_s": round(statistics.mean(ts), 3), "p95_s": round(sorted(ts)[min(len(ts) - 1, int(.95 * len(ts)))], 3), "n": len(ts)} if ts else None
         res["E4"] = {"quality": e4, "latency": lat}
         # quality of a config = recall of a gold page within its own final k

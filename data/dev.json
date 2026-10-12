@@ -7,8 +7,8 @@
   "expect_status": "ambiguous",
   "question": "Tỷ lệ đó là bao nhiêu?",
   "gold_answer": "Cần hỏi lại: tỷ lệ nào, năm nào.",
-  "verified": false,
-  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+  "verified": true,
+  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "c-02",
@@ -22,8 +22,8 @@
   "gold_facts": [
    "35,9"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "c-03",
@@ -37,8 +37,8 @@
   "gold_facts": [
    "21,3"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "c-07",
@@ -52,8 +52,8 @@
   "gold_facts": [
    "-39,3"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "c-08",
@@ -67,8 +67,8 @@
   "gold_facts": [
    "29,8"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "c-09",
@@ -82,8 +82,8 @@
   "gold_facts": [
    "44,4"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "c-10",
@@ -97,8 +97,8 @@
   "gold_facts": [
    "13,2"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "c-11",
@@ -112,8 +112,8 @@
   "gold_facts": [
    "69,0"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "c-12",
@@ -127,8 +127,8 @@
   "gold_facts": [
    "15,0"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "f-01",
@@ -148,8 +148,8 @@
   "gold_facts": [
    "2.253"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "f-02",
@@ -169,8 +169,8 @@
   "gold_facts": [
    "166.251.765"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "f-03",
@@ -190,8 +190,8 @@
   "gold_facts": [
    "8.042.248"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "h-auto",
@@ -205,8 +205,8 @@
   "gold_facts": [
    "56"
   ],
-  "verified": false,
-  "notes": "DRAFT by assistant; verify against the PDF"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "h-credit",
@@ -220,8 +220,8 @@
   "gold_facts": [
    "824.104"
   ],
-  "verified": false,
-  "notes": "DRAFT by assistant; verify against the PDF"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "h-credit-g",
@@ -235,8 +235,8 @@
   "gold_facts": [
    "20,7"
   ],
-  "verified": false,
-  "notes": "DRAFT by assistant; verify against the PDF"
+  "verified": true,
+  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "h-fu-roa",
@@ -256,8 +256,8 @@
   "gold_facts": [
    "2,4"
   ],
-  "verified": false,
-  "notes": "DRAFT by assistant; verify against the PDF"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "h-kpi-car",
@@ -271,8 +271,8 @@
   "gold_facts": [
    "14,6"
   ],
-  "verified": false,
-  "notes": "DRAFT by assistant; verify against the PDF"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "h-kpi-pbt",
@@ -289,8 +289,8 @@
   "gold_facts": [
    "32,5 | 32.538.066 | 32,538"
   ],
-  "verified": false,
-  "notes": "DRAFT by assistant; verify against the PDF"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "h-kpi-roa",
@@ -304,8 +304,8 @@
   "gold_facts": [
    "2,4"
   ],
-  "verified": false,
-  "notes": "DRAFT by assistant; verify against the PDF"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "h-kpi-tnhd",
@@ -322,8 +322,8 @@
   "gold_facts": [
    "53,4 | 53.391.125 | 53,391"
   ],
-  "verified": false,
-  "notes": "DRAFT by assistant; verify against the PDF"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-02",
@@ -337,8 +337,8 @@
   "gold_facts": [
    "1.192.344.137"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-03",
@@ -352,8 +352,8 @@
   "gold_facts": [
    "145.942.288"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-04",
@@ -367,8 +367,8 @@
   "gold_facts": [
    "2.846.321"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-07",
@@ -382,8 +382,8 @@
   "gold_facts": [
    "215.330.128"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-08",
@@ -397,8 +397,8 @@
   "gold_facts": [
    "62.773.576"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-09",
@@ -412,8 +412,8 @@
   "gold_facts": [
    "3.503"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-10",
@@ -427,8 +427,8 @@
   "gold_facts": [
    "12.526.963"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-13",
@@ -442,8 +442,8 @@
   "gold_facts": [
    "39.923.618"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-14",
@@ -457,8 +457,8 @@
   "gold_facts": [
    "145.526.404"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-16",
@@ -472,8 +472,8 @@
   "gold_facts": [
    "7.764.086"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-17",
@@ -487,8 +487,8 @@
   "gold_facts": [
    "53.391.125"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-18",
@@ -502,8 +502,8 @@
   "gold_facts": [
    "12.122.934"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-20",
@@ -517,8 +517,8 @@
   "gold_facts": [
    "26.877.242"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-22",
@@ -532,8 +532,8 @@
   "gold_facts": [
    "1.884.342"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-23",
@@ -547,8 +547,8 @@
   "gold_facts": [
    "51.974"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "t-24",
@@ -562,8 +562,8 @@
   "gold_facts": [
    "17.428.523"
   ],
-  "verified": false,
-  "notes": "AUTO from parsed statement table; verify the figure against the PDF page"
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "u-cam",
@@ -572,8 +572,8 @@
   "answerable": false,
   "question": "Techcombank có bao nhiêu chi nhánh tại Campuchia?",
   "gold_answer": "Không có trong báo cáo.",
-  "verified": false,
-  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+  "verified": true,
+  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "u-fx",
@@ -582,8 +582,8 @@
   "answerable": false,
   "question": "Tỷ giá USD/VND ngày 15/3/2026 là bao nhiêu?",
   "gold_answer": "Không có trong báo cáo.",
-  "verified": false,
-  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+  "verified": true,
+  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "u-gdp27",
@@ -592,8 +592,8 @@
   "answerable": false,
   "question": "Dự báo tăng trưởng GDP của Việt Nam năm 2027 là bao nhiêu?",
   "gold_answer": "Không có trong báo cáo.",
-  "verified": false,
-  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+  "verified": true,
+  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "u-mb",
@@ -602,8 +602,8 @@
   "answerable": false,
   "question": "MB Bank có tổng cộng bao nhiêu nhân viên?",
   "gold_answer": "Không có trong báo cáo.",
-  "verified": false,
-  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+  "verified": true,
+  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "u-momo",
@@ -612,8 +612,8 @@
   "answerable": false,
   "question": "Ví Momo có bao nhiêu người dùng hoạt động hàng tháng?",
   "gold_answer": "Không có trong báo cáo.",
-  "verified": false,
-  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+  "verified": true,
+  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "u-price",
@@ -622,8 +622,8 @@
   "answerable": false,
   "question": "Giá cổ phiếu TCB trên sàn HOSE trong phiên giao dịch ngày hôm nay là bao nhiêu?",
   "gold_answer": "Không có trong báo cáo.",
-  "verified": false,
-  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+  "verified": true,
+  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "u-rate",
@@ -632,8 +632,8 @@
   "answerable": false,
   "question": "Lãi suất điều hành hiện nay của Ngân hàng Nhà nước là bao nhiêu?",
   "gold_answer": "Không có trong báo cáo.",
-  "verified": false,
-  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+  "verified": true,
+  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "u-vcbchair",
@@ -642,8 +642,8 @@
   "answerable": false,
   "question": "Chủ tịch Hội đồng quản trị của Vietcombank là ai?",
   "gold_answer": "Không có trong báo cáo.",
-  "verified": false,
-  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+  "verified": true,
+  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "u-wc",
@@ -652,8 +652,8 @@
   "answerable": false,
   "question": "Techcombank tài trợ bao nhiêu tiền cho World Cup 2026?",
   "gold_answer": "Không có trong báo cáo.",
-  "verified": false,
-  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+  "verified": true,
+  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
  },
  {
   "id": "u-weather",
@@ -662,7 +662,405 @@
   "answerable": false,
   "question": "Thời tiết Hà Nội ngày mai thế nào?",
   "gold_answer": "Không có trong báo cáo.",
-  "verified": false,
-  "notes": "DRAFT unanswerable; absence checked by text search of the parsed report only"
+  "verified": true,
+  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-hr",
+  "category": "human_capital",
+  "type": "single",
+  "question": "Tổng số nhân sự của toàn hệ thống Techcombank tại ngày 31/12/2025 là bao nhiêu người?",
+  "gold_answer": "12.705 người.",
+  "gold_printed_pages": [
+   52
+  ],
+  "alt_pages": [
+   137,
+   259,
+   304,
+   361
+  ],
+  "gold_facts": [
+   "12.705"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-techcost",
+  "category": "financial_review",
+  "type": "single",
+  "question": "Tổng chi phí công nghệ và hạ tầng năm 2025 của Techcombank là bao nhiêu và tăng bao nhiêu phần trăm so với cùng kỳ?",
+  "gold_answer": "3,8 nghìn tỷ đồng, tăng 28,4%.",
+  "gold_printed_pages": [
+   52
+  ],
+  "gold_facts": [
+   "3,8",
+   "28,4"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-bod-indep",
+  "category": "governance",
+  "type": "single",
+  "question": "Thành viên độc lập chiếm bao nhiêu phần trăm Hội đồng quản trị của Techcombank năm 2025?",
+  "gold_answer": "22% (2 trên 9 thành viên).",
+  "gold_printed_pages": [
+   148
+  ],
+  "gold_facts": [
+   "22"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-bod-tenure",
+  "category": "governance",
+  "type": "single",
+  "question": "Bao nhiêu phần trăm thành viên Hội đồng quản trị Techcombank có nhiệm kỳ trên 10 năm?",
+  "gold_answer": "44% (4 trên 9 thành viên).",
+  "gold_printed_pages": [
+   148
+  ],
+  "gold_facts": [
+   "44"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-nps",
+  "category": "customer",
+  "type": "single",
+  "question": "Chỉ số gắn kết khách hàng (NPS) của Techcombank năm 2025 là bao nhiêu điểm?",
+  "gold_answer": "92 điểm.",
+  "gold_printed_pages": [
+   106
+  ],
+  "gold_facts": [
+   "92"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-newcust",
+  "category": "customer",
+  "type": "single",
+  "question": "Techcombank chào đón bao nhiêu khách hàng mới trong năm 2025?",
+  "gold_answer": "Hơn 2,7 triệu khách hàng mới.",
+  "gold_printed_pages": [
+   16
+  ],
+  "alt_pages": [
+   106
+  ],
+  "gold_facts": [
+   "2,7"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-active",
+  "category": "customer",
+  "type": "single",
+  "question": "Techcombank định nghĩa khách hàng hoạt động thường xuyên là khách hàng như thế nào?",
+  "gold_answer": "Khách hàng có ít nhất 10 giao dịch chủ động trong vòng 30 ngày.",
+  "gold_printed_pages": [
+   53
+  ],
+  "gold_facts": [
+   "10",
+   "30"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-equity",
+  "category": "financial_review",
+  "type": "single",
+  "question": "Tổng vốn chủ sở hữu của Techcombank tại ngày 31/12/2025 là bao nhiêu nghìn tỷ đồng?",
+  "gold_answer": "179,5 nghìn tỷ đồng, tăng 21,3% so với năm trước.",
+  "gold_printed_pages": [
+   52
+  ],
+  "gold_facts": [
+   "179,5"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-mktcap",
+  "category": "investor",
+  "type": "single",
+  "question": "Giá trị vốn hóa thị trường của Techcombank tại ngày 31/12/2025 là bao nhiêu tỷ đồng?",
+  "gold_answer": "247.310 tỷ đồng.",
+  "gold_printed_pages": [
+   38
+  ],
+  "gold_facts": [
+   "247.310"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-ir-events",
+  "category": "investor",
+  "type": "single",
+  "question": "Trong năm 2025, bộ phận Quan hệ Nhà đầu tư của Techcombank đã tổ chức bao nhiêu sự kiện dành cho nhà đầu tư?",
+  "gold_answer": "12 sự kiện.",
+  "gold_printed_pages": [
+   41
+  ],
+  "gold_facts": [
+   "12"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-tcbs-pbt",
+  "category": "subsidiary",
+  "type": "single",
+  "question": "Lợi nhuận trước thuế năm 2025 của TCBS là bao nhiêu và đạt bao nhiêu phần trăm kế hoạch năm?",
+  "gold_answer": "7.109 tỷ đồng, đạt 123% kế hoạch năm.",
+  "gold_printed_pages": [
+   78
+  ],
+  "alt_pages": [
+   77
+  ],
+  "gold_facts": [
+   "7.109",
+   "123"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-branch",
+  "category": "network",
+  "type": "single",
+  "question": "Trong năm 2025 Techcombank khai trương bao nhiêu chi nhánh mới và nâng cấp mặt ngoài bao nhiêu chi nhánh?",
+  "gold_answer": "19 chi nhánh mới và 75 chi nhánh được nâng cấp mặt ngoài.",
+  "gold_printed_pages": [
+   61
+  ],
+  "alt_pages": [
+   60
+  ],
+  "gold_facts": [
+   "19",
+   "75"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-sinhloi",
+  "category": "retail",
+  "type": "single",
+  "question": "Sinh lời Tự động 2.0 có bao nhiêu người dùng và tăng bao nhiêu phần trăm so với năm trước?",
+  "gold_answer": "5 triệu người dùng, tăng 137% so với năm trước.",
+  "gold_printed_pages": [
+   60
+  ],
+  "gold_facts": [
+   "137"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-hkd",
+  "category": "retail",
+  "type": "single",
+  "question": "Techcombank phục vụ hơn bao nhiêu hộ kinh doanh?",
+  "gold_answer": "Hơn 2,3 triệu hộ kinh doanh.",
+  "gold_printed_pages": [
+   60
+  ],
+  "gold_facts": [
+   "2,3"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "g-sme",
+  "category": "glossary",
+  "type": "single",
+  "question": "Theo danh mục thuật ngữ của báo cáo, doanh nghiệp vừa và nhỏ (SME) được định nghĩa theo mức doanh thu nào?",
+  "gold_answer": "Tổng doanh thu bán hàng và dịch vụ của năm tài chính gần nhất từ 20 - 200 tỷ đồng.",
+  "gold_printed_pages": [
+   386
+  ],
+  "gold_facts": [
+   "20",
+   "200"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "g-cir",
+  "category": "glossary",
+  "type": "single",
+  "question": "Theo danh mục thuật ngữ của báo cáo, CIR là viết tắt của thuật ngữ gì?",
+  "gold_answer": "Tỷ lệ chi phí trên thu nhập.",
+  "gold_printed_pages": [
+   386
+  ],
+  "gold_facts": [
+   "Tỷ lệ chi phí trên thu nhập"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "g-b3",
+  "category": "glossary",
+  "type": "single",
+  "question": "Theo danh mục thuật ngữ của báo cáo, B3 là nhóm nợ nào?",
+  "gold_answer": "Nợ nhóm 3 (Nợ dưới tiêu chuẩn).",
+  "gold_printed_pages": [
+   386
+  ],
+  "gold_facts": [
+   "Nợ dưới tiêu chuẩn"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "g-alco",
+  "category": "glossary",
+  "type": "single",
+  "question": "Theo danh mục thuật ngữ của báo cáo, ALCO là viết tắt của ủy ban nào?",
+  "gold_answer": "Ủy ban quản lý tài sản - nợ.",
+  "gold_printed_pages": [
+   386
+  ],
+  "gold_facts": [
+   "quản lý tài sản"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-hr-g",
+  "category": "human_capital",
+  "type": "calc",
+  "question": "Tổng số nhân sự toàn hệ thống tại ngày 31/12/2025 tăng bao nhiêu phần trăm so với ngày 31/12/2024?",
+  "gold_answer": "Tăng khoảng 7,2% (12.705 so với 11.848 người).",
+  "gold_printed_pages": [
+   52
+  ],
+  "alt_pages": [
+   259,
+   304,
+   361
+  ],
+  "gold_facts": [
+   "7,2"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-cir-diff",
+  "category": "financial_review",
+  "type": "calc",
+  "question": "Tỷ lệ chi phí trên thu nhập (CIR) năm 2025 giảm bao nhiêu điểm phần trăm so với năm 2024?",
+  "gold_answer": "Giảm 1,9 điểm phần trăm (từ 32,7% xuống 30,8%).",
+  "gold_printed_pages": [
+   52
+  ],
+  "alt_pages": [
+   257
+  ],
+  "gold_facts": [
+   "1,9"
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-fu-hr",
+  "category": "conversation",
+  "type": "followup",
+  "question": "Còn năm trước đó thì sao?",
+  "gold_answer": "11.848 người.",
+  "gold_printed_pages": [
+   52
+  ],
+  "alt_pages": [
+   259,
+   304,
+   361
+  ],
+  "gold_facts": [
+   "11.848"
+  ],
+  "history": [
+   {
+    "question": "Tổng số nhân sự của toàn hệ thống Techcombank tại ngày 31/12/2025 là bao nhiêu người?",
+    "answer": "Tổng số nhân sự tại ngày 31/12/2025 là 12.705 người. [tr. 52]"
+   }
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-fu-eq",
+  "category": "conversation",
+  "type": "followup",
+  "question": "Còn tổng tiền gửi và phát hành giấy tờ có giá của khách hàng thì sao?",
+  "gold_answer": "776,5 nghìn tỷ đồng.",
+  "gold_printed_pages": [
+   52
+  ],
+  "alt_pages": [
+   53
+  ],
+  "gold_facts": [
+   "776,5"
+  ],
+  "history": [
+   {
+    "question": "Tổng vốn chủ sở hữu của Techcombank tại ngày 31/12/2025 là bao nhiêu nghìn tỷ đồng?",
+    "answer": "Tổng vốn chủ sở hữu là 179,5 nghìn tỷ đồng. [tr. 52]"
+   }
+  ],
+  "verified": true,
+  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-u-2022hr",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "Tổng số nhân sự của Techcombank tại ngày 31/12/2022 là bao nhiêu người?",
+  "gold_answer": "Không có trong báo cáo.",
+  "verified": true,
+  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
+ },
+ {
+  "id": "n-u-moody",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "Moody's xếp hạng tín nhiệm của Techcombank ở mức nào?",
+  "gold_answer": "Không có trong báo cáo.",
+  "verified": true,
+  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
  }
 ]

@@ -142,14 +142,15 @@ def cmd_eval(a) -> int:
 
 
 def cmd_exp(a) -> int:
-    from . import boot, exp
+    from . import boot, exp, find
     rt = boot.load_retriever(a.index, lenient=True)
     ctx = exp.make_ctx(rt.ix, rt.rr, rt.gloss)
     which = tuple(x.strip() for x in a.exp.split(",") if x.strip())
     bad = [x for x in which if x not in exp.EXPS]
     if bad:
         print(f"unknown experiment(s) {bad}; choose from {exp.EXPS}", file=sys.stderr); return 2
-    res = exp.run_exp(a.sets, ctx, which, a.include_unverified, a.time_sample, progress=lambda s: print(s, flush=True) if a.verbose else None)
+    timer = find.CrossEncoderReranker(device=a.time_device) if a.time_device else None
+    res = exp.run_exp(a.sets, ctx, which, a.include_unverified, a.time_sample, progress=lambda s: print(s, flush=True) if a.verbose else None, timer=timer)
     res["meta"]["index"] = str(a.index)
     d = exp.write(res, a.out, a.label)
     print(json.dumps(res["decisions"], ensure_ascii=False, indent=1)); print(f"written: {d}/exp.json  {d}/exp.md")
@@ -203,7 +204,8 @@ def main(argv=None) -> int:
     ex.add_argument("sets", nargs="+", help="verified dev/val JSON files, e.g. data/dev.json data/val.json")
     ex.add_argument("--exp", default=",".join(__import__("tcb.exp", fromlist=["EXPS"]).EXPS)); ex.add_argument("--index", default=str(conf.settings().index_dir))
     ex.add_argument("--out", default="out/exp"); ex.add_argument("--label", default="m3"); ex.add_argument("--include-unverified", action="store_true")
-    ex.add_argument("--time-sample", type=int, default=10, help="queries used to time reranking (E4)"); ex.add_argument("--verbose", action="store_true")
+    ex.add_argument("--time-sample", type=int, default=10, help="queries used to time reranking (E4)")
+    ex.add_argument("--time-device", default="", help="time reranking on this device (e.g. cpu) while quality runs on TCB_DEVICE"); ex.add_argument("--verbose", action="store_true")
     ex.set_defaults(f=cmd_exp)
     vs = sp.add_parser("vset", help="dev/val candidate sets: gen | export | apply | check (human review via CSV)")
     vs.add_argument("action", choices=["gen", "export", "apply", "check"]); vs.add_argument("file", nargs="?", default="data/dev.json")

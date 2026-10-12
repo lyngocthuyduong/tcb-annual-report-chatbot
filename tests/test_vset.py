@@ -52,6 +52,7 @@ def test_independent_growth_matches_calc():
 
 def test_csv_roundtrip_verify_drop_edit(tmp_path):
     src = json.loads(open("data/dev.json", encoding="utf-8").read())
+    for x in src: x["verified"] = False      # the shipped set is already checked; the test exercises the mechanism from a draft
     p = tmp_path / "s.json"; p.write_text(json.dumps(src, ensure_ascii=False), encoding="utf-8")
     c = tmp_path / "r.csv"
     assert vset.export_csv(str(p), str(c)) == len(src)

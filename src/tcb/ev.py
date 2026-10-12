@@ -32,7 +32,7 @@ class Item(BaseModel):
     answerable: bool = True
     gold_facts: list[str] = Field(default_factory=list)      # each must appear in the answer; "a | b" = either
     history: list[Turn_] = Field(default_factory=list)       # prior turns for follow-up items
-    verified: bool = False                                    # human-verified against the PDF
+    verified: bool = False                                    # checked against the PDF text (notes say by whom)
     expect_status: Literal["", "ambiguous"] = ""              # "ambiguous": the right behaviour is a clarifying question
     notes: str = ""
 

@@ -64,7 +64,11 @@ for env, name in [("HF_TOKEN", "hf_token"), ("ANTHROPIC_API_KEY", "anthropic_key
 os.environ["TCB_DEVICE"] = "cpu"                 # "cuda" only for tcb exp / tcb eval (reranking), one GPU process at a time (T4 = 15 GB); written into config.json
 os.environ["PROVIDER"] = "anthropic"             # anthropic | openai | ollama
 os.environ["ANTHROPIC_MODEL"] = "claude-haiku-5-5"   # dev loops; claude-sonnet-5-5 for the final run
+# Colab ships JAX/TensorFlow, which can grab ~75% of the T4 at start and leave PyTorch ~3.5 GB (CUDA OOM). Keep them off the GPU:
+os.environ.update(JAX_PLATFORMS="cpu", XLA_PYTHON_CLIENT_PREALLOCATE="false", TF_FORCE_GPU_ALLOW_GROWTH="true",
+                  PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True")
 ```
+If a `cuda` run still hits OOM, check who holds the memory before the run: `!nvidia-smi --query-gpu=memory.used,memory.total --format=csv` and `!pip list 2>/dev/null | grep -i -E "^(jax|jaxlib|tensorflow|flax) "`; then Runtime > Restart session and re-run cell 2. Always use a new `--out` / `--label` per run so earlier results are not overwritten.
 ```python
 # CELL 3 — once per VM: models (≈4.5 GB, a few minutes) + M0 gate
 !python -m tcb.models download 2>&1 | tail -3
@@ -77,10 +81,11 @@ Then run the steps from the runbook in this order (each in its own cell; stop at
 !python -m pytest -m live_models -q                    # real models load
 !python -m pytest -m "live_openai or live" -q          # real provider, real index (needs the key)
 !tcb ask "Tỷ lệ CASA của Techcombank năm 2025 là bao nhiêu?" --json
-!tcb batch data/q10.json --out out/runs/q10            # just run, do not tune on q10
-!tcb vset export data/dev.json --csv out/dev.csv       # edit in Excel (download from Drive, upload back), then:
-!tcb vset apply  data/dev.json --csv out/dev.csv       # same for val
-!tcb exp data/dev.json data/val.json --label m3 --verbose 2>&1 | tail -40
+!tcb batch data/q10.json --out out/runs/q10-cpu1       # just run, do not tune on q10; a NEW --out every time
+!tcb vset check data/dev.json && tcb vset check data/val.json   # gold facts are on their gold pages (dev 70, val 34, all checked against the PDF text)
+# retrieval experiments, no LLM cost: quality on the GPU (fast), rerank timing on the CPU (what ships)
+!TCB_DEVICE=cuda tcb exp data/dev.json data/val.json --label m4 --time-device cpu --time-sample 10 --verbose 2>&1 | tail -60
+# after conf.py is frozen from exp.md (pool N, k, RRF k, tau_low): answer quality on val, real LLM
 !tcb eval data/val.json --label val1
 ```
 Offline mode (Ollama on the T4):

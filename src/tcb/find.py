@@ -19,15 +19,16 @@ class Reranker(Protocol):
 class CrossEncoderReranker:
     """BAAI/bge-reranker-v2-m3 from the baked snapshot. Loaded lazily; never downloads."""
 
-    def __init__(self, path=None, max_length: int = 512):
+    def __init__(self, path=None, max_length: int = 512, device: str | None = None):
         self.path, self.max_length, self._m = path or conf.MODELS_DIR / "bge-reranker-v2-m3", max_length, None
+        self.device = device
 
     def score(self, query, texts):
         if self._m is None:
             if not self.path.exists():
                 raise FileNotFoundError(f"{self.path} missing: reranker is baked into the Docker image (never downloaded at run time)")
             from sentence_transformers import CrossEncoder
-            self._m = CrossEncoder(str(self.path), device=os.getenv("TCB_DEVICE", "cpu"), max_length=self.max_length)   # cpu = what ships; cuda only for faster Colab runs
+            self._m = CrossEncoder(str(self.path), device=self.device or os.getenv("TCB_DEVICE", "cpu"), max_length=self.max_length)   # cpu = what ships; cuda only for faster Colab runs
         return [float(x) for x in self._m.predict([(query, t) for t in texts], batch_size=8)]
 
 
