@@ -43,6 +43,6 @@ markers = [
   "live: real models/network (opt-in: pytest -m live)",
   "live_openai: real OpenAI call (needs OPENAI_API_KEY)",
   "live_ollama: real Ollama call (needs a running Ollama with the model)",
-  "live_models: real BGE-M3/reranker from /models",
+  "live_models: real BGE-M3 from /models",
 ]
 addopts = "-m 'not live and not live_openai and not live_ollama and not live_models'"

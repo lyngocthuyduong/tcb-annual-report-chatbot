@@ -10,7 +10,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 
-from . import chat, conf
+from . import chat
 
 UI = Path(__file__).with_name("ui.html")
 PDF = Path("data/ar.pdf")

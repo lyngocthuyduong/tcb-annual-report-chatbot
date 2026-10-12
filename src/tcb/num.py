@@ -40,6 +40,7 @@ _UNITS: list[tuple[str, str, int]] = [
     ("diem phan tram", "pp", 1), ("pp", "pp", 1),
     ("%", "%", 1), ("phan tram", "%", 1),
     ("lan", "x", 1),
+    ("nguoi", "count", 1), ("nhan su", "count", 1),
     ("trieu khach hang", "count", 10**6), ("nghin khach hang", "count", 10**3), ("khach hang", "count", 1),
     ("trieu", "count", 10**6), ("nghin", "count", 10**3),
 ]
@@ -101,7 +102,22 @@ _SCALE_NAME = {("VND", 1): "đồng", ("VND", 10**3): "nghìn đồng", ("VND", 
 
 
 def unit_vi(dim: str, scale: int) -> str:
+    if dim.startswith("u:"):            # unit only known as text (literal inputs): the claim text carries it
+        return ""
     return _SCALE_NAME.get((dim, scale), f"{dim}×{scale}")
+
+
+def literal(qid: str, number: str, unit: str, period: str, label: str, chunk_id: str, page: int | None) -> Quantity:
+    """A number copied from evidence text. Unknown unit text becomes its own dimension ('u:<text>') so it only combines
+    with the same unit. Raises NumError for a non-number."""
+    t = vi.nfc(number).strip()
+    v = parse_vn(t)
+    if v is None:
+        raise NumError(f"not a number: {number!r}")
+    u = ("%", 1) if t.endswith("%") else parse_unit(unit) if unit.strip() else ("count", 1)
+    if u is None:
+        u = ("u:" + vi.nfc(unit).strip().lower(), 1)
+    return Quantity(qid, label, v, u[0], u[1], parse_period(period), chunk_id, page, t)
 
 
 def scale_for(unit_vi_text: str) -> tuple[str, int]:

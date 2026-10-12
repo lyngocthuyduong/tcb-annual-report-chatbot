@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 
 from . import vi
 from .calc import CalcResult
-from .num import Quantity, fmt
+from .num import Quantity
 
 _NUM = re.compile(r"\d+(?:[.,]\d+)*")
 _PLACEHOLDER = re.compile(r"\{(C\d+)\}")
@@ -62,9 +62,31 @@ class Check:
         return not self.plan_level and not self.per_claim
 
 
+def literal_quantities(plan, evs: list[Ev]) -> tuple[dict[str, Quantity], list[str]]:
+    """Quantities declared by the plan from evidence text. Kept only if the number occurs verbatim in the cited block."""
+    from .num import NumError, literal
+    by = {e.eid: e for e in evs}
+    out, probs = {}, []
+    for x in getattr(plan, "literals", []):
+        e = by.get(x.evidence)
+        if e is None:
+            probs.append(f"{x.lid}: unknown evidence id {x.evidence}"); continue
+        n = vi.nfc(x.number).strip()
+        if n not in num_tokens(e.text) and vi.canon_num(n).rstrip("%") not in num_tokens(e.text):
+            probs.append(f"{x.lid}: number {x.number} not found in {x.evidence}"); continue
+        try:
+            out[x.lid] = literal(x.lid, n, x.unit, x.period, x.label, e.chunk_id, e.page)
+        except NumError as err:
+            probs.append(f"{x.lid}: {err}")
+    return out, probs
+
+
 def check(plan, evs: list[Ev], quantities: dict[str, Quantity], question: str = "") -> Check:
     """Deterministic validation of an LLM plan against the retrieved evidence."""
     c = Check()
+    lits, lprobs = literal_quantities(plan, evs)
+    c.plan_level += lprobs
+    quantities = {**quantities, **lits}
     eids = {e.eid: e for e in evs}
     cids = {x.cid for x in plan.calculations}
     q_nums = num_tokens(question)

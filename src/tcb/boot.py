@@ -8,7 +8,7 @@ from . import ask, conf, find, llm
 from .index import Index, validate
 
 
-def load_retriever(index_dir=None, embedder=None, reranker=None, lenient: bool = False) -> find.Retriever:
+def load_retriever(index_dir=None, embedder=None, lenient: bool = False) -> find.Retriever:
     """Index validation (fail closed) -> real models -> Retriever. No LLM involved (used by `tcb exp`).
     lenient=True (experiments only) loads an index built with other chunking; the production path never does."""
     d = Path(index_dir or conf.settings().index_dir)
@@ -20,15 +20,15 @@ def load_retriever(index_dir=None, embedder=None, reranker=None, lenient: bool =
     else:
         ix = Index.load(d, embedder, embed_model=ix_model(d), embed_rev=ix_rev(d), strict_chunking=not lenient)
     gloss = json.loads((d / "gloss.json").read_text(encoding="utf-8"))
-    return find.Retriever(ix, reranker or find.CrossEncoderReranker(), gloss)
+    return find.Retriever(ix, gloss)
 
 
-def load_engine(env=None, index_dir=None, embedder=None, reranker=None, provider=None) -> ask.Engine:
-    """Order matters: cheap config errors first, then the index, then the (slow) models.
-    embedder/reranker/provider are injectable ONLY for tests; production passes none of them."""
+def load_engine(env=None, index_dir=None, embedder=None, provider=None) -> ask.Engine:
+    """Order matters: cheap config errors first, then the index, then the (slow) model.
+    embedder/provider are injectable ONLY for tests; production passes none of them."""
     prov = provider or llm.get(env)
-    rt = load_retriever(index_dir, embedder, reranker)
-    return ask.Engine(rt, prov, llm.max_tokens(env), conf.TAU_LOW)
+    rt = load_retriever(index_dir, embedder)
+    return ask.Engine(rt, prov, llm.max_tokens(env))
 
 
 def ix_model(d):  # injected-embedder path (tests): trust the manifest's own identity

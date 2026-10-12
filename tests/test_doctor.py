@@ -27,11 +27,11 @@ def test_doctor_reports_missing_pieces(tmp_path, monkeypatch):
 
 def test_doctor_accepts_correct_model_snapshot(tmp_path, monkeypatch):
     m = tmp_path / "models"
-    for sub, rev in (("bge-m3", conf.EMBED_REV), ("bge-reranker-v2-m3", conf.RERANK_REV)):
+    for sub, rev in (("bge-m3", conf.EMBED_REV),):
         (m / sub).mkdir(parents=True); (m / sub / ".rev").write_text(rev, encoding="utf-8"); (m / sub / "model.safetensors").write_bytes(b"x")
     monkeypatch.setattr(conf, "MODELS_DIR", m)
     rows = {r["check"]: r for r in doctor.checks(tmp_path)}
-    assert rows["model bge-m3"]["status"] == "OK" and rows["model bge-reranker-v2-m3"]["status"] == "OK"
+    assert rows["model bge-m3"]["status"] == "OK" and not any("reranker" in k for k in rows)
     (m / "bge-m3" / ".rev").write_text("deadbeef", encoding="utf-8")
     assert {r["check"]: r for r in doctor.checks(tmp_path)}["model bge-m3"]["status"] == "FAIL"
 

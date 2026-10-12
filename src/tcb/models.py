@@ -1,4 +1,4 @@
-"""Docker build step: fetch the two fixed models at pinned revisions into /models, never at runtime.
+"""Docker build step: fetch the fixed embedding model (BGE-M3) at its pinned revision into /models, never at runtime.
 
   python -m tcb.models download   # needs huggingface_hub + network (build stage only)
   python -m tcb.models convert    # bge-m3 ships pytorch_model.bin only -> write model.safetensors (needs torch)
@@ -6,13 +6,11 @@
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 
 from . import conf
 
 SPECS = (
     ("bge-m3", conf.EMBED_MODEL, conf.EMBED_REV, ["onnx/*", "imgs/*", "*.jpg", "colbert_linear.pt", "sparse_linear.pt"]),
-    ("bge-reranker-v2-m3", conf.RERANK_MODEL, conf.RERANK_REV, ["assets/*", "*.jpg", "*.png"]),
 )
 
 

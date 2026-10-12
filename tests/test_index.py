@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from conftest import PDF
-from tcb import build, conf, index
+from tcb import build, index
 from tcb.cli import main
 from tcb.index import IndexError_
 
@@ -27,10 +27,10 @@ def test_validate_ok(built):
 
 def test_manifest_fields(built):
     m = built[1]
-    for k in ("index_format_version", "source", "embedding", "reranker_expected", "chunking", "bm25",
+    for k in ("index_format_version", "source", "embedding", "chunking", "bm25",
               "counts", "runtime_requirements", "files"):
         assert k in m
-    assert m["reranker_expected"] == {"model": conf.RERANK_MODEL, "revision": conf.RERANK_REV}
+    assert "reranker_expected" not in m
 
 
 def test_real_embed_model_mismatch(built):

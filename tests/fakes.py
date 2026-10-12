@@ -35,7 +35,7 @@ def qid_of(req, label: str, period: str) -> str:
 
 class NodeSet:
     """Retriever stand-in returning fixed nodes (so pipeline tests do not depend on ranking quality)."""
-    pool = 30
+    k, top_bm25 = 10, 40
 
     def __init__(self, nodes):
         self.nodes = [asdict(n) if not isinstance(n, dict) else n for n in nodes]
@@ -44,8 +44,8 @@ class NodeSet:
         r = find.Result(q)
         ids = [n["chunk_id"] for n in self.nodes]
         r.bm25 = r.dense = r.fused = ids
-        r.reranked = [(c, 1.0 - i * 0.01) for i, c in enumerate(ids)]
+        r.ranked = [(c, 1.0 - i * 0.01) for i, c in enumerate(ids[: self.k])]
         return r
 
-    def top_nodes(self, r, n=8):
-        return self.nodes[:n]
+    def top_nodes(self, r):
+        return self.nodes[: self.k]

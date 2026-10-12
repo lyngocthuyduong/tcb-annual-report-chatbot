@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 import statistics
 import subprocess
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from . import conf
 from .pdf import Block, Half, Word

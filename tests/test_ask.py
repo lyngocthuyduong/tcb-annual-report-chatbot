@@ -18,6 +18,7 @@ def N(doc):
         "kpi_assets": pick(lambda n: n.content_type == "kpi" and "Tổng tài sản" in n.text and n.printed_page_number == 5),
         "kpi_casa": pick(lambda n: n.content_type == "kpi" and "Tỷ lệ CASA" in n.text and n.printed_page_number == 5),
         "gl_casa": pick(lambda n: n.content_type == "glossary" and n.text.startswith("CASA:")),
+        "hr": pick(lambda n: n.content_type == "narrative" and "12.705 người" in n.text and n.printed_page_number == 52),
     }
 
 
@@ -62,6 +63,28 @@ def test_calculation_is_deterministic_and_cited(N):
     a, _ = run(N, h, "Tổng tài sản tăng bao nhiêu phần trăm?")
     assert a.status == "answered" and "tăng 21,8% so với" in a.answer and a.answer.endswith("[tr. 297]")
     assert a.trace["calcs"]["C1"]["formula"].startswith("(Q") and a.trace["calc_errors"] == []
+
+
+def _lit_plan(rq, n2024="11.848"):
+    e = eid_of(rq, "12.705 người")
+    return {"status": "answered",
+            "literals": [{"lid": "L1", "evidence": e, "number": "12.705", "unit": "người", "period": "2025"},
+                         {"lid": "L2", "evidence": e, "number": n2024, "unit": "người", "period": "2024"}],
+            "calculations": [{"cid": "C1", "op": "diff", "inputs": ["L1", "L2"]}],
+            "claims": [{"text_vi": "Tổng số nhân sự năm 2025 tăng thêm {C1} người so với năm 2024.", "evidence": [e], "calc_refs": ["C1"]}]}
+
+
+def test_calculation_on_narrative_numbers_via_literals(N):
+    """Numbers that live in text (no table quantity) reach the calculator only if they occur verbatim in the cited block."""
+    a, p = run(N, lambda rq, i: _lit_plan(rq), "Nhân sự năm 2025 tăng thêm bao nhiêu người so với năm 2024?", keys=("hr", "b02"))
+    assert a.status == "answered" and "tăng thêm 857 người" in a.answer and a.answer.endswith("[tr. 52]") and len(p.calls) == 1
+    assert a.trace["literals"]["L1"]["page"] == 52 and a.trace["calc_errors"] == []
+
+
+def test_invented_literal_is_rejected(N):
+    a, p = run(N, lambda rq, i: _lit_plan(rq, "11.000"), "Nhân sự năm 2025 tăng thêm bao nhiêu người so với năm 2024?", keys=("hr", "b02"))
+    assert a.status != "answered" and "857" not in a.answer and len(p.calls) == 2       # one repair, then refused
+    assert any("L2: number 11.000 not found" in x for x in a.trace["check_problems"])
 
 
 def test_llm_arithmetic_is_rejected(N):
@@ -114,12 +137,12 @@ def test_provider_failure_is_surfaced_not_swapped(N):
     assert "Không tự động chuyển" in a.answer
 
 
-def test_missing_reranker_snapshot_is_an_error_not_a_crash(N):
+def test_missing_model_snapshot_is_an_error_not_a_crash(N):
     class Boom(NodeSet):
-        def search(self, q): raise FileNotFoundError("/models/bge-reranker-v2-m3 missing")
+        def search(self, q): raise FileNotFoundError("/models/bge-m3 missing")
     e = ask.Engine(Boom([]), Scripted(lambda rq, i: {}))
     a = e.ask("x?")
-    assert a.status == "error" and "reranker" in a.answer
+    assert a.status == "error" and "bge-m3" in a.answer
 
 
 def test_empty_question(N):

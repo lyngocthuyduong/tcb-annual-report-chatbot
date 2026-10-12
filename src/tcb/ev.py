@@ -89,7 +89,7 @@ def stage_hits(gold: set[int], tr: dict, page_of: Callable[[str], int | None]) -
             if page_of(c) in gold: return i
         return None
     return {"bm25": first(r.get("bm25", [])), "dense": first(r.get("dense", [])), "fused": first(r.get("fused", [])),
-            "rerank": first([c for c, _ in r.get("reranked", [])])}
+            "final": first([c for c, _ in r.get("ranked", [])])}
 
 
 def attribute(item: Item, ans: dict, hits: dict | None, fact: bool | None, cite_bad: list[int]) -> str:
@@ -107,8 +107,7 @@ def attribute(item: Item, ans: dict, hits: dict | None, fact: bool | None, cite_
         union = [hits["bm25"], hits["dense"]]
         if all(x is None for x in union): return "retrieval:recall_miss"
         if hits["fused"] is None: return "retrieval:fusion_drop"
-        n_ev = conf.FINAL_EVIDENCE
-        if hits["rerank"] is None or hits["rerank"] > n_ev: return "retrieval:rerank_drop"
+        if hits["final"] is None or hits["final"] > conf.FINAL_EVIDENCE: return "retrieval:rank_drop"
     if st == "not_in_report":
         return "refusal:over_refusal" if hits is not None else "refusal:over_refusal_no_gold"
     if ans.get("trace", {}).get("calc_errors"): return "calc:error"
@@ -130,7 +129,7 @@ def score_item(item: Item, ans: dict, page_of: Callable[[str], int | None]) -> d
     bad = [p for p in cited if p not in ev_pages]
     verdict = attribute(item, ans, hits, fact, bad)
     rr = None
-    if hits and hits["rerank"]: rr = 1 / hits["rerank"]
+    if hits and hits["final"]: rr = 1 / hits["final"]
     llm_ = tr.get("llm", {})
     return {"id": item.id, "category": item.category, "type": item.type, "answerable": item.answerable,
             "expect_status": item.expect_status, "verified": item.verified, "status": ans["status"], "verdict": verdict, "passed": verdict == "pass",
@@ -139,7 +138,8 @@ def score_item(item: Item, ans: dict, page_of: Callable[[str], int | None]) -> d
             "page_precision": (len(set(cited) & gold) / len(cited)) if (gold and cited) else None,
             "stage_ranks": hits, "rr": rr, "rewrite_mode": tr.get("rewrite_mode"),
             "latency_s": tr.get("total_s"), "llm_calls": llm_.get("calls"), "cost_usd": llm_.get("cost_usd"),
-            "in_tokens": llm_.get("in_tokens"), "out_tokens": llm_.get("out_tokens"), "repaired": tr.get("repaired")}
+            "in_tokens": llm_.get("in_tokens"), "out_tokens": llm_.get("out_tokens"), "repaired": tr.get("repaired"),
+            "stage_s": {**tr.get("retrieval", {}).get("seconds", {}), "llm": llm_.get("latency_s")}}
 
 
 def _rate(xs):
@@ -162,8 +162,9 @@ def summarize(rows: list[dict]) -> dict:
     s = {
         "n": len(rows), "pass_rate": _rate([r["passed"] for r in rows]),
         "retrieval": {"n_with_gold_pages": len(gold), "recall@40_bm25": recall("bm25", 40), "recall@40_dense": recall("dense", 40),
-                      "recall@30_fused": recall("fused", 30), "recall@8_final": recall("rerank", 8),
-                      "recall@3_final": recall("rerank", 3),
+                      f"recall@{conf.TOP_BM25}_fused": recall("fused", conf.TOP_BM25),
+                      f"recall@{conf.FINAL_EVIDENCE}_final": recall("final", conf.FINAL_EVIDENCE),
+                      "recall@3_final": recall("final", 3),
                       "mrr_final": round(statistics.mean([r["rr"] or 0 for r in gold]), 4) if gold else None},
         "answers": {"fact_correct": _rate([r["fact_ok"] for r in ans]),
                     "fact_unscorable": sum(r["fact_ok"] is None for r in ans),
@@ -176,8 +177,12 @@ def summarize(rows: list[dict]) -> dict:
                     "n_unanswerable": len(un), "false_answer_rate": _rate([r["status"] in ("answered", "partial") for r in un])},
         "latency_s": {"mean": round(statistics.mean(xs), 3) if (xs := [r["latency_s"] for r in rows if r["latency_s"] is not None]) else None,
                       "p50": _pct([r["latency_s"] for r in rows], .5), "p95": _pct([r["latency_s"] for r in rows], .95)},
-        "cost_usd_total": round(sum(r["cost_usd"] or 0 for r in rows), 5),
-        "cost_usd_per_question": round(sum(r["cost_usd"] or 0 for r in rows) / len(rows), 6) if rows else None,
+        # cost is None (not 0) when the model has no price in conf.PRICES; tokens are always reported
+        "tokens_in_total": sum(r["in_tokens"] or 0 for r in rows), "tokens_out_total": sum(r["out_tokens"] or 0 for r in rows),
+        "cost_usd_total": None if any(r["llm_calls"] and r["cost_usd"] is None for r in rows) else round(sum(r["cost_usd"] or 0 for r in rows), 5),
+        "cost_usd_per_question": None if any(r["llm_calls"] and r["cost_usd"] is None for r in rows) or not rows
+        else round(sum(r["cost_usd"] or 0 for r in rows) / len(rows), 6),
+        "stage_seconds_p50": {k: _pct([r["stage_s"].get(k) for r in rows], .5) for k in ("embed", "dense", "bm25", "llm")},
         "llm_calls_mean": round(statistics.mean([r["llm_calls"] or 0 for r in rows]), 2) if rows else None,
         "attribution": {},
     }
@@ -209,13 +214,12 @@ def run_eval(set_path: str, out_dir: str, engine, label: str = "", include_unver
                                 ensure_ascii=False) + "\n")
     counted = [r for r in rows if r["verified"] or include_unverified]
     m = engine.rt.ix.manifest
-    real_rr = type(engine.rt.rr).__name__ == "CrossEncoderReranker"
     cfg = {"label": label, "set": str(set_path), "set_sha256": hashlib.sha256(Path(set_path).read_bytes()).hexdigest(),
            "provider": engine.prov.name, "model": engine.prov.model,
            "index_embedding": m["embedding"], "index_built_at": m["built_at"], "index_nodes": m["counts"]["nodes"],
-           "reranker": type(engine.rt.rr).__name__ if engine.rt.rr is not None else "none", "device": os.getenv("TCB_DEVICE", "cpu"), "tau_low": engine.tau, "rrf_k": engine.rt.rrf_k,
+           "final_evidence": engine.rt.k, "device": os.getenv("TCB_DEVICE", "cpu"), "rrf_k": engine.rt.rrf_k,
            "top_bm25": engine.rt.top_bm25, "top_dense": engine.rt.top_dense, "include_unverified": include_unverified,
-           "submission_grade": m["embedding"]["model"] == conf.EMBED_MODEL and real_rr,
+           "submission_grade": m["embedding"]["model"] == conf.EMBED_MODEL,
            "seconds": round(time.time() - t0, 1)}
     summary = summarize(counted) if counted else {"n": 0, "note": "no verified items; use include_unverified for a pipeline check"}
     summary["items_run"] = len(rows)
@@ -252,13 +256,13 @@ def compare(a_dir: str, b_dir: str) -> dict:
             return s
         x, y = get(sa), get(sb)
         return {"a": x, "b": y, "delta": round(y - x, 4) if isinstance(x, (int, float)) and isinstance(y, (int, float)) else None}
-    metrics = {"pass_rate": ["pass_rate"], "recall@8_final": ["retrieval", "recall@8_final"], "mrr_final": ["retrieval", "mrr_final"],
+    metrics = {"pass_rate": ["pass_rate"], f"recall@{conf.FINAL_EVIDENCE}_final": ["retrieval", f"recall@{conf.FINAL_EVIDENCE}_final"], "mrr_final": ["retrieval", "mrr_final"],
                "fact_correct": ["answers", "fact_correct"], "citation_valid": ["answers", "citation_valid"],
                "page_hit": ["answers", "page_hit"], "refusal_precision": ["refusal", "precision"], "refusal_recall": ["refusal", "recall"],
                "false_answer_rate": ["refusal", "false_answer_rate"], "latency_p50_s": ["latency_s", "p50"],
                "latency_p95_s": ["latency_s", "p95"], "cost_usd_per_question": ["cost_usd_per_question"]}
     warn = []
-    for k in ("set_sha256", "provider", "model", "reranker", "tau_low", "rrf_k"):
+    for k in ("set_sha256", "provider", "model", "final_evidence", "rrf_k"):
         if ca.get(k) != cb.get(k): warn.append(f"{k}: {ca.get(k)} -> {cb.get(k)}")
     if ca.get("index_embedding") != cb.get("index_embedding") or ca.get("index_built_at") != cb.get("index_built_at"):
         warn.append("index differs")

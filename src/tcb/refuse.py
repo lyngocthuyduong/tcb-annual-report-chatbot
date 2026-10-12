@@ -1,6 +1,5 @@
 """Refusal / evidence-sufficiency policy. Fail closed: an answer survives only through claims that passed cite.check.
-tau_low (conf.TAU_LOW, set by E7 on the real index) is a retrieval-level signal that only triggers a retrieval retry;
-it never turns a grounded answer into a refusal on its own."""
+Refusal is decided from the plan and the validators only; there is no retrieval-score threshold (DESIGN 17.1)."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field

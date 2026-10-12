@@ -6,7 +6,7 @@ import json
 import re
 from dataclasses import dataclass, field
 
-from . import cite, vi
+from . import cite
 from .llm import LLMRequest, LLMResponse, Provider
 
 MAX_TURNS = 4

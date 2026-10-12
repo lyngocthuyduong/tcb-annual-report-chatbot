@@ -13,7 +13,7 @@ Status legend used in this file: **[verified]** = checked by a test that ran on 
 | Item | Decision |
 |---|---|
 | Embedding model | `BAAI/bge-m3`, revision pinned in `conf.EMBED_REV` |
-| Reranker | `BAAI/bge-reranker-v2-m3`, revision pinned in `conf.RERANK_REV` |
+| Reranker | none (measured and removed, §17.1) |
 | Orchestration | LlamaIndex for ingestion/vector retrieval only. No agent framework |
 | LLM modes | Online default (OpenAI or Anthropic), explicit Offline profile (Ollama `qwen2.5:7b`). **No automatic fallback between providers or modes** |
 | Depth tracks | Document Intelligence + Retrieval + Evaluation |
@@ -71,11 +71,11 @@ question
  -> rewrite (only for follow-ups)
  -> glossary expansion
  -> BM25 top-40  +  dense top-40
- -> RRF (k=60) -> top-30
- -> BGE-reranker-v2-m3 -> 10 evidence blocks E1..E10
-    + quantities Q1..Qn (high-quality tables only)
+ -> RRF (k=60) -> top 10 = evidence blocks E1..E10
+    + quantities Q1..Qn (high-quality tables; the 60 whose labels best match the question)
  -> LLM returns a JSON plan
-    (claims -> evidence ids, calculations -> quantity ids)
+    (claims -> evidence ids, calculations -> quantity ids or literals L1..Ln
+     copied from evidence text and checked verbatim)
     at most 1 repair retry, same provider
  -> cite.check   ids exist, no page numbers in text,
                  every number is in cited evidence or a calc result
@@ -157,24 +157,22 @@ Status: the validator and build are [verified] with a hash embedder in tmp (and 
 ### 6.1 Pipeline
 1. **BM25** over `tcb-vi-v1` tokens → top 40 (`TOP_BM25`).
 2. **Dense** (BGE-M3 via LlamaIndex) → top 40 (`TOP_DENSE`).
-3. **RRF** with k = 60 (`RRF_K`) over the two rankings → keep the top 10 (`RERANK_POOL`).
-4. **Cross-encoder rerank** (BGE-reranker-v2-m3, max_length 512) on those 30.
-5. Top **8** (`FINAL_EVIDENCE`) go to the LLM, further limited by a 15,000-character prompt budget (`PROMPT_EVIDENCE_CHARS`) so a local 8k-context model is never silently truncated.
+3. **RRF** with k = 60 (`RRF_K`) over the two rankings; the top **10** (`FINAL_EVIDENCE`) go to the LLM, further limited by a 15,000-character prompt budget (`PROMPT_EVIDENCE_CHARS`) so a local 8k-context model is never silently truncated.
 
-`Result` keeps every stage's ranking (`bm25`, `dense`, `fused`, `reranked`) so evaluation can say *which stage lost the gold page* (§14).
+There is no cross-encoder and no score threshold (§17.1). `Result` keeps every stage's ranking (`bm25`, `dense`, `fused`, `ranked`) and the seconds spent on BM25, query embedding and dense search, so evaluation can say *which stage lost the gold page* and *where the time went* (§14).
 
 ### 6.2 Glossary expansion
-If the query contains an upper-case glossary abbreviation (e.g. CASA), the report's own definition (first 100 characters) is appended in parentheses: `CASA (Tiền gửi không kỳ hạn…)`. The expanded query is used by **all** stages (BM25, dense, rerank). Experiment E5 decides if it stays (rule: keep only if it causes no regression) **[NOT RUN]**.
+If the query contains an upper-case glossary abbreviation (e.g. CASA), the report's own definition (first 100 characters) is appended in parentheses: `CASA (Tiền gửi không kỳ hạn…)`. The expanded query is used by both stages. E5 (run m4): no item lost, none gained; kept because abbreviations such as RBG and CASA need it on unseen questions.
 
-### 6.3 Weak-retrieval retry (disabled by design until measured)
-`conf.TAU_LOW = None` (kept: E7 proposed τ = 0.599 on a pool of 30, but the retry costs a second rerank on exactly the weak/unanswerable queries and no experiment shows it recovers a page: E5 had no gains). If set by experiment E7, a query whose top rerank score is below τ is retried once with the diacritic-folded raw query and the candidates merged by max score. It only triggers a retry; it never converts a grounded answer into a refusal. τ is chosen on the **real** index (positives = unanswerable dev items; maximise F1 subject to ≤ 2 points of answerable items flagged) and then frozen. Until then the code path is covered by mock tests only.
+### 6.3 No weak-retrieval retry
+An earlier design retried a query once when the top cross-encoder score fell below τ_low (E7). E7 proposed τ = 0.599, but the retry meant a second full search on exactly the weak and unanswerable questions, and no experiment showed it recovering a page. It was removed together with the reranker; refusal relies on the plan and the validators (§10).
 
 ### 6.4 Why this shape
 - BM25 + dense because figures/abbreviations need lexical exactness while paraphrased narrative needs semantics.
 - RRF because it needs no score calibration between BM25 and cosine; k = 60 is the literature default and is only changed if E3b shows ≥ 5 points of R@20 on **every** set.
-- Rerank pool 10, final 10 (E4, run m4: dev+val, 85 answerable items): recall of a gold page was 0.882 at N10 vs 0.894 at N20/30/40, i.e. one item, while CPU rerank time scales with N. The pool is the cut; the reranker orders it. A pool of 30 was the earlier provisional value.
+- Top 10 fused blocks, no reranker (E4, run m4: dev+val, 85 answerable items): a cross-encoder over 20 to 40 candidates found a gold page for 0.894 of items, the fused top 10 for 0.882, i.e. one item, at about 2 s of CPU per candidate pair on 2 cores (≈ 60 s per question at 30). With 10 candidates and 10 blocks the reranker would only reorder them.
 - Tokenizer stays `vi`: E2 favoured `default` by one item at R@20 (0.894 vs 0.882) while `vi` is ahead at R@5/R@8, so no rebuild.
-- One retrieval path: no HyDE, multi-query or agents — each adds LLM calls and a failure surface; E-experiments decide if any is justified.
+- One retrieval path: no HyDE, multi-query or agents; each adds LLM calls and a failure surface.
 
 ---
 
@@ -263,18 +261,18 @@ A question is treated as a follow-up only if there is history **and** it is shor
 
 ## 12. Surfaces
 
-- **HTTP (`api.py`, FastAPI):** `GET /health`, `POST /chat {question, session_id?}`, `GET /evidence/{chunk_id}`, `GET /pdf`, `GET /` (single-file UI `ui.html`), `/docs`. Single process, one answer at a time under a lock (the cross-encoder is not thread-safe). Status codes map error kinds (config/timeout/unavailable/rejected). Every answer's full trace is appended to `out/trace/chat.jsonl`; tracing failures never break an answer.
-- **CLI (`tcb`):** `doctor` (diagnose this machine), `models download|convert`, `check` (M0 gate: load both models, one embed + one rerank, log time/RSS), `build`, `validate`, `ask`, `chat`, `batch`, `eval` (`--compare`, `--include-unverified`), `exp` (retrieval experiments), `vset` (dev/val tooling), `smoke` (Ollama), `serve`. Exit codes: 2 config, 3 index, 4 error answer, 5 model missing, 6 smoke.
+- **HTTP (`api.py`, FastAPI):** `GET /health`, `POST /chat {question, session_id?}`, `GET /evidence/{chunk_id}`, `GET /pdf`, `GET /` (single-file UI `ui.html`), `/docs`. Single process, one answer at a time under a lock. Status codes map error kinds (config/timeout/unavailable/rejected). Every answer's full trace is appended to `out/trace/chat.jsonl`; tracing failures never break an answer.
+- **CLI (`tcb`):** `doctor` (diagnose this machine), `models download|convert`, `check` (gate: load BGE-M3, related text closer than unrelated, one query embedding timed, log RSS), `build`, `validate`, `ask`, `chat`, `batch`, `eval` (`--compare`, `--include-unverified`), `exp` (retrieval experiments), `vset check` (gold facts on gold pages), `smoke` (Ollama), `serve`. Exit codes: 2 config, 3 index, 4 error answer, 5 model missing, 6 smoke.
 - **Boot order (`boot.py`):** read config → validate index → load models → serve. A bad index exits 3 before models are touched; a missing key exits 2 before the port opens.
 
 ---
 
 ## 13. Packaging and portability
 
-- **Docker (`Dockerfile`, `compose.yaml`):** `docker compose up --build` is the online default. The image installs CPU torch from the PyTorch index first, then `pip install --require-hashes --no-deps -r requirements.lock` (hash-pinned, Python 3.12 linux-x86_64, no torch/CUDA); the two models are downloaded at build time at pinned revisions into `/models` with a `.rev` marker. `idx/` and `data/` are mounted, not baked, so the index can be replaced without rebuilding the image. Layers are kept lean on purpose: `COPY --chown` instead of `RUN chown -R` and no in-image weight conversion, because each would duplicate 4.5 GB of weights in a new layer (a first Docker build on a 32 GB Codespace ran out of disk exporting layers). The one-off index build runs on Colab (`TCB_DEVICE=cuda` only speeds up embedding; model and revision are the pinned ones), not inside Docker.
+- **Docker (`Dockerfile`, `compose.yaml`):** `docker compose up --build` is the online default. The image installs CPU torch from the PyTorch index first, then `pip install --require-hashes --no-deps -r requirements.lock` (hash-pinned, Python 3.12 linux-x86_64, no torch/CUDA); BGE-M3 is downloaded at build time at pinned revisions into `/models` with a `.rev` marker. `idx/` and `data/` are mounted, not baked, so the index can be replaced without rebuilding the image. Layers are kept lean on purpose: `COPY --chown` instead of `RUN chown -R` and no in-image weight conversion, because each would duplicate 2.3 GB of weights in a new layer (a first Docker build on a 32 GB Codespace ran out of disk exporting layers). The one-off index build runs on Colab (`TCB_DEVICE=cuda` only speeds up embedding; model and revision are the pinned ones), not inside Docker.
 - **Offline mode:** `docker compose --profile offline up --build app-offline` starts Ollama, pulls `qwen2.5:7b` once, and runs the app with `PROVIDER=ollama`. Separate services, no cross-fallback.
-- **Local (VS Code) runs:** `setup.ps1` / `setup.sh` create a venv and install; `.env` loader (does not override real env vars); `TCB_MODELS_DIR`, `POPPLER_BIN`, `PYTHONUTF8`; `import resource` guarded for Windows; explicit UTF-8 everywhere. `tcb doctor` prints a one-screen diagnosis (python, packages, poppler, PDF hash, models, index, keys, RAM/disk, Docker) with a fix per failure.
-- **Locks:** `lock.sh` produces `requirements.lock` (and `uv.lock`) and fails if torch/CUDA leak in.
+- **Local runs (no Docker):** `pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cpu && pip install -e ".[dev]"`, `python -m tcb.models download`; `.env` loader (does not override real env vars); `TCB_MODELS_DIR`, `POPPLER_BIN`, `PYTHONUTF8`; `import resource` guarded for Windows; explicit UTF-8 everywhere. `tcb doctor` prints a one-screen diagnosis (python, packages, poppler, PDF hash, models, index, keys, RAM/disk, Docker) with a fix per failure.
+- **Locks:** `lock.sh` produces `requirements.lock` and fails if torch/CUDA leak in.
 - **Status:** compose files syntax-validated; image build, lock install inside Docker, `smoke.sh`, and the Ollama smoke (which logs `Not Executed` when it cannot run) are all **[NOT RUN]**.
 
 ---
@@ -285,10 +283,9 @@ A question is treated as a follow-up only if there is history **and** it is shor
 | File | Content | Rule |
 |---|---|---|
 | `data/q10.json` | the 10 published sample questions (9 answerable, 1 not) | never used for tuning; additively annotated with `gold_facts`, `alt_pages` (e.g. 297 for total assets), `type`, `verified` |
-| `data/dev.json`, `data/val.json` | 46 + 21 **draft** items, all `verified:false` | for experiments and tuning only after human verification |
-| `data/hand.json` | hand-written source pool: KPI, narrative, follow-up, 14 unanswerable, 2 ambiguous | |
+| `data/dev.json`, `data/val.json` | 70 + 34 items written by hand (statement tables, KPI tiles, narrative, segments, subsidiary, governance, investor relations, glossary, calculations, follow-ups, 19 unanswerable or ambiguous) | gold checked by Claude against the PDF text of the cited page, calculations recomputed; human spot-check pending |
 
-Generation (`tcb vset gen`) draws table items from the parsed high-quality statements (unique labels only; no header leakage, no unit-in-label, growth between 0.5 % and 300 %), splits ~2:1 stratified by type, and is deterministic (seeded). Unanswerable topics were chosen only if a text search of the parsed report found no mention (Vietcombank, Campuchia, Bitcoin, Momo, Nasdaq, World Cup, 2027, MB Bank — enforced by a test). Topics that **are** in the report (dividends, 2029/2030, remuneration, 2026 plan) are not used as "unanswerable". Review workflow: `tcb vset export` → CSV (`utf-8-sig`, opens in Excel) → set `action` = `Y` (verified, with edits) or `D` (drop) → `tcb vset apply`. `tcb vset check` asserts every answerable item's gold facts are present, as text, on its gold pages (for calc items: the *inputs* are).
+Unanswerable topics were chosen only if a full-text search of the report found no mention (Vietcombank, Campuchia, Bitcoin, Momo, Nasdaq, World Cup, 2027, MB Bank, Moody's; enforced by a test). Topics that **are** in the report (dividends, 2029/2030, remuneration, 2026 plan) are not used as "unanswerable". `tcb vset check` asserts every answerable item's gold facts are present, as text, on its gold pages (for calc items: the *inputs* are). The first table items were drafted by a generator from the statements; it and its CSV review loop were removed once the sets were checked, so they cannot be regenerated over by accident.
 
 Item types: `single`, `multi`, `calc`, `followup`, `refusal`; `expect_status: ambiguous` marks questions whose right behaviour is a clarifying question; these are excluded from refusal precision/recall.
 
@@ -300,22 +297,21 @@ Item types: `single`, `multi`, `calc`, `followup`, `refusal`; `expect_status: am
 - **Cost/latency:** per question from traces (p50/p95, tokens, estimated USD).
 
 ### 14.3 Stage attribution
-For each failed item, the first failing stage in this order: `system` (provider/index error) → `retrieval:recall_miss` (gold page in neither BM25 nor dense top-40) → `retrieval:fusion_drop` → `retrieval:rerank_drop` (gold page ranked below the `FINAL_EVIDENCE` blocks given to the LLM) → `citation` (invalid/wrong page) → `calc` → `generation:wrong_or_missing_fact` → `refusal:over_refusal` / `under_refusal`. This is what makes "what did the numbers make you change" answerable.
+For each failed item, the first failing stage in this order: `system` (provider/index error) → `retrieval:recall_miss` (gold page in neither BM25 nor dense top-40) → `retrieval:fusion_drop` → `retrieval:rank_drop` (gold page ranked below the `FINAL_EVIDENCE` blocks given to the LLM) → `citation` (invalid/wrong page) → `calc` → `generation:wrong_or_missing_fact` → `refusal:over_refusal` / `under_refusal`. This is what makes "what did the numbers make you change" answerable.
 
 ### 14.4 Run artifacts
-`tcb eval` writes `traces.jsonl` (full per-question trace), `results.jsonl`, `summary.json` and `config.json` (set sha256, provider, model, index identity, reranker class, τ, RRF k, and **`submission_grade`**: true only with the real BGE-M3 index and the real cross-encoder). `tcb eval --compare A B` reports fixed / regressed / verdict-changed items and metric deltas, and warns if the two runs differ in set, provider, model, τ, k or index.
+`tcb eval` writes `traces.jsonl` (full per-question trace), `results.jsonl`, `summary.json` and `config.json` (set sha256, provider, model, index identity, evidence count, RRF k, device, and **`submission_grade`**: true only with the real BGE-M3 index). `tcb eval --compare A B` reports fixed / regressed / verdict-changed items and metric deltas, and warns if the two runs differ in set, provider, model, τ, k or index.
 
 ### 14.5 Experiments (`tcb exp`, retrieval only, zero token cost)
 | ID | Question | Decision rule |
 |---|---|---|
-| E2 | tokenizer `tcb-vi-v1` vs default vs bigram | report R@k |
+| E2 | tokenizer `tcb-vi-v1` vs default vs bigram | switch only with ≥ 2 pts R@20 (a switch needs an index rebuild) |
 | E3 / E3b | BM25 vs dense vs RRF vs RSF; RRF k sweep | keep k = 60 unless ≥ 5 pts R@20 on **every** set |
-| E4 | rerank pool N × final k, with rerank time | smallest (N, k) within 2 pts of best recall |
+| E4 | how many fused blocks go to the LLM (k = 5 … 20) | smallest k within 2 pts of the best recall (run m4 measured the former reranker grid N × k instead; §17.1) |
 | E5 | glossary expansion | keep only if no regression |
 | E6 | narrative chunk size | needs index rebuild; experimental indexes are rejected by `serve` |
-| E7 | τ_low from rerank-score distributions | max F1 subject to answerable flagged ≤ 2 pts; then **freeze** in `conf.py` |
 
-The runner *suggests* a decision by these rules and never edits `conf.py`. Order of work: E-experiments on dev → freeze → confirm once on val → q10 once, human-scored.
+The runner *suggests* a decision by these rules and never edits `conf.py`. Order of work: experiments on dev+val → freeze → eval on val → q10 once, human-scored. Val was also used to find the three failures fixed in §17.1, so it is no longer a clean held-out set; q10 was never used for a decision.
 
 ---
 
@@ -325,7 +321,7 @@ The runner *suggests* a decision by these rules and never edits `conf.py`. Order
 |---|---|---|---|
 | `unit` | nothing | calculator, citation checks, refusal, retry, provider error mapping (mocked), API routing, scorers, experiment math | any real model/provider works |
 | `integ` | `data/ar.pdf`, poppler | page map, extraction, table golden figures, header regressions, gold-on-page for q10/dev/val, index build/validate with a hash embedder in tmp, vset round trip | retrieval quality; the submission index |
-| `live_models` | real models | BGE-M3 / reranker load, dim, revision | answer quality |
+| `live_models` | real model | BGE-M3 load, dim, revision | answer quality |
 | `live_openai`, `live_ollama` | key / running Ollama | one schema-constrained call returns a valid grounded plan | quality at scale |
 | `live` | `idx/` + models + provider | end-to-end answer and refusal | — |
 
@@ -367,7 +363,7 @@ The runner *suggests* a decision by these rules and never edits `conf.py`. Order
 | Fail-closed index validation | warn and continue | silent degradation is worse than refusing to start |
 | Eval counts verified items only | count all drafts | an unverified gold can make a correct answer "fail" or a wrong one "pass" |
 | Deterministic scorers | LLM judge | reproducible, free; the cost is that fact-presence can miss a paraphrase without a numeric anchor (those items are flagged `unscorable`) |
-| τ_low left unset after E7 | a guessed threshold; the E7 threshold | the retry costs a second rerank and showed no gain (17.1) |
+| No reranker, no τ_low retry | BGE-reranker-v2-m3 over a pool; a score-triggered retry | one item of recall in 85 for most of the CPU time; the retry doubled retrieval on weak questions with no gain (§17.1) |
 | Hash embedder only in `tests/` | use it to produce the index when BGE-M3 is unavailable | it would let a fake index pass as real |
 
 ### 17.1 Retrieval and speed options tried (measured, 13 Oct 2026)
@@ -382,20 +378,44 @@ Data: `data/dev.json` + `data/val.json`, 85 answerable items with gold pages, 19
 | Rerank pool N × final k (E4) | recall within the k blocks given to the LLM | N10: 0.882; N20/30/40 with k ≥ 8: 0.894 (one item more). CPU rerank time grows with N (≈ 60 s per question at N = 30 on 2 cores) | pool 30 → 10, all 10 blocks to the LLM |
 | Glossary expansion (E5) | items lost / gained | none lost, none gained | keep (needed for abbreviations such as RBG, CASA) |
 | Weak-retrieval retry τ_low (E7) | F1 of flagging unanswerable by top rerank score | τ = 0.599 (on pool 30) | not enabled: the retry is a second full search and rerank on exactly the weak and unanswerable questions, and no experiment shows it recovers a page |
-| No cross-encoder at all | follows from E4: with N = k = 10 the reranker no longer selects blocks, it only orders them | recall unchanged by construction (0.882); saves the whole rerank time | **pending**: `tcb eval --no-rerank` vs default on val (CPU). Rule fixed before the run: drop the reranker from the answer path unless it costs more than one correct answer on val |
+| No cross-encoder at all | follows from E4: with N = k = 10 the reranker no longer selects blocks, it only orders them | recall unchanged by construction (0.882); removes ≈ 20 s per question on 2 CPU cores (val1 with the reranker at N = 10: p50 30.3 s) | **adopted 13 Oct 2026**: model, download, `tcb check` step, E4 grid and E7 removed; Docker image ≈ 2.2 GB smaller. Decided without the planned A/B eval because recall cannot change and the time saving is the whole rerank stage |
 | Vector database (FAISS / Chroma / Qdrant) instead of the LlamaIndex in-memory store | time of one top-40 dense search over 1,526 × 1,024 vectors, query vector given | LlamaIndex simple store 49 ms (median), numpy 0.17 ms, FAISS flat 0.30 ms; BM25 0.14 ms | not adopted: at most 0.05 s saved per question against a rerank of tens of seconds, and a DB server adds a service to Docker |
 | BGE-M3 sparse ("hybrid search" inside the model) instead of BM25 | the premise that keyword search puts the number's block at top 1 | 1 of 85 questions contains a number other than a year or date (the number is the answer, not the query); "2025" occurs in 572 of 1,526 chunks; BM25 R@1 = 0.565 | not adopted for speed: retrieval is already hybrid (BM25 + BGE-M3 dense + RRF), sparse weights come from the same forward pass so they save no time, and they need FlagEmbedding plus a re-index. A quality experiment for later |
 | Larger chunks (400 to 500 words, 50 to 100 words overlap) | current chunk shape | narrative median 176 words (cap 220), table chunks are whole rows with column header and unit repeated on every row, KPI tiles 19 words, glossary 7; 0 chunks cross a printed page | not adopted: 10 blocks of ~450 words is ~2.5× the prompt (slower and dearer LLM call; the 15,000-character evidence budget would keep only ~5 blocks), blocks over ~350 words exceed the reranker's 512 tokens, and overlap across pages breaks one-page citations. Chunk size for quality (E6) not run |
-| Reranker speed-ups (batch size 1, int8 dynamic quantization, ONNX runtime) | not run | | moot if the reranker leaves the answer path; int8 changes scores and ONNX adds dependencies |
-| Model warm-up at start | first question paid the reranker load | `Retriever.warm()` at start of chat/serve/batch/eval | adopted |
+| Reranker speed-ups (batch size 1, int8 dynamic quantization, ONNX runtime) | not run | | moot once the reranker left |
+| Model warm-up at start | the first question paid the model load | `Retriever.warm()` at start of chat/serve/batch/eval | adopted |
+
+### 17.2 Answer-level results and the fixes they caused
+
+Run `val1` (13 Oct 2026): `data/val.json` 34 items, claude-haiku-5-5, Colab 2 vCPU, still with the reranker at N = 10.
+
+| Metric | Value |
+|---|---|
+| pass | 31 / 34 (0.912) |
+| fact correct / page hit (answerable) | 0.893 / 0.893 |
+| citation valid | 1.0 |
+| refusal recall / false answers on unanswerable | 1.0 / 0.0 (5 items) |
+| refusal precision | 0.625: three answerable questions refused |
+| latency p50 / p95 | 30.3 s / 35.5 s |
+| LLM calls per question | 1.21 (follow-up rewrites + repairs) |
+
+All three failures were over-refusals with the gold page already in the top 4:
+
+| Item | Cause | Fix (general, not item-specific) |
+|---|---|---|
+| `n-hr-diff` (headcount 12.705 vs 11.848, p.52) | the calculator only accepted quantities parsed from statement tables, so any arithmetic on numbers in narrative text or KPI tiles was impossible ("diff needs 2 inputs, got 0") | **literals**: the plan may declare `L1..Ln` (evidence id, number copied verbatim, unit, period); the code accepts one only if the number occurs in that evidence block, then the normal typed calculator runs. An invented number is rejected and triggers the one repair (tests `test_calculation_on_narrative_numbers_via_literals`, `test_invented_literal_is_rejected`) |
+| `c-06` (net profit growth, B03 p.300) | under investigation from the trace; one plausible cause: ten table chunks can offer more than the 60-quantity cap, and quantities were kept in evidence order | quantities over the cap are now kept by word overlap between their label and the question |
+| `g-irrbb` (glossary p.387) | under investigation from the trace | |
+
+Integer differences now print without a decimal (857, not 857,0).
 
 ---
 
 ## 18. Known gaps and limits
 
-1. **Not run yet:** Docker build, `smoke.sh`, live OpenAI call, Ollama smoke, E6, `tcb eval` quality numbers, CPU latency at pool 10, demo video. Run on Colab: model load, `idx/`, live Anthropic test, q10 batch (pool 30), experiments E2 to E5 and E7.
+1. **Not run yet:** Docker build, `smoke.sh`, live OpenAI call, Ollama smoke, E6, eval without the reranker, q10 eval, demo video. Run on Colab: model load, `idx/`, live Anthropic test, experiments E2 to E5 (and the former E4 grid and E7), eval `val1`.
 2. dev/val golds were checked by Claude against the PDF text (pdftotext of the cited page; calculations recomputed); a human spot-check is pending.
-3. 47 low-quality note tables give text only; calculations over them are refused. A layout model could recover them (out of scope).
+3. 47 low-quality note tables give no table quantities; a calculation over them is possible only through literals copied from the text. A layout model could recover them (out of scope).
 4. Number grounding ignores integers ≤ 12.
 5. Fact-presence scoring cannot judge a purely textual answer without numeric or keyword gold; it relies on `gold_facts` being well chosen.
 6. Rounded vs exact figures: the report states some values twice at different precision (p.5 vs p.297/300); gold facts use `a | b` alternatives and `alt_pages`; this is manual per item.
@@ -408,7 +428,7 @@ Data: `data/dev.json` + `data/val.json`, 85 answerable items with gold pages, 19
 
 ## 19. Cost and latency model (to be measured, not asserted)
 
-Per question: ≤ 1 rewrite call (follow-ups only) + 1–2 generation calls; embedding of the query (CPU) + rerank of 10 passages (CPU, the dominant local cost; 30 passages took ≈ 60 s on 2 Colab cores) + dense search (≈ 0.05 s) + BM25 (< 1 ms). The trace records tokens, calls, per-stage seconds and an estimated USD cost, so the submission can report p50/p95 latency and cost per question. Ingestion cost: parse is seconds; embedding 1,526 nodes with BGE-M3 on CPU is **[NOT MEASURED]**.
+Per question: ≤ 1 rewrite call (follow-ups only) + 1–2 generation calls; one query embedding with BGE-M3 on CPU (`query_embed_s` in `tcb check`; `seconds.embed` in every trace) + dense search (≈ 0.05 s) + BM25 (< 1 ms). The former rerank of 30 passages took ≈ 60 s on 2 Colab cores. `tcb eval` reports p50/p95 latency and the median seconds per stage (`embed`, `dense`, `bm25`, `llm`), tokens, and a cost estimate when the model has a list price in `conf.PRICES` (otherwise null, never 0).
 
 ---
 
@@ -420,7 +440,7 @@ Keys are read from the environment / `.env` (git-ignored; the loader never print
 
 ## 21. Operating the project (pointers)
 
-- Diagnose a machine: `tcb doctor`; set up locally: `setup.ps1` (Windows) or `setup.sh`.
+- Diagnose a machine: `tcb doctor`.
 - Gate order on a networked machine: `tcb check` → `tcb build data/ar.pdf out/idx` → `tcb validate out/idx` → move to `idx/` → `docker compose up --build` / `./smoke.sh`.
-- Evaluation order: `tcb vset check` → human review via CSV → `tcb exp data/dev.json data/val.json` → freeze constants → `tcb eval data/val.json` → once on `data/q10.json` → fill `SUBMISSION.md` with measured numbers only.
+- Evaluation order: `tcb vset check` → `tcb exp data/dev.json data/val.json` → freeze constants → `tcb eval data/val.json` → once on `data/q10.json` → fill `SUBMISSION.md` with measured numbers only.
 - Exact commands and the status table live in `README.md`; the submission text lives in `SUBMISSION.md`.

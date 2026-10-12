@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 
-from . import calc, chat, cite, conf, find, gen, num, plan as P, refuse
+from . import calc, chat, cite, conf, find, gen, num, plan as P, refuse, vi
 from .llm import LLMError, Provider
 
 
@@ -37,33 +37,27 @@ def cost_usd(model: str, tin: int, tout: int) -> float | None:
 
 
 class Engine:
-    def __init__(self, retriever: find.Retriever, provider: Provider, max_tokens: int = 1000, tau_low=conf.TAU_LOW):
-        self.rt, self.prov, self.max_tokens, self.tau = retriever, provider, max_tokens, tau_low
+    def __init__(self, retriever: find.Retriever, provider: Provider, max_tokens: int = 1000):
+        self.rt, self.prov, self.max_tokens = retriever, provider, max_tokens
 
     # ---------------------------------------------------------------- helpers
-    def _quantities(self, nodes: list[dict], evs: list[cite.Ev], cap: int = 60) -> dict[str, num.Quantity]:
+    def _quantities(self, nodes: list[dict], question: str, cap: int = 60) -> dict[str, num.Quantity]:
+        """Table quantities of the evidence. Ten statement chunks can hold 200+ cells, so when over the cap the ones whose
+        label shares the most words with the question are kept (then evidence order)."""
         k = [0]
         def nid():
             k[0] += 1; return f"Q{k[0]}"
-        qs: dict[str, num.Quantity] = {}
-        for n in nodes:
-            for q in num.from_node(n, nid):
-                if len(qs) < cap: qs[q.qid] = q
-        return qs
+        allq = [q for n in nodes for q in num.from_node(n, nid)]
+        if len(allq) > cap:
+            qt = set(vi.tokens(question))
+            keep = sorted(range(len(allq)), key=lambda i: (-len(qt & set(vi.tokens(allq[i].label))), i))[:cap]
+            allq = [allq[i] for i in sorted(keep)]
+        return {q.qid: q for q in allq}
 
     def _retrieve(self, q: str, trace: dict):
         r = self.rt.search(q)
-        weak = self.tau is not None and (r.top_score is None or r.top_score < self.tau)
-        trace["retrieval"] = {"query": r.query, "weak": weak, "retried": False}
-        if weak:                                           # one retry with the diacritic-folded raw query, merged by score
-            from . import vi
-            r2 = self.rt.search(vi.fold(q))
-            seen = dict(r.reranked)
-            for c, s in r2.reranked: seen[c] = max(s, seen.get(c, -1e9))
-            r.reranked = sorted(seen.items(), key=lambda x: -x[1])
-            trace["retrieval"]["retried"] = True
-        trace["retrieval"].update(bm25=r.bm25, dense=r.dense, fused=r.fused[: self.rt.pool],
-                                  reranked=[[c, round(s, 4)] for c, s in r.reranked], seconds=r.seconds)
+        trace["retrieval"] = {"query": r.query, "bm25": r.bm25, "dense": r.dense, "fused": r.fused[: self.rt.top_bm25],
+                              "ranked": [[c, round(s, 5)] for c, s in r.ranked], "seconds": r.seconds}
         return r
 
     # ---------------------------------------------------------------- main
@@ -89,7 +83,7 @@ class Engine:
                 nodes.append(n); used += len(n["text"])
             tr["evidence_chars"] = used
             evs = cite.evidence_from(nodes)
-            qmap = self._quantities(nodes, evs)
+            qmap = self._quantities(nodes, standalone)
             tr["evidence"] = [{"eid": e.eid, "chunk_id": e.chunk_id, "page": e.page, "pdf_page": e.pdf_page,
                                "type": e.content_type, "source": e.page_source} for e in evs]
             tr["quantities"] = {k: {"label": v.label, "value": str(v.value), "dim": v.dim, "scale": v.scale,
@@ -104,6 +98,9 @@ class Engine:
             plan = g.plan
             tr["plan"] = plan.model_dump(); tr["repaired"] = g.repaired
 
+            lits, _ = cite.literal_quantities(plan, evs)
+            tr["literals"] = {k: {"value": str(v.value), "dim": v.dim, "period": v.period.label, "page": v.page} for k, v in lits.items()}
+            qmap = {**qmap, **lits}
             ck = cite.check(plan, evs, qmap, standalone)
             tr["check_problems"] = ck.flat
             # ---- calculations (deterministic)

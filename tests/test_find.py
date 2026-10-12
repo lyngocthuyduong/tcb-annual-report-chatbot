@@ -1,22 +1,16 @@
-"""INTEGRATION on a TEST-HASH index built in tmp from the real PDF. The hash embedder and overlap reranker are
-stand-ins: these tests check retrieval MECHANICS (lexical number matching, RRF, stage bookkeeping), not retrieval quality."""
+"""INTEGRATION on a TEST-HASH index built in tmp from the real PDF. The hash embedder is a stand-in: these tests check
+retrieval MECHANICS (lexical number matching, RRF, stage bookkeeping), not retrieval quality."""
 import json
 
 import pytest
 
-from tcb import conf, find, vi
-
-
-class OverlapRerank:
-    def score(self, q, ts):
-        qs = set(vi.tokens(q))
-        return [len(qs & set(vi.tokens(t))) / (1 + len(t.split()) ** 0.5) for t in ts]
+from tcb import conf, find
 
 
 @pytest.fixture(scope="module")
 def rt(tindex, built):
     gloss = json.loads((built[0] / "gloss.json").read_text(encoding="utf-8"))
-    return find.Retriever(tindex, OverlapRerank(), gloss)
+    return find.Retriever(tindex, gloss)
 
 
 def page_of(rt, cid): return rt.ix.nodes[cid]["printed_page_number"]
@@ -46,28 +40,16 @@ def test_glossary_expansion(rt):
 def test_stage_bookkeeping(rt):
     r = rt.search("tổng tài sản 2025")
     assert len(r.bm25) <= 40 and len(r.dense) == 40 and len(r.fused) >= len(r.bm25)
-    assert len(r.reranked) == min(conf.RERANK_POOL, len(r.fused)) and set(c for c, _ in r.reranked) <= set(r.fused)
-    s = [x for _, x in r.reranked]; assert s == sorted(s, reverse=True)
-    assert set(r.seconds) == {"bm25", "dense", "rerank"}
-    assert len(rt.top_nodes(r)) == min(conf.FINAL_EVIDENCE, len(r.reranked)) and r.top_score == s[0]
-
-
-def test_no_reranker_keeps_fused_order(rt):
-    import copy
-    r0 = copy.copy(rt); r0.rr = None
-    r = r0.search("tổng tài sản 2025")
-    assert [c for c, _ in r.reranked] == r.fused[: r0.pool] and len(r0.top_nodes(r)) == min(conf.FINAL_EVIDENCE, len(r.reranked))
-    r0.warm()
+    assert [c for c, _ in r.ranked] == r.fused[: conf.FINAL_EVIDENCE]                 # no reranker: the fused order is final
+    s = [x for _, x in r.ranked]; assert s == sorted(s, reverse=True)
+    assert set(r.seconds) == {"bm25", "embed", "dense"}
+    assert len(rt.top_nodes(r)) == min(conf.FINAL_EVIDENCE, len(r.fused))
+    rt.warm()
 
 
 def test_empty_query_does_not_crash(rt):
     r = rt.search("???")
-    assert r.bm25 == [] and r.dense == [] and r.reranked == []
-
-
-def test_missing_reranker_snapshot_fails_loudly(tmp_path):
-    with pytest.raises(FileNotFoundError, match="baked into the Docker image"):
-        find.CrossEncoderReranker(tmp_path / "nope").score("q", ["t"])
+    assert r.bm25 == [] and r.dense == [] and r.ranked == []
 
 
 def test_test_index_is_never_the_submission_index(built):

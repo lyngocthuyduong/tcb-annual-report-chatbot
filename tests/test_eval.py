@@ -17,7 +17,7 @@ def item(**kw):
 
 
 def trace(bm=("a",), de=("a",), fu=("a",), rr=(("a", 1.0),), ev_pages=(5,)):
-    return {"retrieval": {"bm25": list(bm), "dense": list(de), "fused": list(fu), "reranked": [list(x) for x in rr]},
+    return {"retrieval": {"bm25": list(bm), "dense": list(de), "fused": list(fu), "ranked": [list(x) for x in rr]},
             "evidence": [{"page": p} for p in ev_pages], "total_s": 1.0, "llm": {"calls": 1, "cost_usd": 0.001}}
 
 
@@ -60,7 +60,7 @@ def test_facts_alternatives_and_units():
     ({}, A(tr=trace(bm=(), de=(), fu=(), rr=())), "retrieval:recall_miss"),
     ({}, A("not_in_report", "Không có", tr=trace(bm=("b",), de=("b",), fu=("b",), rr=(("b", 1),), ev_pages=(9,))), "retrieval:recall_miss"),
     ({}, A(tr=trace(fu=("b",), rr=(("b", 1),))), "retrieval:fusion_drop"),
-    ({}, A(tr=trace(rr=(("b", 1),) * conf.FINAL_EVIDENCE + (("a", 0.1),))), "retrieval:rerank_drop"),
+    ({}, A(tr=trace(rr=(("b", 1),) * conf.FINAL_EVIDENCE + (("a", 0.1),))), "retrieval:rank_drop"),
     ({}, A("not_in_report", "Không có thông tin"), "refusal:over_refusal"),
     ({}, A(answer="CASA 39% [tr. 5]"), "generation:wrong_or_missing_fact"),
     ({}, A(answer="CASA 40,4% [tr. 9]", tr=trace(ev_pages=(5, 9))), "citation:wrong_page"),
@@ -91,7 +91,7 @@ def test_summary_metrics():
     s = ev.summarize(rows)
     assert s["n"] == 4 and s["pass_rate"] == 0.5
     assert s["refusal"] == {"precision": 0.5, "recall": 0.5, "n_unanswerable": 2, "false_answer_rate": 0.5}
-    assert s["retrieval"]["recall@8_final"] == 1.0 and s["retrieval"]["mrr_final"] == 1.0
+    assert s["retrieval"][f"recall@{conf.FINAL_EVIDENCE}_final"] == 1.0 and s["retrieval"]["mrr_final"] == 1.0
     assert s["attribution"]["pass"] == 2 and s["answers"]["citation_valid"] == 1.0
 
 
@@ -121,7 +121,7 @@ def test_run_eval_end_to_end_writes_machine_readable_artifacts(tmp_path):
     d = tmp_path / "runs" / "t"
     assert {p.name for p in d.iterdir()} == {"traces.jsonl", "results.jsonl", "summary.json", "config.json"}
     tr = [json.loads(l) for l in (d / "traces.jsonl").read_text(encoding="utf-8").splitlines()]
-    assert len(tr) == 3 and tr[0]["answer"]["trace"]["retrieval"]["reranked"] and tr[0]["score"]["verdict"] == "pass"
+    assert len(tr) == 3 and tr[0]["answer"]["trace"]["retrieval"]["ranked"] and tr[0]["score"]["verdict"] == "pass"
     cfg = json.loads((d / "config.json").read_text(encoding="utf-8"))
     assert cfg["provider"] == "scripted" and len(cfg["set_sha256"]) == 64
     rep2 = ev.run_eval(str(sp), str(tmp_path / "runs"), e, label="t2", include_unverified=True)
@@ -131,7 +131,7 @@ def test_run_eval_end_to_end_writes_machine_readable_artifacts(tmp_path):
 def _fake_run(d, rows, cfg_extra=None, summary=None):
     d.mkdir(parents=True)
     (d / "results.jsonl").write_text("\n".join(json.dumps(r) for r in rows) + "\n", encoding="utf-8")
-    (d / "summary.json").write_text(json.dumps(summary or {"pass_rate": 0.5, "retrieval": {"recall@8_final": 0.8, "mrr_final": 0.6}}), encoding="utf-8")
+    (d / "summary.json").write_text(json.dumps(summary or {"pass_rate": 0.5, "retrieval": {f"recall@{conf.FINAL_EVIDENCE}_final": 0.8, "mrr_final": 0.6}}), encoding="utf-8")
     (d / "config.json").write_text(json.dumps({"set_sha256": "s1", "provider": "p", "model": "m", **(cfg_extra or {})}), encoding="utf-8")
 
 
@@ -139,11 +139,11 @@ def test_compare_runs(tmp_path):
     a = tmp_path / "a"; b = tmp_path / "b"
     R = lambda i, ok, v: {"id": i, "passed": ok, "verdict": v}
     _fake_run(a, [R("1", True, "pass"), R("2", False, "retrieval:recall_miss"), R("3", False, "generation:wrong_or_missing_fact"), R("4", True, "pass")])
-    _fake_run(b, [R("1", False, "citation:wrong_page"), R("2", True, "pass"), R("3", False, "retrieval:rerank_drop"), R("5", True, "pass")],
-              {"model": "m2", "set_sha256": "s2"}, {"pass_rate": 0.75, "retrieval": {"recall@8_final": 0.9, "mrr_final": 0.7}})
+    _fake_run(b, [R("1", False, "citation:wrong_page"), R("2", True, "pass"), R("3", False, "retrieval:rank_drop"), R("5", True, "pass")],
+              {"model": "m2", "set_sha256": "s2"}, {"pass_rate": 0.75, "retrieval": {f"recall@{conf.FINAL_EVIDENCE}_final": 0.9, "mrr_final": 0.7}})
     c = ev.compare(str(a), str(b))
     assert c["fixed"] == ["2"] and c["regressed"] == ["1"] and c["only_in_a"] == ["4"] and c["only_in_b"] == ["5"]
-    assert c["verdict_changed"] == [{"id": "3", "from": "generation:wrong_or_missing_fact", "to": "retrieval:rerank_drop"}]
+    assert c["verdict_changed"] == [{"id": "3", "from": "generation:wrong_or_missing_fact", "to": "retrieval:rank_drop"}]
     assert c["metrics"]["pass_rate"] == {"a": 0.5, "b": 0.75, "delta": 0.25}
     assert any("DIFFERENT DATASET" in w for w in c["config_differences"]) and any("model" in w for w in c["config_differences"])
     t = ev.compare_text(c); assert "REGRESSED (1): 1" in t and "fixed (1): 2" in t

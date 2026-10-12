@@ -2,7 +2,7 @@
 in a node that carries the gold printed page. Guards page mapping + extraction, independent of retrieval/LLM."""
 import pytest
 
-from tcb import cite, ev, vi
+from tcb import cite, ev
 
 pytestmark = pytest.mark.integ
 ITEMS = [i for i in ev.load_items("data/q10.json") if i.answerable]

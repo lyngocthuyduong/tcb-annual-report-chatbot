@@ -12,10 +12,10 @@ ROOT = Path(__file__).resolve().parent.parent
 
 @pytest.mark.live_models
 def test_real_models_load_and_behave():
-    if not (conf.MODELS_DIR / "bge-m3").exists() or not (conf.MODELS_DIR / "bge-reranker-v2-m3").exists():
+    if not (conf.MODELS_DIR / "bge-m3").exists():
         pytest.skip(f"{conf.MODELS_DIR} has no baked models (run inside the Docker image)")
     from tcb import cli
-    assert cli.cmd_check(None) == 0                     # same gate as `tcb check`: dim 1024, revisions match, rerank pos > neg
+    assert cli.cmd_check(None) == 0                     # same gate as `tcb check`: dim 1024, revision matches, related text closer than unrelated
 
 
 @pytest.mark.live_openai

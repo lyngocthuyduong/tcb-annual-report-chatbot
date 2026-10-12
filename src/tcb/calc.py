@@ -74,7 +74,8 @@ def diff(q_a: Quantity, q_b: Quantity) -> CalcResult:
     _same_dim(q_a, q_b); _same_kind(q_a, q_b)
     if q_a.dim == "%":
         return CalcResult("diff", q_a.value - q_b.value, "pp", 1, 2, (q_a.qid, q_b.qid), f"{q_a.qid}-{q_b.qid}")
-    return CalcResult("diff", (q_a.base - q_b.base) / q_a.scale, q_a.dim, q_a.scale, 1, (q_a.qid, q_b.qid),
+    whole = q_a.scale == q_b.scale and all(q.value == q.value.to_integral_value() for q in (q_a, q_b))
+    return CalcResult("diff", (q_a.base - q_b.base) / q_a.scale, q_a.dim, q_a.scale, 0 if whole else 1, (q_a.qid, q_b.qid),
                       f"{q_a.qid}-{q_b.qid}")
 
 

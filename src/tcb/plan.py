@@ -28,10 +28,28 @@ class Calc(BaseModel):
         return v
 
 
+class Lit(BaseModel):
+    """A number the LLM copies from an evidence block that has no table quantity (narrative, KPI tile). The code checks
+    that `number` occurs verbatim in that block before the calculator may use it."""
+    lid: str
+    evidence: str                                              # "E3"
+    number: str                                                # copied verbatim, e.g. "12.705"
+    unit: str = ""                                             # "người", "tỷ đồng", "%"
+    period: str = ""                                           # "2025" or "31/12/2025"
+    label: str = ""
+
+    @field_validator("lid")
+    @classmethod
+    def _lid(cls, v):
+        if not re.fullmatch(r"L\d+", v): raise ValueError("lid must look like L1")
+        return v
+
+
 class Plan(BaseModel):
     status: Literal["answered", "partial", "not_in_report", "ambiguous"]
     sub_questions: list[str] = Field(default_factory=list)
     claims: list[Claim] = Field(default_factory=list)
+    literals: list[Lit] = Field(default_factory=list)
     calculations: list[Calc] = Field(default_factory=list)
     clarification_vi: str | None = None
 
@@ -46,6 +64,10 @@ SCHEMA = {
             "evidence": {"type": "array", "items": {"type": "string"}},
             "calc_refs": {"type": "array", "items": {"type": "string"}}},
             "required": ["text_vi", "evidence"]}},
+        "literals": {"type": "array", "items": {"type": "object", "properties": {
+            "lid": {"type": "string"}, "evidence": {"type": "string"}, "number": {"type": "string"},
+            "unit": {"type": "string"}, "period": {"type": "string"}, "label": {"type": "string"}},
+            "required": ["lid", "evidence", "number", "unit", "period"]}},
         "calculations": {"type": "array", "items": {"type": "object", "properties": {
             "cid": {"type": "string"},
             "op": {"type": "string", "enum": ["growth_pct", "diff", "ratio", "share_pct", "cagr", "sum", "convert"]},
@@ -73,7 +95,7 @@ SYSTEM = """Bạn là trợ lý đọc Báo cáo thường niên 2025 của Tech
 Quy tắc:
 1. Chỉ dùng các đoạn bằng chứng [E1], [E2]... được cung cấp. Không dùng kiến thức bên ngoài. Mỗi claim phải liệt kê id bằng chứng hỗ trợ trong "evidence".
 2. Số liệu trong text_vi phải được chép NGUYÊN VĂN từ bằng chứng (giữ định dạng Việt Nam, ví dụ 1.192.344.137 hoặc 14,6%), kèm đơn vị và kỳ (năm/ngày).
-3. KHÔNG tự tính toán. Nếu cần tính (tăng trưởng, chênh lệch, tỷ lệ, tỷ trọng, CAGR, tổng, đổi đơn vị), khai báo trong "calculations" với inputs là id đại lượng [Q1], [Q2]... và chèn {C1}, {C2}... vào text_vi tại vị trí kết quả; đồng thời ghi cid vào "calc_refs".
+3. KHÔNG tự tính toán. Nếu cần tính (tăng trưởng, chênh lệch, tỷ lệ, tỷ trọng, CAGR, tổng, đổi đơn vị), khai báo trong "calculations" với inputs là id đại lượng [Q1], [Q2]... và chèn {C1}, {C2}... vào text_vi tại vị trí kết quả; đồng thời ghi cid vào "calc_refs". Nếu số cần tính nằm trong đoạn bằng chứng nhưng không có trong danh sách đại lượng, khai báo nó trong "literals" (lid "L1", evidence là id đoạn chứa số, number chép NGUYÊN VĂN, unit, period là năm hoặc ngày của số đó) rồi dùng "L1" làm input.
 4. KHÔNG ghi số trang hay "[tr. N]" trong text_vi; hệ thống tự gắn trích dẫn.
 5. Câu hỏi nhiều phần: liệt kê các phần trong "sub_questions" và trả lời từng phần bằng các claim riêng.
 6. status: "answered" (đủ thông tin), "partial" (chỉ trả lời được một phần; ghi phần báo cáo không có vào clarification_vi), "not_in_report" (báo cáo không có thông tin; claims để trống), "ambiguous" (câu hỏi mơ hồ; điền clarification_vi, claims để trống).

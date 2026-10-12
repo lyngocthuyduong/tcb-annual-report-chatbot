@@ -63,7 +63,7 @@ def checks(root: Path = Path(".")) -> list[dict]:
             p = conf.poppler(t)
             ver = subprocess.run([p, "-v"], capture_output=True, text=True, encoding="utf-8", errors="replace")
             add(t, OK, (ver.stderr or ver.stdout).splitlines()[0] if (ver.stderr or ver.stdout) else p)
-        except RuntimeError as e:
+        except RuntimeError:
             add(t, FAIL, "not found", conf.POPPLER_HINT)
 
     pdf = root / "data" / "ar.pdf"
@@ -75,7 +75,7 @@ def checks(root: Path = Path(".")) -> list[dict]:
         add("data/ar.pdf", OK if h == conf.PDF_SHA256 else FAIL, f"sha256 {h[:12]}…",
             "" if h == conf.PDF_SHA256 else f"Different file than the one the code was built for (expected {conf.PDF_SHA256[:12]}…)")
 
-    for sub, rev in (("bge-m3", conf.EMBED_REV), ("bge-reranker-v2-m3", conf.RERANK_REV)):
+    for sub, rev in (("bge-m3", conf.EMBED_REV),):
         d = conf.MODELS_DIR / sub
         r = d / ".rev"
         if not d.exists():
@@ -109,7 +109,7 @@ def checks(root: Path = Path(".")) -> list[dict]:
         "" if have_key else "cp .env.example .env and fill the key (both Docker and local `tcb` read ./.env)")
 
     ram = _ram_gb()
-    add("RAM", OK if ram is None or ram >= 8 else WARN, "unknown" if ram is None else f"{ram:.1f} GB", "" if ram is None or ram >= 8 else "BGE-M3 + reranker want ≈8 GB free; close other apps / raise Docker memory")
+    add("RAM", OK if ram is None or ram >= 6 else WARN, "unknown" if ram is None else f"{ram:.1f} GB", "" if ram is None or ram >= 6 else "BGE-M3 + index need ≈4 GB (peak RSS 4.1 GB measured); close other apps / raise Docker memory")
     free = shutil.disk_usage(root).free / 1e9
     add("disk", OK if free >= 15 else WARN, f"{free:.0f} GB free", "" if free >= 15 else "models ≈6 GB + image ≈10 GB")
 

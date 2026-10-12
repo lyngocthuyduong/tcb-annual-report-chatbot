@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Regenerate dependency locks from pyproject.toml (run on a networked machine; needs `pip install uv`).
-#   requirements.lock : hash-pinned, Linux x86_64 / py3.12, WITHOUT torch + CUDA (Docker installs CPU torch separately)
-#   uv.lock           : full multi-platform lock (documentation / `uv sync` users)
+# Regenerate requirements.lock from pyproject.toml (run on a networked machine; needs `pip install uv`).
+# Hash-pinned, Linux x86_64 / py3.12, WITHOUT torch + CUDA (Docker installs CPU torch separately).
 set -euo pipefail
 cd "$(dirname "$0")"
 SKIP=""
@@ -12,5 +11,4 @@ uv pip compile pyproject.toml --extra dev --python-version 3.12 --python-platfor
 if grep -qiE '^(nvidia|triton|cuda|torch)' requirements.lock; then
   echo "ERROR: GPU/torch packages leaked into requirements.lock; update the SKIP list in lock.sh" >&2; exit 1
 fi
-uv lock
-echo "locks written: requirements.lock uv.lock"
+echo "lock written: requirements.lock"
