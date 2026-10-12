@@ -59,6 +59,48 @@ class Group:
         bb = [b.bbox for b in self.blocks]
         return (min(b[0] for b in bb), min(b[1] for b in bb), max(b[2] for b in bb), max(b[3] for b in bb))
 
+    @property
+    def read(self) -> str:
+        """Prose in reading order (columns left to right, bands split by full-width blocks)."""
+        return "\n".join(b.text for b in reading_order(self.blocks, lambda b: b.bbox))
+
+    @property
+    def tile(self) -> str:
+        """KPI tile: label lines above the figure, the figure, its unit (set beside it), then lines below."""
+        big = [b for b in self.blocks if (b.bbox[3] - b.bbox[1]) >= 20 and re.search(r"\d", b.text) and len(b.text) <= 12]
+        def key(b):
+            for n in big:
+                if b is not n and b.bbox[0] >= n.bbox[2] - 2 and min(b.bbox[3], n.bbox[3]) > max(b.bbox[1], n.bbox[1]):
+                    return (n.bbox[1], 1, b.bbox[0])            # unit beside the figure: right after it
+            return (b.bbox[1], 0, b.bbox[0])
+        return "\n".join(b.text for b in sorted(self.blocks, key=key))
+
+
+def reading_order(items: list, box) -> list:
+    """Items (blocks or groups) whose box spans >= 60 % of the total width split the page into bands; inside a band,
+    columns (items whose x-ranges overlap) are read left to right, each top to bottom."""
+    if len(items) < 2: return list(items)
+    gx0 = min(box(b)[0] for b in items); gx1 = max(box(b)[2] for b in items)
+    full = sorted((b for b in items if box(b)[2] - box(b)[0] >= 0.6 * (gx1 - gx0)), key=lambda b: box(b)[1])
+    rest = [b for b in items if not any(b is f for f in full)]
+    bands: list[list] = [[] for _ in range(len(full) + 1)]
+    for b in rest:
+        bands[sum(1 for f in full if box(f)[1] < box(b)[1])].append(b)
+    out: list = []
+    for i, band in enumerate(bands):
+        cols: list[list] = []
+        for b in sorted(band, key=lambda b: box(b)[0]):
+            for c in cols:
+                cx0, cx1 = min(box(x)[0] for x in c), max(box(x)[2] for x in c)
+                if min(cx1, box(b)[2]) - max(cx0, box(b)[0]) > 0.3 * min(cx1 - cx0, box(b)[2] - box(b)[0]):
+                    c.append(b); break
+            else:
+                cols.append([b])
+        for c in sorted(cols, key=lambda c: min(box(x)[0] for x in c)):
+            out += sorted(c, key=lambda b: box(b)[1])
+        if i < len(full): out.append(full[i])
+    return out
+
 
 def _link(a: Block, b: Block) -> bool:
     ax0, ay0, ax1, ay1 = a.bbox
@@ -103,8 +145,7 @@ def groups(blocks: list[Block]) -> list[Group]:
         big_num = any((b.bbox[3] - b.bbox[1]) >= 20 and re.search(r"\d", b.text) and len(b.text) <= 12 for b in bl)
         if big_num and chars <= 220: g.kind = "kpi"
         out.append(g)
-    out.sort(key=lambda g: g.order)
-    return out
+    return reading_order(out, lambda g: g.bbox)
 
 
 # ---------------------------------------------------------------- FS tables
@@ -254,11 +295,20 @@ def tables(h: Half) -> tuple[list[Table], list[tuple[float, float]]]:
             if pending and not label:  # wrapped label above the numbers
                 label = " ".join(pending); pending = []
             elif pending:
-                if rws and pending[0][:1].islower():             # tail of the previous row's wrapped label
-                    rws[-1].label = (rws[-1].label + " " + " ".join(pending)).strip()
-                else:
-                    label = " ".join(pending) + " " + label
+                tail = []
+                while pending and pending[0][:1].islower(): tail.append(pending.pop(0))
+                if tail and rws:                                 # tail of the previous row's wrapped label
+                    rws[-1].label = (rws[-1].label + " " + " ".join(tail)).strip()
+                elif tail:
+                    pending = tail + pending
+                if pending:
+                    if label[:1].islower():                      # wrapped label whose numbers sit on its last line
+                        label = " ".join(pending) + " " + label
+                    else:                                        # a sub-heading above this row
+                        rws.append(Row(" ".join(pending), None, [None] * ncol, 0.0, r[0].y0))
                 pending = []
+            if "như sau:" in label:                                  # the note's intro sentence glued to its first row
+                label = label.rsplit("như sau:", 1)[1].strip()
             rws.append(Row(label, note.text if note else None, cells,
                            (lab[0].x0 - h.x_off) if lab else 0.0, r[0].y0))
         if rws and re.fullmatch(r"(Thuyết minh)?", rws[0].label.strip()) and all(c and YEAR_ONLY.match(c) for c in rws[0].cells):
@@ -267,6 +317,13 @@ def tables(h: Half) -> tuple[list[Table], list[tuple[float, float]]]:
         if not rws: continue
         for ci in range(ncol):                                       # carry the column unit into the header text
             if units[ci] and not UNIT_RE.search(headers[ci]): headers[ci] = f"{headers[ci]} {units[ci]}"
+        # text just above the table can fall into the header zone ("hệ 31/12/2025 Triệu đồng"): keep only period + unit
+        clean = []
+        for x in headers:
+            m = DATE_RE.search(x) or re.search(r"\bNăm (?:19|20)\d{2}\b", x)
+            us = UNIT_RE.findall(x)
+            clean.append(f"{m.group(0)} {us[-1]}".strip() if m and us else m.group(0) if m else x)
+        if len(set(clean)) == len(clean): headers = clean
         # title + form code from the top of the page (above the zone)
         ztop_y = parsed[top][0][0].y0
         head = [w for w in words if w.y0 < ztop_y - 2]
@@ -278,8 +335,7 @@ def tables(h: Half) -> tuple[list[Table], list[tuple[float, float]]]:
         title = " ".join(" ".join(w.text for w in r) for r in tl[-4:]).strip() if zi == 0 else \
             " ".join(" ".join(w.text for w in r) for r in tl[-2:]).strip()
         title = re.sub(r"\s+", " ", title)
-        reliable = all(DATE_RE.search(x) or YEAR_HDR.search(x) for x in headers) or \
-            (ncol <= 3 and all(len(x) <= 45 and not x.startswith("cột") for x in headers))
+        reliable = all(DATE_RE.search(x) or YEAR_HDR.search(x) for x in headers)   # every column has a period
         yy = (parsed[top][0][0].y0 - 2, parsed[last][0][0].y1 + 2)
         out.append(Table(f"{form or 'T'}@{h.printed_page}.{zi}", form, title, "tiếp theo" in title.lower(),
                          headers, units, rws, yy, reliable))

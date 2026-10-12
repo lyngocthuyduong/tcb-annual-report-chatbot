@@ -24,59 +24,70 @@ docker compose run --rm app tcb ask "Tỷ lệ CASA năm 2025?" --json
 ```
 `eval` writes `traces.jsonl`, `results.jsonl` (score + failing stage per item), `summary.json` (pass rate, recall by stage, refusal P/R, p50/p95 latency, median seconds per stage, tokens, cost when the model has a price in `conf.PRICES`) and `config.json`. Only `"verified": true` items count.
 
-## Run on Colab (development; no Docker there)
-Runtime: **T4 GPU** only to rebuild the index (cell 4); everything else runs on the CPU (`TCB_DEVICE` defaults to `cpu`), which is also what latency numbers must use. Secrets (key icon, **Notebook access** ON): `gh-token`, `hf_token`, `anthropic_key` (or `openai_key`).
+## Run on Colab (development; two notebooks)
+Secrets (key icon, **Notebook access** ON): `gh-token` (Contents read **and write**), `hf_token`, `anthropic_key`.
+
+**Notebook A: build the index** (runtime T4 GPU; only when ingestion code changes; `tcb serve` refuses an index built by older code)
 ```python
-# CELL 1: once per VM, then Runtime > Restart session
+# A1: then Runtime > Restart session
 !apt-get -qq update && apt-get -qq install -y poppler-utils
 import os; from google.colab import userdata
 os.environ["GH_TOKEN"] = userdata.get("gh-token")
 !git clone -q -b cont https://x-access-token:$GH_TOKEN@github.com/lyngocthuyduong/tcb-annual-report-chatbot /content/tcb
 %cd /content/tcb
-!pip install -q -e ".[dev]"
-!pip uninstall -y -q torchvision torchaudio     # Colab's torchvision is built for another torch
+!pip install -q -e ".[dev]" && pip uninstall -y -q torchvision torchaudio
 ```
 ```python
-# CELL 2: after every restart (keeps files and packages, loses cwd and env vars)
+# A2: build, validate, commit
+import os; from google.colab import userdata
+%cd /content/tcb
+!git pull -q origin cont
+os.environ.update(TCB_MODELS_DIR="/content/models", HF_TOKEN=userdata.get("hf_token"),
+                  JAX_PLATFORMS="cpu", XLA_PYTHON_CLIENT_PREALLOCATE="false")
+!python -m tcb.models download 2>&1 | tail -1
+!python -m pytest -q 2>&1 | tail -1                    # unit + integ on the real PDF; must pass before building
+!rm -rf idx.new && TCB_DEVICE=cuda tcb build data/ar.pdf idx.new && tcb validate idx.new --snapshot
+!rm -rf idx && mv idx.new idx && cat idx/report.json
+!git config user.name "Ly Quoc Bien" && git config user.email "bien.anh2603@gmail.com"
+!git add idx && git commit -qm "Rebuild index" && git push -q origin HEAD:cont && git log --oneline -1
+```
+
+**Notebook B: run and measure** (runtime CPU: latency must come from the CPU)
+```python
+# B1: then Runtime > Restart session
+!apt-get -qq update && apt-get -qq install -y poppler-utils
+import os; from google.colab import userdata
+os.environ["GH_TOKEN"] = userdata.get("gh-token")
+!git clone -q -b cont https://x-access-token:$GH_TOKEN@github.com/lyngocthuyduong/tcb-annual-report-chatbot /content/tcb
+%cd /content/tcb
+!pip install -q -e ".[dev]" && pip uninstall -y -q torchvision torchaudio
+```
+```python
+# B2: after every restart
 import os; from google.colab import drive, userdata
 drive.mount("/content/drive")
 %cd /content/tcb
-!git pull -q origin cont
+!git pull -q origin cont && git log --oneline -1
 !mkdir -p /content/drive/MyDrive/tcb-out && rm -rf out && ln -s /content/drive/MyDrive/tcb-out out
-os.environ["TCB_MODELS_DIR"] = "/content/models"
-for env, name in [("HF_TOKEN", "hf_token"), ("ANTHROPIC_API_KEY", "anthropic_key"), ("OPENAI_API_KEY", "openai_key")]:
-    try: os.environ[env] = userdata.get(name)
-    except Exception: print("no secret:", name)
-os.environ.update(PROVIDER="anthropic", ANTHROPIC_MODEL="claude-haiku-5-5")
+os.environ.update(TCB_MODELS_DIR="/content/models", HF_TOKEN=userdata.get("hf_token"),
+                  ANTHROPIC_API_KEY=userdata.get("anthropic_key"), PROVIDER="anthropic", ANTHROPIC_MODEL="claude-haiku-5-5")
 ```
 ```python
-# CELL 3: once per VM: BGE-M3 (≈2.3 GB) + gate
-!python -m tcb.models download 2>&1 | tail -2
-!tcb check | tee out/check.json            # dim 1024, revision ok, query_embed_s; if the .bin is refused: !python -m tcb.models convert
+# B3: once per VM: model, gate, index check, tests
+!python -m tcb.models download 2>&1 | tail -1
+!tcb check
+!tcb validate idx --snapshot
+!python -m pytest -q 2>&1 | tail -1
 ```
 ```python
-# CELL 4: only when ingestion code changed (index format check fails): rebuild idx/ on the GPU, validate, commit
-os.environ.update(JAX_PLATFORMS="cpu", XLA_PYTHON_CLIENT_PREALLOCATE="false")   # keep Colab's JAX off the T4
-!rm -rf idx.new && TCB_DEVICE=cuda tcb build data/ar.pdf idx.new && tcb validate idx.new --snapshot && rm -rf idx && mv idx.new idx
-!git config user.name "Ly Quoc Bien" && git config user.email "bien.anh2603@gmail.com"
-!git add idx && git commit -qm "Rebuild index" && git push -q origin HEAD:cont
+# B4: retrieval experiments (no tokens)
+!tcb exp data/dev.json data/val.json --label m5 2>&1 | tail -40
 ```
-Then, one cell each, a NEW `--label`/`--out` every run:
 ```python
-!python -m pytest -q                                              # unit + integ, no models
-!tcb vset check data/dev.json && tcb vset check data/val.json     # gold facts / calc inputs are on their gold pages
-!tcb exp data/dev.json data/val.json --label m5 2>&1 | tail -40   # retrieval only, no tokens
-!tcb eval data/val.json --label val2
-!tcb batch data/q10.json --out out/runs/q10-b
+# B5: answer quality, latency, cost (a new --label each run)
+!tcb eval data/val.json --label val3
+!tcb eval data/q10.json --label q10
 ```
-Offline mode on Colab: install Ollama (`curl -fsSL https://ollama.com/install.sh | sh`), start `ollama serve`, `ollama pull qwen2.5:7b`, set `PROVIDER=ollama OLLAMA_BASE_URL=http://localhost:11434 LLM_TIMEOUT_S=300`, then `tcb smoke`. Colab runs are not Docker proof; latency there is 2 vCPU.
-
-| Symptom | Fix |
-|---|---|
-| `SecretNotFoundError` / `NotebookAccessError` | secret name differs, or Notebook access is off |
-| `No module named tcb` or `/content/tcb` missing | the VM was recycled: cells 1 → restart → 2 → 3 |
-| `torchvision::nms does not exist` | `pip uninstall torchvision torchaudio`, restart |
-| `out` empty / dangling | Drive not mounted: re-run cell 2 |
 
 ## Tests: what each category proves
 | Command | Proves | Does not prove |

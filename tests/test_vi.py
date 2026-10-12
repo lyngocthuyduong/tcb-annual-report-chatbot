@@ -19,3 +19,10 @@ def test_diacritic_fold_extra_token():
 
 def test_negative_paren_number_tokenised():
     assert "181.150" in vi.tokens("(181.150)") and "181150" in vi.tokens("(181.150)")
+
+
+def test_trailing_decimal_zero_is_the_same_number():
+    from tcb import ev
+    assert vi.canon_num("16,0%") == vi.canon_num("16%") == "16%" and vi.canon_num("14,60") == "14.6"
+    it = ev.Item(id="x", question="q", gold_facts=["16"], gold_printed_pages=[5])
+    assert ev.facts_ok(it, "Thị phần đạt 16,0%.")[0] is True

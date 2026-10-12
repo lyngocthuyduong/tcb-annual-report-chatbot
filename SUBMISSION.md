@@ -13,10 +13,10 @@
 ## Architecture
 **Pages.** 197 PDF pages = cover + 196 spreads. Each spread is split at the gutter into two printed pages; 380 of 393 halves take their number from the footer, 13 dividers are inferred from their neighbours. The half-page is the citation unit, so `[tr. N]` always names the printed page.
 
-**Typed nodes (1,533).** Word boxes from `pdftotext -bbox-layout` are grouped by layout:
-- KPI tiles (209): value, unit, label and change grouped by coordinates, e.g. `Dư nợ vay | 328,1 | Nghìn tỷ đồng | 26,9% N/N`.
-- Statement tables (107 chunks): rows rebuilt from column positions with note references, nil `-` and negative `(x)` cells; every row carries its column header and unit. 60 chunks (all of B01 to B04) parse cleanly and expose typed quantities.
-- Narrative (1,054 chunks of ≤ 220 syllable-words) and glossary entries (163 terms).
+**Typed nodes (1,512).** Word boxes from `pdftotext -bbox-layout` are grouped by layout:
+- KPI tiles (180): label, figure, unit and change grouped by coordinates and ordered label → figure → unit, e.g. `Dư nợ vay | 328,1 | Nghìn tỷ đồng | 26,9% N/N`. Number-only fragments (chart ticks, contents-page numbers) are not indexed.
+- Statement tables (115 chunks): rows rebuilt from column positions with note references, nil `-` and negative `(x)` cells; wrapped labels rejoined, sub-headings kept as their own rows, column headers reduced to period + unit; every row carries them. 60 chunks (all of B01 to B04, and 39 notes) have a period in every column and expose typed quantities; a continuation page inherits its statement's title.
+- Narrative (1,054 chunks of ≤ 220 syllable-words) read column by column, and glossary entries (163 terms).
 - Every node text starts with its context `[chapter › page title › subtitle]`, read from font size: a page title carries over to the following pages until the next one, so a tile on p.59 reads `[Thành tựu của Tech › Khối Ngân hàng Bán lẻ (RBG) › Điểm nhấn 2025] Dư nợ vay | 328,1 …`.
 
 **Index.** BGE-M3 dense vectors (LlamaIndex) and BM25 over a Vietnamese tokenizer that keeps numbers whole (`1.192.344.137`, `14,6%`) and also indexes diacritic-folded forms. A manifest pins the PDF hash, model revision, tokenizer, chunking and a sha256 per file; the server refuses to start on any mismatch.
@@ -32,6 +32,7 @@
 - **Retry on a low rerank score (τ_low)**: the threshold that best separated unanswerable questions (0.599) would trigger a second full search on exactly those questions, and no experiment showed the retry recovering a page. Removed with the reranker.
 - **bm25s default tokenizer**: splits `1.192.344.137` into `192`, `344`, `137`; BM25-only R@5 0.800 against 0.824 for the Vietnamese tokenizer.
 - **Calculator limited to table quantities**: arithmetic on figures from narrative text or KPI tiles (e.g. headcount 12.705 vs 11.848, p.52) was refused. Replaced by literals checked against the evidence text.
+- **Sorting text blocks by position** interleaved the two columns of prose wherever a heading spanned both (166 groups on 109 pages). Replaced by a column-aware reading order.
 - **Chunk-level context only from the chapter name**: a KPI tile on the RBG spread (`Dư nợ vay 328,1`) did not say it belonged to the Retail block, so "RBG loan balance" was refused. Fixed with page-title context; a paragraph spanning two KPI tiles also glued them into one narrative chunk, fixed in the grouping rule (+7 tiles recovered).
 - **Speed ideas measured and dropped**: a vector database (top-40 over 1,526 × 1,024 vectors: 49 ms in LlamaIndex, 0.3 ms in FAISS, against tens of seconds of reranking), BGE-M3 sparse weights in place of BM25 (computed in the same forward pass, so no time saved; 1 of 85 questions contains a figure other than a year or date), 400 to 500-word chunks with overlap (≈ 2.5× longer prompts; overlap across pages breaks one-page citations).
 

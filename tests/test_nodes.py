@@ -51,3 +51,29 @@ def test_page_headings_give_each_node_its_context(doc):
 def test_kpi_tiles_are_not_glued_by_a_paragraph(doc):
     kpi = [n.text for n in doc["nodes"] if n.content_type == "kpi" and n.printed_page_number == 59]
     assert any("Số dư tiền gửi | 475,8" in t for t in kpi) and any("Tổng thu nhập hoạt động | 28,3" in t for t in kpi)
+
+
+def test_two_column_prose_is_read_column_by_column(doc):
+    """A heading spanning both columns used to merge them; sorting by y then interleaved paragraphs of the two columns."""
+    t = " ".join(n.text for n in doc["nodes"] if n.printed_page_number == 53 and n.content_type == "narrative")
+    assert "thêm 23,0% N/N, đạt 776,5 nghìn tỷ đồng" in t and "N/N, với cùng kỳ" not in t
+    assert "phiên bản nâng cấp được thiết kế nhằm mang lại nhiều giá trị hơn" in t
+
+
+def test_number_only_tiles_are_not_indexed(doc):
+    """Chart ticks and contents-page numbers carry no meaning alone and would match numeric questions by accident."""
+    kpi = [n.text.split("] ", 1)[-1] for n in doc["nodes"] if n.content_type == "kpi"]
+    assert not any(re.fullmatch(r"[\d\s|%,.QqA-Z]+", t) for t in kpi)
+    assert all(len(re.findall(r"[^\W\d_]{2,}", t)) >= 2 for t in kpi)
+
+
+def test_statement_rows_and_headers_are_clean(doc):
+    rows = [(n, r) for n in doc["nodes"] if n.content_type == "table" and n.quality == "high" for r in n.rows]
+    labels = {r["label"] for _, r in rows}
+    # a sub-heading under a wrapped subtotal stays its own row (B04 p.301)
+    assert "Lưu chuyển tiền thuần từ hoạt động kinh doanh trước những thay đổi về tài sản và vốn lưu động" in labels
+    assert "Những thay đổi về tài sản hoạt động" in labels
+    # every column of a high-quality table is a clean period (+ unit); no text leaked from above the table
+    hdrs = {h for _, r in rows for h in r["cells"]}
+    assert all(re.fullmatch(r"(\d{2}/\d{2}/\d{4}|Năm (19|20)\d{2})( (Triệu đồng|%|Tỷ đồng|Nghìn tỷ đồng|Triệu USD|Đồng))?", h, re.I) for h in hdrs), hdrs
+    assert not any(re.search(r"\d{1,3}(\.\d{3}){2,}", lab) for lab in labels)

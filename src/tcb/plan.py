@@ -9,10 +9,19 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 LLM_STATUSES = ("answered", "partial", "not_in_report", "ambiguous")
 
 
+def _id(v: str) -> str:
+    """Models sometimes copy the prompt's bracketed form ('[E1]', '{C1}'); ids are compared bare and upper-case."""
+    return re.sub(r"[\[\]{}()\s]", "", str(v)).upper()
+
+
 class Claim(BaseModel):
     text_vi: str = Field(min_length=1)
     evidence: list[str] = Field(default_factory=list)          # ["E1", ...]
     calc_refs: list[str] = Field(default_factory=list)         # ["C1", ...]
+
+    @field_validator("evidence", "calc_refs")
+    @classmethod
+    def _ids(cls, v): return [_id(x) for x in v]
 
 
 class Calc(BaseModel):
@@ -21,9 +30,14 @@ class Calc(BaseModel):
     inputs: list[str]                                          # ["Q1", "Q2"]
     to: str | None = None                                      # convert only
 
+    @field_validator("inputs")
+    @classmethod
+    def _ins(cls, v): return [_id(x) for x in v]
+
     @field_validator("cid")
     @classmethod
     def _cid(cls, v):
+        v = _id(v)
         if not re.fullmatch(r"C\d+", v): raise ValueError("cid must look like C1")
         return v
 
@@ -38,10 +52,11 @@ class Lit(BaseModel):
     period: str = ""                                           # "2025" or "31/12/2025"
     label: str = ""
 
-    @field_validator("lid")
+    @field_validator("lid", "evidence")
     @classmethod
-    def _lid(cls, v):
-        if not re.fullmatch(r"L\d+", v): raise ValueError("lid must look like L1")
+    def _lid(cls, v, info):
+        v = _id(v)
+        if info.field_name == "lid" and not re.fullmatch(r"L\d+", v): raise ValueError("lid must look like L1")
         return v
 
 

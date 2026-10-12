@@ -24,7 +24,8 @@ def canon_num(tok: str) -> str:
     if _VN_NUM.match(tok):
         t = tok.rstrip("%")
         pct = "%" if tok.endswith("%") else ""
-        if "," in t: t = t.replace(".", "").replace(",", ".")
+        if "," in t:
+            t = t.replace(".", "").replace(",", ".").rstrip("0").rstrip(".")      # 16,0 == 16 ; 14,60 == 14,6
         else: t = t.replace(".", "")
         return t + pct
     return tok

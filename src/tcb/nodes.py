@@ -76,8 +76,8 @@ _LOCAL = re.compile(r"^(Điểm nhấn|Trọng tâm)", re.I)
 
 def headings(h: Half) -> tuple[str, str, str]:
     """(title, subtitle, local) printed at the top of a half-page, recognised by font height. KPI figures are excluded
-    (mostly digits). `local` = recurring labels ('Điểm nhấn 2025', 'Trọng tâm năm 2026') and long slogans, which name
-    a part of this page only and are never carried to the next page."""
+    (mostly digits); a multi-line lead sentence in large type is not a title. `local` = recurring labels ('Điểm nhấn 2025',
+    'Trọng tâm năm 2026'), which name a part of this page only and are never carried to the next page."""
     t1, t2, loc = [], [], []
     for b in h.blocks:
         for l in b.lines:
@@ -87,8 +87,11 @@ def headings(h: Half) -> tuple[str, str, str]:
                 continue
             hh = sum(w.y1 - w.y0 for w in l.words) / len(l.words)
             if hh >= H1_MIN: t1.append(txt)
-            elif hh >= H2_MIN: (loc if _LOCAL.match(txt) or len(txt.split()) > 10 else t2).append(txt)
-    return " ".join(t1), " ".join(t2), " ".join(loc)
+            elif hh >= H2_MIN: (loc if _LOCAL.match(txt) else t2).append(txt)
+    sub = " ".join(t2)
+    if len(sub) > 90 or len(t2) >= 3:                        # a lead sentence set in large type, not a title
+        sub = ""
+    return " ".join(t1), sub, " ".join(loc)
 
 
 def half_nodes(h: Half, section: str, chunk_words: int | None = None, context: str = "",
@@ -154,12 +157,17 @@ def half_nodes(h: Half, section: str, chunk_words: int | None = None, context: s
         buf.clear()
 
     for g in parse.groups(blocks):
-        txt = re.sub(r"\s*\n\s*", " ", g.text).strip()
+        txt = re.sub(r"\s*\n\s*", " ", g.read if g.kind == "narrative" else g.text).strip()
         if g.kind == "kpi":
+            words = len(re.findall(r"[^\W\d_]{2,}", txt))
+            nums = len(re.findall(r"\d[\d.,]*%?", txt))
+            if words < 2 and nums >= 3: continue          # chart ticks, page lists of the contents/divider pages: no meaning alone
+            if words < 2:                                  # a lone figure ('146%', '4,77/5'): keep it with the page's text
+                buf.append(txt); continue
             flush_buf()
             x0, y0, x1, y1 = g.bbox
             nodes.append(Node(_cid(h.pdf_page_index, h.side, "k", round(x0), round(y0)), crumb + " | ".join(
-                s.strip() for s in g.text.split("\n") if s.strip()), content_type="kpi",
+                s.strip() for s in g.tile.split("\n") if s.strip()), content_type="kpi",
                 bbox=[round(x0 - h.x_off, 1), round(y0, 1), round(x1 - h.x_off, 1), round(y1, 1)], **base))
         else:
             buf.append(txt)

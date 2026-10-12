@@ -100,3 +100,12 @@ def test_decide(args, status, reason):
 def test_refusal_never_claims_content():
     d = refuse.decide("answered", 3, 0, [], None, True)
     assert d.status == "not_in_report" and refuse.MSG_NOT_IN_REPORT in d.notes
+
+
+def test_bracketed_ids_from_the_model_are_normalised():
+    from tcb import plan
+    p = plan.parse('{"status":"answered","claims":[{"text_vi":"x {C1}","evidence":["[E4]"],"calc_refs":["{C1}"]}],'
+                   '"calculations":[{"cid":"[C1]","op":"growth_pct","inputs":["[Q33]","Q34"]}],'
+                   '"literals":[{"lid":"[L1]","evidence":"[E2]","number":"1","unit":"","period":""}]}')
+    assert p.claims[0].evidence == ["E4"] and p.claims[0].calc_refs == ["C1"] and p.calculations[0].cid == "C1"
+    assert p.calculations[0].inputs == ["Q33", "Q34"] and p.literals[0].lid == "L1" and p.literals[0].evidence == "E2"

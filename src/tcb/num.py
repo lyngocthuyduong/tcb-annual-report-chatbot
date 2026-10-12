@@ -162,6 +162,8 @@ def from_node(n: dict, next_id) -> list[Quantity]:
         return []
     out = []
     for r in n["rows"]:
+        if not r["label"].strip():            # an unlabeled (sub)total line: the label would have to be guessed
+            continue
         for hdr, cell in r["cells"].items():
             if cell is None:
                 continue
