@@ -89,8 +89,10 @@ def settings() -> Settings:
 
 # ---- provisional, set by experiment E7 on the REAL index (M3). None = score-triggered retrieval retry disabled.
 TAU_LOW: float | None = None
-FINAL_EVIDENCE = 8           # E1..E8 passed to the LLM
-RERANK_POOL = 30             # fused candidates sent to the cross-encoder
+# E4 (run m4, dev+val, 85 answerable items, GPU quality / CPU timing): N10_k12 is the smallest config within 2 pts of the best recall.
+# With a pool of 10, k=12 means "all 10 reranked blocks": the reranker orders them, the pool is the cut.
+FINAL_EVIDENCE = 10          # E1..E10 passed to the LLM
+RERANK_POOL = 10             # fused candidates sent to the cross-encoder (was 30: ~3x the CPU rerank time for +1 item of recall)
 # $/1M tokens (in, out) -- public list prices checked 10 Oct 2026; used only for the cost estimate in traces
 PRICES = {"gpt-4o-mini": (0.15, 0.60), "claude-sonnet-5-5": (2.0, 10.0)}
 PROMPT_EVIDENCE_CHARS = 15000   # budget for evidence text in one prompt (~5k tokens @ ~3 chars/token; keeps local 8k-context models safe)

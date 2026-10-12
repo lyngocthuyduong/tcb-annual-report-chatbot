@@ -72,7 +72,7 @@ question
  -> glossary expansion
  -> BM25 top-40  +  dense top-40
  -> RRF (k=60) -> top-30
- -> BGE-reranker-v2-m3 -> 8 evidence blocks E1..E8
+ -> BGE-reranker-v2-m3 -> 10 evidence blocks E1..E10
     + quantities Q1..Qn (high-quality tables only)
  -> LLM returns a JSON plan
     (claims -> evidence ids, calculations -> quantity ids)
@@ -157,7 +157,7 @@ Status: the validator and build are [verified] with a hash embedder in tmp (and 
 ### 6.1 Pipeline
 1. **BM25** over `tcb-vi-v1` tokens → top 40 (`TOP_BM25`).
 2. **Dense** (BGE-M3 via LlamaIndex) → top 40 (`TOP_DENSE`).
-3. **RRF** with k = 60 (`RRF_K`) over the two rankings → keep the top 30 (`RERANK_POOL`).
+3. **RRF** with k = 60 (`RRF_K`) over the two rankings → keep the top 10 (`RERANK_POOL`).
 4. **Cross-encoder rerank** (BGE-reranker-v2-m3, max_length 512) on those 30.
 5. Top **8** (`FINAL_EVIDENCE`) go to the LLM, further limited by a 15,000-character prompt budget (`PROMPT_EVIDENCE_CHARS`) so a local 8k-context model is never silently truncated.
 
@@ -167,12 +167,13 @@ Status: the validator and build are [verified] with a hash embedder in tmp (and 
 If the query contains an upper-case glossary abbreviation (e.g. CASA), the report's own definition (first 100 characters) is appended in parentheses: `CASA (Tiền gửi không kỳ hạn…)`. The expanded query is used by **all** stages (BM25, dense, rerank). Experiment E5 decides if it stays (rule: keep only if it causes no regression) **[NOT RUN]**.
 
 ### 6.3 Weak-retrieval retry (disabled by design until measured)
-`conf.TAU_LOW = None`. If set by experiment E7, a query whose top rerank score is below τ is retried once with the diacritic-folded raw query and the candidates merged by max score. It only triggers a retry; it never converts a grounded answer into a refusal. τ is chosen on the **real** index (positives = unanswerable dev items; maximise F1 subject to ≤ 2 points of answerable items flagged) and then frozen. Until then the code path is covered by mock tests only.
+`conf.TAU_LOW = None` (kept: E7 proposed τ = 0.599 on a pool of 30, but the retry costs a second rerank on exactly the weak/unanswerable queries and no experiment shows it recovers a page: E5 had no gains). If set by experiment E7, a query whose top rerank score is below τ is retried once with the diacritic-folded raw query and the candidates merged by max score. It only triggers a retry; it never converts a grounded answer into a refusal. τ is chosen on the **real** index (positives = unanswerable dev items; maximise F1 subject to ≤ 2 points of answerable items flagged) and then frozen. Until then the code path is covered by mock tests only.
 
 ### 6.4 Why this shape
 - BM25 + dense because figures/abbreviations need lexical exactness while paraphrased narrative needs semantics.
 - RRF because it needs no score calibration between BM25 and cosine; k = 60 is the literature default and is only changed if E3b shows ≥ 5 points of R@20 on **every** set.
-- Rerank pool 30, final 8: balance between recall and the LLM prompt budget; E4 picks the smallest (N, k) within 2 points of best recall.
+- Rerank pool 10, final 10 (E4, run m4: dev+val, 85 answerable items): recall of a gold page was 0.882 at N10 vs 0.894 at N20/30/40, i.e. one item, while CPU rerank time scales with N. The pool is the cut; the reranker orders it. A pool of 30 was the earlier provisional value.
+- Tokenizer stays `vi`: E2 favoured `default` by one item at R@20 (0.894 vs 0.882) while `vi` is ahead at R@5/R@8, so no rebuild.
 - One retrieval path: no HyDE, multi-query or agents — each adds LLM calls and a failure surface; E-experiments decide if any is justified.
 
 ---

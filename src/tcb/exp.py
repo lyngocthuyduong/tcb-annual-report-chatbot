@@ -159,9 +159,11 @@ def run_exp(set_paths: list[str], ctx: Ctx, which: tuple[str, ...] = EXPS, inclu
 
     if "E2" in which:
         res["E2"] = {t: table(lambda i, t=t: rank([c for c, _ in fs[i]["bm"][t]], fs[i]["gold"])) for t in TOKENIZERS}
-        best = max(TOKENIZERS, key=lambda t: (res["E2"][t]["all"].get("R@20", 0), t == "vi"))
-        res["decisions"]["E2"] = {"best_bm25_only_R@20": best, "production": "vi",
-                                  "action": "none" if best == "vi" else f"switch tokenizer to '{best}' (bump conf.TOKENIZER, rebuild index)"}
+        r20 = {t: res["E2"][t]["all"].get("R@20", 0) for t in TOKENIZERS}
+        best = max(TOKENIZERS, key=lambda t: (r20[t], t == "vi"))
+        switch = best != "vi" and r20[best] >= r20["vi"] + 0.02          # a rebuild needs a real margin, not one item
+        res["decisions"]["E2"] = {"best_bm25_only_R@20": best, "production": "vi", "R@20": r20,
+                                  "action": f"switch tokenizer to '{best}' (bump conf.TOKENIZER, rebuild index)" if switch else "none (keep 'vi'; switching needs >= 2 pts R@20)"}
 
     if "E3" in which:
         e3 = {"bm25": table(lambda i: rank([c for c, _ in fs[i]["bmx"]], fs[i]["gold"])),

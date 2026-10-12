@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from tcb import find, vi
+from tcb import conf, find, vi
 
 
 class OverlapRerank:
@@ -46,7 +46,7 @@ def test_glossary_expansion(rt):
 def test_stage_bookkeeping(rt):
     r = rt.search("tổng tài sản 2025")
     assert len(r.bm25) <= 40 and len(r.dense) == 40 and len(r.fused) >= len(r.bm25)
-    assert len(r.reranked) == min(30, len(r.fused)) and set(c for c, _ in r.reranked) <= set(r.fused)
+    assert len(r.reranked) == min(conf.RERANK_POOL, len(r.fused)) and set(c for c, _ in r.reranked) <= set(r.fused)
     s = [x for _, x in r.reranked]; assert s == sorted(s, reverse=True)
     assert set(r.seconds) == {"bm25", "dense", "rerank"}
     assert len(rt.top_nodes(r)) == 8 and r.top_score == s[0]

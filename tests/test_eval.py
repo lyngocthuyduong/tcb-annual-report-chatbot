@@ -6,7 +6,7 @@ from types import SimpleNamespace as NS
 import pytest
 
 from fakes import NodeSet, Scripted, eid_of
-from tcb import ask, ev
+from tcb import ask, conf, ev
 
 pytestmark = pytest.mark.unit
 
@@ -60,7 +60,7 @@ def test_facts_alternatives_and_units():
     ({}, A(tr=trace(bm=(), de=(), fu=(), rr=())), "retrieval:recall_miss"),
     ({}, A("not_in_report", "Không có", tr=trace(bm=("b",), de=("b",), fu=("b",), rr=(("b", 1),), ev_pages=(9,))), "retrieval:recall_miss"),
     ({}, A(tr=trace(fu=("b",), rr=(("b", 1),))), "retrieval:fusion_drop"),
-    ({}, A(tr=trace(rr=(("b", 1),) * 8 + (("a", 0.1),))), "retrieval:rerank_drop"),
+    ({}, A(tr=trace(rr=(("b", 1),) * conf.FINAL_EVIDENCE + (("a", 0.1),))), "retrieval:rerank_drop"),
     ({}, A("not_in_report", "Không có thông tin"), "refusal:over_refusal"),
     ({}, A(answer="CASA 39% [tr. 5]"), "generation:wrong_or_missing_fact"),
     ({}, A(answer="CASA 40,4% [tr. 9]", tr=trace(ev_pages=(5, 9))), "citation:wrong_page"),

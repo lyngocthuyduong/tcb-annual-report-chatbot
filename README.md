@@ -144,7 +144,7 @@ Only `verified:true` items count in `tcb eval` / `tcb exp`.
 
 ## Layout
 `src/tcb/`: `pdf` `parse` `nodes` `vi` (ingestion) · `build` `index` (index) · `find` (BM25+dense→RRF→rerank) · `num` `calc` (quantities, calculator) · `plan` `gen` `llm/` (LLM plan, one repair retry, providers) · `cite` `refuse` (validation, policy) · `chat` `ask` (pipeline) · `api` `ui.html` `cli` `smoke` `ev` `exp` `vset` · `conf` (fixed models/constants) · `models` (Docker download).
-`data/`: `ar.pdf`, `q10.json` (published questions; never tuned on), `dev.json`/`val.json` (unverified drafts), `hand.json` (hand-written source pool). Design rationale: `DESIGN.md`.
+`data/`: `ar.pdf`, `q10.json` (published questions; never tuned on), `dev.json`/`val.json` (70/34 items checked against the PDF text by Claude, human spot-check pending), `hand.json` (hand-written source pool). Design rationale: `DESIGN.md`.
 
 ## Known gaps
-τ_low is unset (`conf.TAU_LOW=None`): the score-triggered retrieval retry is disabled until E7 runs on the real index. Low-quality note tables (47 of 107 table chunks; the four primary statements B01–B04 are all high) are kept as text but yield no calculator quantities. Number grounding ignores integers ≤ 12.
+τ_low is unset (`conf.TAU_LOW=None`): the score-triggered retrieval retry stays disabled (E7 would flag weak queries, but the retry doubles rerank time on them with no measured gain). Low-quality note tables (47 of 107 table chunks; the four primary statements B01–B04 are all high) are kept as text but yield no calculator quantities. Number grounding ignores integers ≤ 12.

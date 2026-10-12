@@ -38,7 +38,7 @@ PDF → (poppler bbox) half-page split of each two-page spread with printed-page
 Another orchestration framework (LlamaIndex is used for ingestion/retrieval only), an LLM judge, OCR for image-only content (inventoried, not read), automatic provider fallback, runtime index rebuild or model download.
 
 ## With 10x time and budget
-1. Build the real index, run E1–E8 (RRF k, chunk size, reranker pool) and freeze τ_low (E7) on a larger human-verified dev/val set.
+1. Run the chunk-size experiment, and tune τ_low and the reranker pool on a larger set labelled by people (dev/val here were checked by Claude against the PDF text; human spot-check pending).
 2. Recover the 47 low-quality note tables with a layout model and enable calculator quantities for them.
 3. Judge model calibrated against ≥40 human labels; multi-document support.
 
