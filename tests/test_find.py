@@ -49,7 +49,7 @@ def test_stage_bookkeeping(rt):
     assert len(r.reranked) == min(conf.RERANK_POOL, len(r.fused)) and set(c for c, _ in r.reranked) <= set(r.fused)
     s = [x for _, x in r.reranked]; assert s == sorted(s, reverse=True)
     assert set(r.seconds) == {"bm25", "dense", "rerank"}
-    assert len(rt.top_nodes(r)) == 8 and r.top_score == s[0]
+    assert len(rt.top_nodes(r)) == min(conf.FINAL_EVIDENCE, len(r.reranked)) and r.top_score == s[0]
 
 
 def test_empty_query_does_not_crash(rt):
