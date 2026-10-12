@@ -85,9 +85,13 @@ def cmd_validate(a) -> int:
     return 0
 
 
-def _engine():
+def _engine(no_rerank: bool = False):
     from .boot import load_engine
-    return load_engine()
+    e = load_engine()
+    if no_rerank:                       # experiment only (eval/batch --no-rerank): fused top RERANK_POOL, no cross-encoder
+        e.rt.rr = None
+    e.rt.warm()
+    return e
 
 
 def cmd_ask(a) -> int:
@@ -113,7 +117,7 @@ def cmd_chat(a) -> int:
 def cmd_batch(a) -> int:
     from pathlib import Path
     qs = json.loads(Path(a.file).read_text(encoding="utf-8"))
-    e, out = _engine(), Path(a.out); out.mkdir(parents=True, exist_ok=True)
+    e, out = _engine(a.no_rerank), Path(a.out); out.mkdir(parents=True, exist_ok=True)
     n_err = 0
     with open(out / "answers.jsonl", "w", encoding="utf-8") as f:
         for i, q in enumerate(qs, 1):
@@ -136,7 +140,7 @@ def cmd_eval(a) -> int:
         return 1 if c["regressed"] else 0
     if not a.set:
         print("eval needs a dataset (or --compare RUN_A RUN_B)", file=sys.stderr); return 2
-    rep = ev.run_eval(a.set, a.out, _engine(), label=a.label, include_unverified=a.include_unverified)
+    rep = ev.run_eval(a.set, a.out, _engine(a.no_rerank), label=a.label, include_unverified=a.include_unverified)
     print(json.dumps(rep["summary"], ensure_ascii=False, indent=1))
     return 0
 
@@ -195,10 +199,12 @@ def main(argv=None) -> int:
     k = sp.add_parser("ask"); k.add_argument("question"); k.add_argument("--json", action="store_true")
     k.add_argument("--trace", action="store_true"); k.set_defaults(f=cmd_ask)
     sp.add_parser("chat").set_defaults(f=cmd_chat)
-    bt = sp.add_parser("batch"); bt.add_argument("file"); bt.add_argument("--out", default="out/runs/batch"); bt.set_defaults(f=cmd_batch)
+    bt = sp.add_parser("batch"); bt.add_argument("file"); bt.add_argument("--out", default="out/runs/batch")
+    bt.add_argument("--no-rerank", action="store_true", help="experiment: skip the cross-encoder"); bt.set_defaults(f=cmd_batch)
     ev_ = sp.add_parser("eval"); ev_.add_argument("set", nargs="?"); ev_.add_argument("--out", default="out/runs/eval")
     ev_.add_argument("--compare", nargs=2, metavar=("RUN_A", "RUN_B"), help="diff two finished run folders (A=baseline)")
     ev_.add_argument("--include-unverified", action="store_true")
+    ev_.add_argument("--no-rerank", action="store_true", help="experiment: skip the cross-encoder (fused top RERANK_POOL)")
     ev_.add_argument("--label", default=""); ev_.set_defaults(f=cmd_eval)
     ex = sp.add_parser("exp", help="M3 retrieval experiments (E2,E3,E3b,E4,E5,E7); no LLM, no token cost")
     ex.add_argument("sets", nargs="+", help="verified dev/val JSON files, e.g. data/dev.json data/val.json")

@@ -213,7 +213,7 @@ def run_eval(set_path: str, out_dir: str, engine, label: str = "", include_unver
     cfg = {"label": label, "set": str(set_path), "set_sha256": hashlib.sha256(Path(set_path).read_bytes()).hexdigest(),
            "provider": engine.prov.name, "model": engine.prov.model,
            "index_embedding": m["embedding"], "index_built_at": m["built_at"], "index_nodes": m["counts"]["nodes"],
-           "reranker": type(engine.rt.rr).__name__, "device": os.getenv("TCB_DEVICE", "cpu"), "tau_low": engine.tau, "rrf_k": engine.rt.rrf_k,
+           "reranker": type(engine.rt.rr).__name__ if engine.rt.rr is not None else "none", "device": os.getenv("TCB_DEVICE", "cpu"), "tau_low": engine.tau, "rrf_k": engine.rt.rrf_k,
            "top_bm25": engine.rt.top_bm25, "top_dense": engine.rt.top_dense, "include_unverified": include_unverified,
            "submission_grade": m["embedding"]["model"] == conf.EMBED_MODEL and real_rr,
            "seconds": round(time.time() - t0, 1)}

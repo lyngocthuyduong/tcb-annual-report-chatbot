@@ -93,10 +93,19 @@ class Retriever:
         r.fused = [c for c, _ in fused]
         pool = r.fused[: self.pool]
         t = time.time()
-        sc = self.rr.score(q, [self.ix.nodes[c]["text"] for c in pool]) if pool else []
-        r.reranked = sorted(zip(pool, sc), key=lambda x: -x[1])
+        if self.rr is None:                                 # no cross-encoder: keep the fused order, RRF score as the score
+            r.reranked = [(c, s) for c, s in fused[: self.pool]]
+        else:
+            sc = self.rr.score(q, [self.ix.nodes[c]["text"] for c in pool]) if pool else []
+            r.reranked = sorted(zip(pool, sc), key=lambda x: -x[1])
         r.seconds["rerank"] = round(time.time() - t, 3)
         return r
+
+    def warm(self) -> None:
+        """Load the models before the first question, so the first answer is not slower than the rest."""
+        self._dense.retrieve("tổng tài sản")
+        if self.rr is not None:
+            self.rr.score("tổng tài sản", ["Tổng tài sản"])
 
     def top_nodes(self, r: Result, n: int = conf.FINAL_EVIDENCE) -> list[dict]:
         return [self.ix.nodes[c] for c, _ in r.reranked[:n]]

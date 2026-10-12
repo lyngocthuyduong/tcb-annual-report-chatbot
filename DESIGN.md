@@ -300,7 +300,7 @@ Item types: `single`, `multi`, `calc`, `followup`, `refusal`; `expect_status: am
 - **Cost/latency:** per question from traces (p50/p95, tokens, estimated USD).
 
 ### 14.3 Stage attribution
-For each failed item, the first failing stage in this order: `system` (provider/index error) → `retrieval:recall_miss` (gold page in neither BM25 nor dense top-40) → `retrieval:fusion_drop` → `retrieval:rerank_drop` (gold page ranked below the 8 given to the LLM) → `citation` (invalid/wrong page) → `calc` → `generation:wrong_or_missing_fact` → `refusal:over_refusal` / `under_refusal`. This is what makes "what did the numbers make you change" answerable.
+For each failed item, the first failing stage in this order: `system` (provider/index error) → `retrieval:recall_miss` (gold page in neither BM25 nor dense top-40) → `retrieval:fusion_drop` → `retrieval:rerank_drop` (gold page ranked below the `FINAL_EVIDENCE` blocks given to the LLM) → `citation` (invalid/wrong page) → `calc` → `generation:wrong_or_missing_fact` → `refusal:over_refusal` / `under_refusal`. This is what makes "what did the numbers make you change" answerable.
 
 ### 14.4 Run artifacts
 `tcb eval` writes `traces.jsonl` (full per-question trace), `results.jsonl`, `summary.json` and `config.json` (set sha256, provider, model, index identity, reranker class, τ, RRF k, and **`submission_grade`**: true only with the real BGE-M3 index and the real cross-encoder). `tcb eval --compare A B` reports fixed / regressed / verdict-changed items and metric deltas, and warns if the two runs differ in set, provider, model, τ, k or index.
@@ -367,15 +367,34 @@ The runner *suggests* a decision by these rules and never edits `conf.py`. Order
 | Fail-closed index validation | warn and continue | silent degradation is worse than refusing to start |
 | Eval counts verified items only | count all drafts | an unverified gold can make a correct answer "fail" or a wrong one "pass" |
 | Deterministic scorers | LLM judge | reproducible, free; the cost is that fact-presence can miss a paraphrase without a numeric anchor (those items are flagged `unscorable`) |
-| τ_low unset until E7 | a guessed threshold | a guess either over-refuses or does nothing |
+| τ_low left unset after E7 | a guessed threshold; the E7 threshold | the retry costs a second rerank and showed no gain (17.1) |
 | Hash embedder only in `tests/` | use it to produce the index when BGE-M3 is unavailable | it would let a fake index pass as real |
+
+### 17.1 Retrieval and speed options tried (measured, 13 Oct 2026)
+
+Data: `data/dev.json` + `data/val.json`, 85 answerable items with gold pages, 19 unanswerable/ambiguous. Run `m4` on Colab (quality on a T4 GPU, rerank timing on 2 CPU cores). Recall = a gold printed page is among the blocks considered. One item = 1.2 points.
+
+| Option | What was measured | Result | Decision |
+|---|---|---|---|
+| BM25 tokenizer: `tcb-vi-v1` vs bm25s default vs +bigrams (E2) | BM25-only recall | R@20: default 0.894, vi 0.882, bigram 0.894; R@5: vi 0.824, default 0.800. The only R@20 difference is one glossary item (`g-alco`) | keep `tcb-vi-v1`; a switch needs ≥ 2 pts R@20 and an index rebuild |
+| BM25 vs dense vs RRF vs RSF (E3) | R@20 | BM25 0.918, dense 0.694, RRF 0.941, RSF 0.929 | keep RRF |
+| RRF k ∈ {10, 30, 60, 100} (E3b) | R@20 per set | no k beats 60 by ≥ 5 pts on both sets | keep k = 60 |
+| Rerank pool N × final k (E4) | recall within the k blocks given to the LLM | N10: 0.882; N20/30/40 with k ≥ 8: 0.894 (one item more). CPU rerank time grows with N (≈ 60 s per question at N = 30 on 2 cores) | pool 30 → 10, all 10 blocks to the LLM |
+| Glossary expansion (E5) | items lost / gained | none lost, none gained | keep (needed for abbreviations such as RBG, CASA) |
+| Weak-retrieval retry τ_low (E7) | F1 of flagging unanswerable by top rerank score | τ = 0.599 (on pool 30) | not enabled: the retry is a second full search and rerank on exactly the weak and unanswerable questions, and no experiment shows it recovers a page |
+| No cross-encoder at all | follows from E4: with N = k = 10 the reranker no longer selects blocks, it only orders them | recall unchanged by construction (0.882); saves the whole rerank time | **pending**: `tcb eval --no-rerank` vs default on val (CPU). Rule fixed before the run: drop the reranker from the answer path unless it costs more than one correct answer on val |
+| Vector database (FAISS / Chroma / Qdrant) instead of the LlamaIndex in-memory store | time of one top-40 dense search over 1,526 × 1,024 vectors, query vector given | LlamaIndex simple store 49 ms (median), numpy 0.17 ms, FAISS flat 0.30 ms; BM25 0.14 ms | not adopted: at most 0.05 s saved per question against a rerank of tens of seconds, and a DB server adds a service to Docker |
+| BGE-M3 sparse ("hybrid search" inside the model) instead of BM25 | the premise that keyword search puts the number's block at top 1 | 1 of 85 questions contains a number other than a year or date (the number is the answer, not the query); "2025" occurs in 572 of 1,526 chunks; BM25 R@1 = 0.565 | not adopted for speed: retrieval is already hybrid (BM25 + BGE-M3 dense + RRF), sparse weights come from the same forward pass so they save no time, and they need FlagEmbedding plus a re-index. A quality experiment for later |
+| Larger chunks (400 to 500 words, 50 to 100 words overlap) | current chunk shape | narrative median 176 words (cap 220), table chunks are whole rows with column header and unit repeated on every row, KPI tiles 19 words, glossary 7; 0 chunks cross a printed page | not adopted: 10 blocks of ~450 words is ~2.5× the prompt (slower and dearer LLM call; the 15,000-character evidence budget would keep only ~5 blocks), blocks over ~350 words exceed the reranker's 512 tokens, and overlap across pages breaks one-page citations. Chunk size for quality (E6) not run |
+| Reranker speed-ups (batch size 1, int8 dynamic quantization, ONNX runtime) | not run | | moot if the reranker leaves the answer path; int8 changes scores and ONNX adds dependencies |
+| Model warm-up at start | first question paid the reranker load | `Retriever.warm()` at start of chat/serve/batch/eval | adopted |
 
 ---
 
 ## 18. Known gaps and limits
 
-1. **Nothing real has run yet:** real model load, real `idx/`, Docker build, `smoke.sh`, live OpenAI/Anthropic calls, Ollama smoke, experiments E1–E8, τ_low, quality numbers, demo video are all **[NOT RUN]**.
-2. dev/val items are drafts until a human verifies each gold against the PDF; the generator verifies only that gold facts are present on the gold pages of the *parsed* text.
+1. **Not run yet:** Docker build, `smoke.sh`, live OpenAI call, Ollama smoke, E6, `tcb eval` quality numbers, CPU latency at pool 10, demo video. Run on Colab: model load, `idx/`, live Anthropic test, q10 batch (pool 30), experiments E2 to E5 and E7.
+2. dev/val golds were checked by Claude against the PDF text (pdftotext of the cited page; calculations recomputed); a human spot-check is pending.
 3. 47 low-quality note tables give text only; calculations over them are refused. A layout model could recover them (out of scope).
 4. Number grounding ignores integers ≤ 12.
 5. Fact-presence scoring cannot judge a purely textual answer without numeric or keyword gold; it relies on `gold_facts` being well chosen.
@@ -389,7 +408,7 @@ The runner *suggests* a decision by these rules and never edits `conf.py`. Order
 
 ## 19. Cost and latency model (to be measured, not asserted)
 
-Per question: ≤ 1 rewrite call (follow-ups only) + 1–2 generation calls; embedding of the query (CPU) + rerank of 30 passages (CPU, the dominant local cost) + BM25 (negligible). The trace records tokens, calls, per-stage seconds and an estimated USD cost, so the submission can report p50/p95 latency and cost per question. Ingestion cost: parse is seconds; embedding 1,526 nodes with BGE-M3 on CPU is **[NOT MEASURED]**.
+Per question: ≤ 1 rewrite call (follow-ups only) + 1–2 generation calls; embedding of the query (CPU) + rerank of 10 passages (CPU, the dominant local cost; 30 passages took ≈ 60 s on 2 Colab cores) + dense search (≈ 0.05 s) + BM25 (< 1 ms). The trace records tokens, calls, per-stage seconds and an estimated USD cost, so the submission can report p50/p95 latency and cost per question. Ingestion cost: parse is seconds; embedding 1,526 nodes with BGE-M3 on CPU is **[NOT MEASURED]**.
 
 ---
 

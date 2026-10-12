@@ -85,8 +85,10 @@ Then run the steps from the runbook in this order (each in its own cell; stop at
 !tcb vset check data/dev.json && tcb vset check data/val.json   # gold facts are on their gold pages (dev 70, val 34, all checked against the PDF text)
 # retrieval experiments, no LLM cost: quality on the GPU (fast), rerank timing on the CPU (what ships)
 !TCB_DEVICE=cuda tcb exp data/dev.json data/val.json --label m4 --time-device cpu --time-sample 10 --verbose 2>&1 | tail -60
-# after conf.py is frozen from exp.md (pool N, k, RRF k, tau_low): answer quality on val, real LLM
-!tcb eval data/val.json --label val1
+# answer quality + CPU latency on val, real LLM: with and without the cross-encoder (DESIGN 17.1), then compare
+!tcb eval data/val.json --label val-rr
+!tcb eval data/val.json --label val-norr --no-rerank
+!tcb eval --compare out/runs/eval/val-rr out/runs/eval/val-norr
 ```
 Offline mode (Ollama on the T4):
 ```python

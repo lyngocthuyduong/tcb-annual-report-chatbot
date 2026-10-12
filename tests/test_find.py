@@ -52,6 +52,14 @@ def test_stage_bookkeeping(rt):
     assert len(rt.top_nodes(r)) == min(conf.FINAL_EVIDENCE, len(r.reranked)) and r.top_score == s[0]
 
 
+def test_no_reranker_keeps_fused_order(rt):
+    import copy
+    r0 = copy.copy(rt); r0.rr = None
+    r = r0.search("tổng tài sản 2025")
+    assert [c for c, _ in r.reranked] == r.fused[: r0.pool] and len(r0.top_nodes(r)) == min(conf.FINAL_EVIDENCE, len(r.reranked))
+    r0.warm()
+
+
 def test_empty_query_does_not_crash(rt):
     r = rt.search("???")
     assert r.bm25 == [] and r.dense == [] and r.reranked == []
