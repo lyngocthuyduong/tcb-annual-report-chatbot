@@ -124,6 +124,9 @@ def cmd_eval(a) -> int:
         print("eval needs a dataset (or --compare RUN_A RUN_B)", file=sys.stderr); return 2
     rep = ev.run_eval(a.set, a.out, _engine(), label=a.label, include_unverified=a.include_unverified)
     print(json.dumps(rep["summary"], ensure_ascii=False, indent=1))
+    fails = ev.failure_lines(rep["rows"])
+    print("\nFAILED ITEMS (from traces):" if fails else "\nno failed items", *fails, sep="\n")
+    print(f"written: {rep['dir']}")
     return 0
 
 

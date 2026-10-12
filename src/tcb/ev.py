@@ -139,7 +139,10 @@ def score_item(item: Item, ans: dict, page_of: Callable[[str], int | None]) -> d
             "stage_ranks": hits, "rr": rr, "rewrite_mode": tr.get("rewrite_mode"),
             "latency_s": tr.get("total_s"), "llm_calls": llm_.get("calls"), "cost_usd": llm_.get("cost_usd"),
             "in_tokens": llm_.get("in_tokens"), "out_tokens": llm_.get("out_tokens"), "repaired": tr.get("repaired"),
-            "stage_s": {**tr.get("retrieval", {}).get("seconds", {}), "llm": llm_.get("latency_s")}}
+            "stage_s": {**tr.get("retrieval", {}).get("seconds", {}), "llm": llm_.get("latency_s")},
+            "why": {"plan_status": (tr.get("plan") or {}).get("status"), "decision": (tr.get("decision") or {}).get("reason"),
+                    "problems": (tr.get("check_problems") or [])[:3], "calc_errors": tr.get("calc_errors") or [],
+                    "error": ans.get("error")}}
 
 
 def _rate(xs):
@@ -150,6 +153,18 @@ def _rate(xs):
 def _pct(xs, p):
     xs = sorted(x for x in xs if x is not None)
     return round(xs[min(len(xs) - 1, int(p * len(xs)))], 3) if xs else None
+
+
+def failure_lines(rows: list[dict]) -> list[str]:
+    """One line per failed item: what the eval saw and why the pipeline decided as it did (from the trace)."""
+    out = []
+    for r in rows:
+        if r["passed"]: continue
+        w = r.get("why", {})
+        out.append(f"{r['id']}: {r['verdict']} | status={r['status']} plan={w.get('plan_status')} decision={w.get('decision')} "
+                   f"| gold rank {(r.get('stage_ranks') or {}).get('final')} | problems={w.get('problems')} calc={w.get('calc_errors')}"
+                   + (f" | error={w['error']}" if w.get("error") else ""))
+    return out
 
 
 def summarize(rows: list[dict]) -> dict:

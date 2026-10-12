@@ -34,3 +34,20 @@ def test_nodes_never_span_pages(doc):
 def test_content_types_present(doc):
     types = {n.content_type for n in doc["nodes"]}
     assert types == {"narrative", "kpi", "table", "glossary"}
+
+
+def test_page_headings_give_each_node_its_context(doc):
+    """A KPI tile alone ('Dư nợ vay | 328,1') does not say whose figure it is; the page title does (it sits on the facing page)."""
+    ns = doc["nodes"]
+    def on(page, pat): return [n for n in ns if n.printed_page_number == page and re.search(pat, n.text)]
+    assert (x := on(59, r"328,1|475,8")) and all("Khối Ngân hàng Bán lẻ (RBG)" in n.text for n in x)
+    assert (x := on(78, r"7\.109")) and all("TCBS" in n.text for n in x)
+    assert on(84, r".") and not any("TCBS" in n.text for n in on(84, r".")), "the next subsidiary replaces the carried title"
+    assert (x := on(148, r"9 thành viên")) and all("Hội đồng quản trị" in n.text for n in x)
+    assert (x := on(302, r"Mua sắm tài sản cố định")) and all("Báo cáo lưu chuyển tiền tệ hợp nhất" in n.text for n in x)
+    assert on(387, r"Danh mục thuật ngữ viết tắt\] IRRBB: Rủi ro lãi suất trên sổ ngân hàng")
+
+
+def test_kpi_tiles_are_not_glued_by_a_paragraph(doc):
+    kpi = [n.text for n in doc["nodes"] if n.content_type == "kpi" and n.printed_page_number == 59]
+    assert any("Số dư tiền gửi | 475,8" in t for t in kpi) and any("Tổng thu nhập hoạt động | 28,3" in t for t in kpi)

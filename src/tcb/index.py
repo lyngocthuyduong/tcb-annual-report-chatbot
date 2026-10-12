@@ -41,7 +41,8 @@ def validate(index_dir: str | Path, embed_model: str = conf.EMBED_MODEL, embed_r
         raise IndexError_("embedding", f"index built with {e.get('model')}@{e.get('revision')}, "
                                        f"code expects {embed_model}@{embed_rev}")
     ch = m.get("chunking", {})
-    if strict_chunking and (ch.get("narrative_max_words") != conf.CHUNK_MAX_WORDS or ch.get("table_rows_per_chunk") != conf.TABLE_ROWS_PER_CHUNK):
+    if strict_chunking and (ch.get("narrative_max_words") != conf.CHUNK_MAX_WORDS or ch.get("table_rows_per_chunk") != conf.TABLE_ROWS_PER_CHUNK
+                            or ch.get("context") != conf.NODE_CONTEXT):
         raise IndexError_("format", f"index chunking {ch.get('narrative_max_words')}/{ch.get('table_rows_per_chunk')} words/rows "
                                     f"!= code {conf.CHUNK_MAX_WORDS}/{conf.TABLE_ROWS_PER_CHUNK} (experimental index?)")
     if m["bm25"].get("tokenizer") != conf.TOKENIZER:

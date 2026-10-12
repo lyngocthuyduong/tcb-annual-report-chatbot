@@ -14,6 +14,7 @@ INDEX_FORMAT = 1
 TOKENIZER = "tcb-vi-v1"
 CHUNK_MAX_WORDS = 220        # narrative chunk budget (syllable-words)
 TABLE_ROWS_PER_CHUNK = 12
+NODE_CONTEXT = "chapter>heading"   # every node text starts with [chapter › page heading › subheading]
 BM25_K1, BM25_B = 1.5, 0.75  # bm25s defaults, recorded in manifest
 TOP_BM25 = TOP_DENSE = 40
 RRF_K = 60                   # E3b
@@ -89,5 +90,6 @@ def settings() -> Settings:
 # candidates reached 0.894 (one item) at ~2 s per candidate on 2 CPU cores, so there is no reranker (DESIGN 17.1).
 FINAL_EVIDENCE = 10
 # $/1M tokens (in, out) -- public list prices checked 10 Oct 2026; used only for the cost estimate in traces
-PRICES = {"gpt-4o-mini": (0.15, 0.60), "claude-sonnet-5-5": (2.0, 10.0)}
+PRICES = {"gpt-4o-mini": (0.15, 0.60), "claude-sonnet-5-5": (2.0, 10.0),
+          "claude-haiku-5-5": (0.10, 0.50)}   # Haiku: Anthropic price page, prompts up to 100k tokens (13 Oct 2026)
 PROMPT_EVIDENCE_CHARS = 15000   # budget for evidence text in one prompt (~5k tokens @ ~3 chars/token; keeps local 8k-context models safe)

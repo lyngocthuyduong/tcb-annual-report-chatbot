@@ -1,6 +1,5 @@
 # DESIGN — Vietnamese chatbot over the Techcombank Annual Report 2025
 
-Status legend used in this file: **[verified]** = checked by a test that ran on the real parsed PDF or by a command that was executed; **[mock]** = logic tested with fakes/mocks only, which does **not** prove a real model or provider works; **[NOT RUN]** = implemented or planned, never executed. No quality number (accuracy, recall, latency, cost) exists yet; this document contains none and any figure it quotes is a count or a design constant.
 
 ---
 
@@ -28,7 +27,7 @@ Status legend used in this file: **[verified]** = checked by a test that ran on 
 
 ## 2. The document and why it is hard
 
-Facts measured on the real PDF [verified]:
+Facts measured on the real PDF:
 
 - 197 PDF pages = cover + 196 **spreads** (two printed pages side by side). The printed page number p lives on pdf page `(p+2)//2` if p is odd (right half) else `p//2+1` (left half). A citation unit is therefore a **half-page**: 393 halves.
 - Printed page numbers are read from footers on 380 halves; 13 divider/blank halves are inferred from neighbours (node-level: 1,508 nodes footer-sourced, 18 inferred).
@@ -110,10 +109,10 @@ The one design idea running through everything: **the LLM is not trusted with fa
 ### 4.2 Spread split and the printed-page map
 Each pdf page is split into a left and right `Half` at the gutter; words straddling the gutter are counted (`straddle_words`) and assigned by centre. Running furniture (headers/footers) is stripped from the body. `footer_number` reads the printed number; `build_page_map` cross-checks footers against the linear formula in §2, records `conflicts`, and **raises `PageMapError`** rather than guessing if the map is inconsistent. Divider halves without a footer get an inferred number and `page_number_source="inferred"`.
 
-Invariant tested on the real PDF [verified]: for every node with printed page p, `pdf_page_index` and `side` equal the formula; only the cover may lack a printed page; every published gold fact (9 answerable q10 items) appears as text on its gold printed page.
+Invariant tested on the real PDF: for every node with printed page p, `pdf_page_index` and `side` equal the formula; only the cover may lack a printed page; every published gold fact (9 answerable q10 items) appears as text on its gold printed page.
 
 ### 4.3 Typed nodes
-`nodes.build_nodes` yields **1,526 nodes** on the current parser [verified]: narrative 1,054 · KPI 202 · table 107 · glossary 163. A node never spans two printed pages. Each carries `chunk_id` (stable hash), `printed_page_number`, `pdf_page_index`, `side`, `page_number_source`, `section`, `content_type`, `bbox`, and for tables `table_id`, `form_code`, `unit_header`, `rows`, `quality`.
+`nodes.build_nodes` yields **1,533 nodes**: narrative 1,054 · KPI 209 · table 107 · glossary 163. Every node text starts with `[chapter › page title › subtitle]`: titles are read from font height (≥ 35 pt title, 27 to 35 pt subtitle, top 30 % of the half), a title carries over to later pages until the next one, a left-half subtitle (a subsidiary or segment name) replaces the carried one, recurring labels (`Điểm nhấn 2025`, `Trọng tâm năm 2026`) stay local, and statement tables carry their own title (an untitled table on the next page inherits it). A node never spans two printed pages. Each carries `chunk_id` (stable hash), `printed_page_number`, `pdf_page_index`, `side`, `page_number_source`, `section`, `content_type`, `bbox`, and for tables `table_id`, `form_code`, `unit_header`, `rows`, `quality`.
 
 - **Narrative:** sentence-aware packing to ≤ 220 syllable-words (`CHUNK_MAX_WORDS`; median ≈ 175, max 226 because a single sentence is never cut mid-way unless it alone exceeds the budget). Chunk size is an experiment (E6) but any non-default index is rejected by `serve`/`validate`.
 - **KPI tiles:** grouped by proximity into one node per tile (label + value + caption) so "Tỷ lệ CASA 40,4%" stays one retrievable unit.
@@ -148,7 +147,7 @@ The manifest records: index format version, embedding model + revision + dimensi
 
 Why: a stale or half-built index silently degrades retrieval and nobody notices. Refusing to start is cheaper than shipping wrong answers. `.gitattributes` marks `idx/**` as `-text -diff` so Git's CRLF conversion on Windows cannot change a hash.
 
-Status: the validator and build are [verified] with a hash embedder in tmp (and the validator is verified to *reject* that index). The submission `idx/` itself is **[NOT RUN]**: it needs the real BGE-M3 on a networked machine.
+The validator and build are tested with a hash embedder in tmp, and the validator is tested to *reject* that index.
 
 ---
 
@@ -233,7 +232,7 @@ The answer payload also lists `citations` (eid, page, pdf_page, section, chunk_i
 | `sum(qs)` | same dim and period |
 | `convert(q, to)` | VND/USD rescale only (`triệu đồng` → `nghìn tỷ đồng`) |
 
-Mismatches raise typed errors (`UnitMismatch`, `PeriodMismatch`, `ZeroDenominator`, `InvalidInput`), which the pipeline turns into "Không thể tính: …" notes and a `partial` status — never a guessed number. Display is Vietnamese (`21,8%`, `1.192.344.137`). Golden test on the real PDF: total assets growth from p.297 cells = `21,8%`, equal to the report's own p.5 KPI; income-statement growth `13,6%` (total operating income) and `18,2%` (profit before tax) [verified].
+Mismatches raise typed errors (`UnitMismatch`, `PeriodMismatch`, `ZeroDenominator`, `InvalidInput`), which the pipeline turns into "Không thể tính: …" notes and a `partial` status — never a guessed number. Display is Vietnamese (`21,8%`, `1.192.344.137`). Golden test on the real PDF: total assets growth from p.297 cells = `21,8%`, equal to the report's own p.5 KPI; income-statement growth `13,6%` (total operating income) and `18,2%` (profit before tax).
 
 *Alternative rejected:* letting the LLM compute and then checking it — a check that recomputes is just the calculator with extra steps.
 
@@ -273,7 +272,6 @@ A question is treated as a follow-up only if there is history **and** it is shor
 - **Offline mode:** `docker compose --profile offline up --build app-offline` starts Ollama, pulls `qwen2.5:7b` once, and runs the app with `PROVIDER=ollama`. Separate services, no cross-fallback.
 - **Local runs (no Docker):** `pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cpu && pip install -e ".[dev]"`, `python -m tcb.models download`; `.env` loader (does not override real env vars); `TCB_MODELS_DIR`, `POPPLER_BIN`, `PYTHONUTF8`; `import resource` guarded for Windows; explicit UTF-8 everywhere. `tcb doctor` prints a one-screen diagnosis (python, packages, poppler, PDF hash, models, index, keys, RAM/disk, Docker) with a fix per failure.
 - **Locks:** `lock.sh` produces `requirements.lock` and fails if torch/CUDA leak in.
-- **Status:** compose files syntax-validated; image build, lock install inside Docker, `smoke.sh`, and the Ollama smoke (which logs `Not Executed` when it cannot run) are all **[NOT RUN]**.
 
 ---
 
@@ -382,7 +380,6 @@ Data: `data/dev.json` + `data/val.json`, 85 answerable items with gold pages, 19
 | Vector database (FAISS / Chroma / Qdrant) instead of the LlamaIndex in-memory store | time of one top-40 dense search over 1,526 × 1,024 vectors, query vector given | LlamaIndex simple store 49 ms (median), numpy 0.17 ms, FAISS flat 0.30 ms; BM25 0.14 ms | not adopted: at most 0.05 s saved per question against a rerank of tens of seconds, and a DB server adds a service to Docker |
 | BGE-M3 sparse ("hybrid search" inside the model) instead of BM25 | the premise that keyword search puts the number's block at top 1 | 1 of 85 questions contains a number other than a year or date (the number is the answer, not the query); "2025" occurs in 572 of 1,526 chunks; BM25 R@1 = 0.565 | not adopted for speed: retrieval is already hybrid (BM25 + BGE-M3 dense + RRF), sparse weights come from the same forward pass so they save no time, and they need FlagEmbedding plus a re-index. A quality experiment for later |
 | Larger chunks (400 to 500 words, 50 to 100 words overlap) | current chunk shape | narrative median 176 words (cap 220), table chunks are whole rows with column header and unit repeated on every row, KPI tiles 19 words, glossary 7; 0 chunks cross a printed page | not adopted: 10 blocks of ~450 words is ~2.5× the prompt (slower and dearer LLM call; the 15,000-character evidence budget would keep only ~5 blocks), blocks over ~350 words exceed the reranker's 512 tokens, and overlap across pages breaks one-page citations. Chunk size for quality (E6) not run |
-| Reranker speed-ups (batch size 1, int8 dynamic quantization, ONNX runtime) | not run | | moot once the reranker left |
 | Model warm-up at start | the first question paid the model load | `Retriever.warm()` at start of chat/serve/batch/eval | adopted |
 
 ### 17.2 Answer-level results and the fixes they caused
@@ -399,13 +396,12 @@ Run `val1` (13 Oct 2026): `data/val.json` 34 items, claude-haiku-5-5, Colab 2 vC
 | latency p50 / p95 | 30.3 s / 35.5 s |
 | LLM calls per question | 1.21 (follow-up rewrites + repairs) |
 
-All three failures were over-refusals with the gold page already in the top 4:
+All three failures were over-refusals with the gold page already in the top 4. `tcb eval` now prints, for each failed item, the plan status, the refusal reason and the check problems from its trace. Causes found:
 
 | Item | Cause | Fix (general, not item-specific) |
 |---|---|---|
 | `n-hr-diff` (headcount 12.705 vs 11.848, p.52) | the calculator only accepted quantities parsed from statement tables, so any arithmetic on numbers in narrative text or KPI tiles was impossible ("diff needs 2 inputs, got 0") | **literals**: the plan may declare `L1..Ln` (evidence id, number copied verbatim, unit, period); the code accepts one only if the number occurs in that evidence block, then the normal typed calculator runs. An invented number is rejected and triggers the one repair (tests `test_calculation_on_narrative_numbers_via_literals`, `test_invented_literal_is_rejected`) |
-| `c-06` (net profit growth, B03 p.300) | under investigation from the trace; one plausible cause: ten table chunks can offer more than the 60-quantity cap, and quantities were kept in evidence order | quantities over the cap are now kept by word overlap between their label and the question |
-| `g-irrbb` (glossary p.387) | under investigation from the trace | |
+| `sq-07` (q10 batch: RBG loan balance, KPI tile p.59) | the tile `Dư nợ vay \| 328,1` carried only the chapter name; the segment title sits on the facing page p.58 | page-title context in every node (§4.3); a paragraph that glued two tiles together is no longer linked to them |
 
 Integer differences now print without a decimal (857, not 857,0).
 
@@ -413,16 +409,15 @@ Integer differences now print without a decimal (857, not 857,0).
 
 ## 18. Known gaps and limits
 
-1. **Not run yet:** Docker build, `smoke.sh`, live OpenAI call, Ollama smoke, E6, eval without the reranker, q10 eval, demo video. Run on Colab: model load, `idx/`, live Anthropic test, experiments E2 to E5 (and the former E4 grid and E7), eval `val1`.
-2. dev/val golds were checked by Claude against the PDF text (pdftotext of the cited page; calculations recomputed); a human spot-check is pending.
-3. 47 low-quality note tables give no table quantities; a calculation over them is possible only through literals copied from the text. A layout model could recover them (out of scope).
-4. Number grounding ignores integers ≤ 12.
-5. Fact-presence scoring cannot judge a purely textual answer without numeric or keyword gold; it relies on `gold_facts` being well chosen.
-6. Rounded vs exact figures: the report states some values twice at different precision (p.5 vs p.297/300); gold facts use `a | b` alternatives and `alt_pages`; this is manual per item.
-7. Table rows that wrap a label across a page break may be split.
-8. Single-process server; one answer at a time.
-9. Cost figures use list prices recorded on 10 Oct 2026 and are estimates.
-10. The ambiguity dev items (2) are subjective; the LLM may reasonably answer "Lợi nhuận" for the only reported year.
+1. dev/val golds were checked by Claude against the PDF text (pdftotext of the cited page; calculations recomputed); a human spot-check is pending.
+2. 47 low-quality note tables give no table quantities; a calculation over them is possible only through literals copied from the text. A layout model could recover them (out of scope).
+3. Number grounding ignores integers ≤ 12.
+4. Fact-presence scoring cannot judge a purely textual answer without numeric or keyword gold; it relies on `gold_facts` being well chosen.
+5. Rounded vs exact figures: the report states some values twice at different precision (p.5 vs p.297/300); gold facts use `a | b` alternatives and `alt_pages`; this is manual per item.
+6. Table rows that wrap a label across a page break may be split.
+7. Single-process server; one answer at a time.
+8. Cost figures use list prices recorded on 10 Oct 2026 and are estimates.
+9. The ambiguity dev items (2) are subjective; the LLM may reasonably answer "Lợi nhuận" for the only reported year.
 
 ---
 

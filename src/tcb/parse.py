@@ -69,7 +69,10 @@ def _link(a: Block, b: Block) -> bool:
     dy = max(ay0, by0) - min(ay1, by1)               # vertical gap
     narrow = min(ax1 - ax0, bx1 - bx0)
     small = len(a.lines) <= 3 and len(b.lines) <= 3
-    if ox >= 0.4 * narrow and dy <= (20 if small else 12): return True  # stacked
+    w, nb = (a, b) if (ax1 - ax0) >= (bx1 - bx0) else (b, a)      # wider / narrower block
+    para = len(w.text) > 80 and (w.bbox[2] - w.bbox[0]) > 4 * narrow  # a paragraph under or over a small tile part
+    if ox >= 0.4 * narrow and dy <= (20 if small else 12) and not (para and dy > 8): return True  # stacked
+    # (a paragraph spanning several KPI tiles must not glue them into one group)
     if oy > 0 and dx <= 12 and dx >= 0 and oy >= 0.5 * min(ay1 - ay0, by1 - by0): return True  # side by side (value | unit)
     return False
 

@@ -17,7 +17,7 @@ def N(doc):
         "b02": pick(lambda n: n.content_type == "table" and "TỔNG TÀI SẢN" in n.text and n.printed_page_number == 297),
         "kpi_assets": pick(lambda n: n.content_type == "kpi" and "Tổng tài sản" in n.text and n.printed_page_number == 5),
         "kpi_casa": pick(lambda n: n.content_type == "kpi" and "Tỷ lệ CASA" in n.text and n.printed_page_number == 5),
-        "gl_casa": pick(lambda n: n.content_type == "glossary" and n.text.startswith("CASA:")),
+        "gl_casa": pick(lambda n: n.content_type == "glossary" and "] CASA:" in n.text),
         "hr": pick(lambda n: n.content_type == "narrative" and "12.705 người" in n.text and n.printed_page_number == 52),
     }
 

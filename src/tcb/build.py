@@ -116,7 +116,7 @@ def build(pdf_path: str, out_dir: str, embedder=None, embed_name: str = conf.EMB
                    "printed_pages_footer": pm["footer"], "printed_pages_inferred": pm["inferred"]},
         "embedding": {"model": embed_name, "revision": embed_rev, "dim": dim, "normalize": True, "max_length": 512},
         "chunking": {"unit": "half-page", "narrative_max_words": chunk_words or conf.CHUNK_MAX_WORDS,
-                     "table_rows_per_chunk": conf.TABLE_ROWS_PER_CHUNK, "glossary": "one-per-term"},
+                     "table_rows_per_chunk": conf.TABLE_ROWS_PER_CHUNK, "context": conf.NODE_CONTEXT, "glossary": "one-per-term"},
         "bm25": {"library": "bm25s", "version": ver("bm25s"), "tokenizer": conf.TOKENIZER,
                  "k1": conf.BM25_K1, "b": conf.BM25_B},
         "counts": {"nodes": len(nodes), "by_type": by_type, "glossary": len(gloss)},

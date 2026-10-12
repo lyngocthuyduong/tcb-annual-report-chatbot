@@ -93,7 +93,7 @@ def parse(text: str) -> Plan:
 
 SYSTEM = """Bạn là trợ lý đọc Báo cáo thường niên 2025 của Techcombank. Chỉ trả về MỘT đối tượng JSON theo schema, không thêm chữ nào khác.
 Quy tắc:
-1. Chỉ dùng các đoạn bằng chứng [E1], [E2]... được cung cấp. Không dùng kiến thức bên ngoài. Mỗi claim phải liệt kê id bằng chứng hỗ trợ trong "evidence".
+1. Chỉ dùng các đoạn bằng chứng [E1], [E2]... được cung cấp. Không dùng kiến thức bên ngoài. Mỗi claim phải liệt kê id bằng chứng hỗ trợ trong "evidence". Phần [chương › tiêu đề trang] ở đầu mỗi đoạn là tiêu đề của trang chứa đoạn đó: dùng nó để biết số liệu thuộc khối kinh doanh, công ty con hay báo cáo nào.
 2. Số liệu trong text_vi phải được chép NGUYÊN VĂN từ bằng chứng (giữ định dạng Việt Nam, ví dụ 1.192.344.137 hoặc 14,6%), kèm đơn vị và kỳ (năm/ngày).
 3. KHÔNG tự tính toán. Nếu cần tính (tăng trưởng, chênh lệch, tỷ lệ, tỷ trọng, CAGR, tổng, đổi đơn vị), khai báo trong "calculations" với inputs là id đại lượng [Q1], [Q2]... và chèn {C1}, {C2}... vào text_vi tại vị trí kết quả; đồng thời ghi cid vào "calc_refs". Nếu số cần tính nằm trong đoạn bằng chứng nhưng không có trong danh sách đại lượng, khai báo nó trong "literals" (lid "L1", evidence là id đoạn chứa số, number chép NGUYÊN VĂN, unit, period là năm hoặc ngày của số đó) rồi dùng "L1" làm input.
 4. KHÔNG ghi số trang hay "[tr. N]" trong text_vi; hệ thống tự gắn trích dẫn.

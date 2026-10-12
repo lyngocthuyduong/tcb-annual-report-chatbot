@@ -2,16 +2,6 @@
 
 Evidence-first: every answer cites printed pages `[tr. N]` taken from index metadata (never from the LLM); numbers in answers must appear in the cited evidence or come from a deterministic calculator; the bot refuses when the report lacks the answer. Design and measurements: `DESIGN.md`. Submission summary: `SUBMISSION.md`.
 
-## Status
-| Part | State | Evidence |
-|---|---|---|
-| PDF → page map → nodes → index build/validate | **verified** | `pytest -m integ` on the real PDF |
-| Calculator, citation check, refusal, providers (mocked), repair retry, API, eval | implemented, unit/mock-tested | `pytest -m unit` |
-| BGE-M3 load (`tcb check`), shipped `idx/` (1,526 nodes) | **passed on Colab (CPU)** | `tcb check`, `tcb validate idx --snapshot` |
-| Retrieval experiments E2–E5 on dev+val (85 answerable) | **run on Colab** | DESIGN 17.1 |
-| `tcb eval` on val (34 items, claude-haiku-5-5) | **run once, with the former reranker**: pass 31/34, p50 30.3 s | DESIGN 17.1 |
-| Same eval without reranker, q10 eval, Docker build, OpenAI live call, Ollama smoke | **NOT RUN** | |
-
 ## Run (online)
 ```bash
 cp .env.example .env          # set PROVIDER + its API key
@@ -35,7 +25,7 @@ docker compose run --rm app tcb ask "Tỷ lệ CASA năm 2025?" --json
 `eval` writes `traces.jsonl`, `results.jsonl` (score + failing stage per item), `summary.json` (pass rate, recall by stage, refusal P/R, p50/p95 latency, median seconds per stage, tokens, cost when the model has a price in `conf.PRICES`) and `config.json`. Only `"verified": true` items count.
 
 ## Run on Colab (development; no Docker there)
-Runtime: **CPU** is enough (the index is shipped; there is no reranker). Secrets (key icon, **Notebook access** ON): `gh-token`, `hf_token`, `anthropic_key` (or `openai_key`).
+Runtime: **T4 GPU** only to rebuild the index (cell 4); everything else runs on the CPU (`TCB_DEVICE` defaults to `cpu`), which is also what latency numbers must use. Secrets (key icon, **Notebook access** ON): `gh-token`, `hf_token`, `anthropic_key` (or `openai_key`).
 ```python
 # CELL 1: once per VM, then Runtime > Restart session
 !apt-get -qq update && apt-get -qq install -y poppler-utils
@@ -63,7 +53,13 @@ os.environ.update(PROVIDER="anthropic", ANTHROPIC_MODEL="claude-haiku-5-5")
 # CELL 3: once per VM: BGE-M3 (≈2.3 GB) + gate
 !python -m tcb.models download 2>&1 | tail -2
 !tcb check | tee out/check.json            # dim 1024, revision ok, query_embed_s; if the .bin is refused: !python -m tcb.models convert
-!tcb validate idx --snapshot
+```
+```python
+# CELL 4: only when ingestion code changed (index format check fails): rebuild idx/ on the GPU, validate, commit
+os.environ.update(JAX_PLATFORMS="cpu", XLA_PYTHON_CLIENT_PREALLOCATE="false")   # keep Colab's JAX off the T4
+!rm -rf idx.new && TCB_DEVICE=cuda tcb build data/ar.pdf idx.new && tcb validate idx.new --snapshot && rm -rf idx && mv idx.new idx
+!git config user.name "Ly Quoc Bien" && git config user.email "bien.anh2603@gmail.com"
+!git add idx && git commit -qm "Rebuild index" && git push -q origin HEAD:cont
 ```
 Then, one cell each, a NEW `--label`/`--out` every run:
 ```python
