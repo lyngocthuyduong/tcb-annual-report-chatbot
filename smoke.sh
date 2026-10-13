@@ -7,7 +7,10 @@
 set -uo pipefail
 cd "$(dirname "$0")"
 MODE="${1:-online}"; DRY=0; [ "$MODE" = "--dry-run" ] && { DRY=1; MODE=online; }
-LOG=out/smoke.log; mkdir -p out; : > "$LOG"
+LOG=out/smoke.log; mkdir -p out
+if ! : > "$LOG" 2>/dev/null; then   # Docker creates a missing bind-mount folder as root; the host user then cannot write to it
+  echo "out/ is not writable by $(id -un). Fix: sudo chown -R $(id -u):$(id -g) out   then run ./smoke.sh again"; exit 1
+fi
 declare -a RESULTS
 stage() { # name, command...
   local name="$1"; shift
