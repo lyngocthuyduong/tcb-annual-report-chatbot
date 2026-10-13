@@ -129,8 +129,8 @@ class Engine:
             tr["calc_errors"] = used_err
             d = refuse.decide(plan.status, len(plan.claims), len(kept), used_err, plan.clarification_vi, bool(g.problems))
             tr["decision"] = {"status": d.status, "reason": d.reason}
-            # ---- claims that restate figures already given are only flagged: removing them (runs dev9/val9) also removed
-            # remarks they carried ("dẫn đầu hệ thống"), so one statement per figure is left to the prompt (rule 9)
+            # ---- claims that restate figures already given are only flagged: removing them also removed remarks they carried
+            # ("dẫn đầu hệ thống"), so one statement per figure is left to the prompt (rule 9; DESIGN 8)
             dups = cite.duplicate_claims([cite.render_claim(cl, {}) if not (set(cite._PLACEHOLDER.findall(cl.text_vi)) | set(cl.calc_refs))
                                           else "" for cl in kept])
             tr["restated_figures"] = [kept[i].text_vi for i in sorted(dups)]

@@ -3,9 +3,16 @@
 An analyst pastes the answer into an email, so they must be able to check it in seconds: the figure, its unit and the page it came from. Every design choice below serves that check. Figures, units, pages and arithmetic are produced or verified by code; the language model only chooses which retrieved evidence answers the question and words the answer.
 
 ## How to run
-- Clean machine: `mkdir -p out && cp .env.example .env`, put the key in `ANTHROPIC_API_KEY` (or choose another `PROVIDER`), then `docker compose up --build` → http://127.0.0.1:8000 (UI, `POST /chat`, `/docs`). Creating `out/` first keeps it writable for the container's user. Prerequisites: Docker Compose v2, about 6 GB of RAM for Docker, internet for the first build. Before serving, the app validates the shipped index and the PDF and exits with a named error (code 3) on any mismatch. The full path (build, model check, index validation, tests, answer, refusal, q10) passed `./smoke.sh` at commit `5bd7fbf` (`runs/smoke-5bd7fbf.txt`).
-- Different key or local model: set `PROVIDER=openai|anthropic|ollama` and the matching key or model in `.env`. Local model: run Ollama on the host (`ollama pull qwen2.5:7b`), set `PROVIDER=ollama`, then `docker compose up --build`; `tcb smoke` sends it one fixed question. I planned a local run too, but on the machines I had (2 vCPU, no GPU) a 7B model needs minutes per answer at these prompt sizes, so the results below use claude-haiku-5-5 and the Ollama adapter is tested against a mocked server. There is no automatic fallback between providers.
-- Batch run: put the question file in `data/` and run `docker compose run --rm app tcb batch data/questions.json --out out/runs/x`; `answers.jsonl` holds each answer, status, citations and trace. Accepts the brief's `sample_questions.json` shape, a list of strings, JSON Lines or one question per line; a follow-up keeps its context through a `history` list or a shared `session` id, and a file with no questions is an error. Scoring: `tcb eval <file>`.
+- Clean machine: `mkdir -p out && cp .env.example .env`, put the key in `ANTHROPIC_API_KEY` (or choose another `PROVIDER`), then `docker compose up --build` → http://127.0.0.1:8000 (UI, `POST /chat`, `/docs`).
+  - Prerequisites: Docker Compose v2, about 6 GB of RAM for Docker, internet for the first build. Creating `out/` first keeps it writable for the container's user.
+  - Before serving, the app validates the shipped index and the PDF and exits with a named error (code 3) on any mismatch.
+  - The full path (build, model check, index validation, tests, answer, refusal, q10) passed `./smoke.sh` at commit `5bd7fbf` (`runs/smoke-5bd7fbf.txt`).
+- Different key or local model: set `PROVIDER=openai|anthropic|ollama` and the matching key or model in `.env`. There is no automatic fallback between providers.
+  - Local model: run Ollama on the host (`ollama pull qwen2.5:7b`), set `PROVIDER=ollama`, then `docker compose up --build`; `tcb smoke` sends it one fixed question.
+  - I planned a local run too, but on the machines I had (2 vCPU, no GPU) a 7B model needs minutes per answer at these prompt sizes, so the results below use claude-haiku-5-5 and the Ollama adapter is tested against a mocked server.
+- Batch run: put the question file in `data/` and run `docker compose run --rm app tcb batch data/questions.json --out out/runs/x`; `answers.jsonl` holds each answer, status, citations and trace.
+  - Accepts the brief's `sample_questions.json` shape, a list of strings, JSON Lines or one question per line; a follow-up keeps its context through a `history` list or a shared `session` id, and a file with no questions is an error.
+  - Scoring: `tcb eval <file>`.
 - Environment variables: `PROVIDER`, `OPENAI_API_KEY`, `OPENAI_MODEL`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_NUM_CTX`, `LLM_TIMEOUT_S`, `LLM_MAX_OUTPUT_TOKENS`, `INDEX_DIR`, `APP_HOST`, `APP_PORT`, `TRACE_DIR`, `LOG_LEVEL` (described in `.env.example`); outside Docker only: `TCB_MODELS_DIR` (where the embedding model is stored), `POPPLER_BIN` (folder of the poppler tools), `TCB_DEVICE` (`cuda` to speed up an index build). Embedding model, tokenizer and chunking are fixed in code and pinned in the index manifest.
 - Shipped index: `idx/` (39 MB).
 
@@ -40,7 +47,12 @@ The layers cover each other's blind spots: extraction makes a figure's unit and 
 Other experiments (tokenizers, fusion parameters, chunk sizes, vector database, sparse retrieval) are in DESIGN §17.
 
 ## Evaluation
-- Method: deterministic scorers, no LLM judge. A fact counts only with the magnitude the gold prints (`100 tỷ` does not satisfy `100 triệu`); the gold stated more precisely or in another unit counts. Citations must be pages of retrieved evidence. Page hit counts the declared gold pages and any page that prints all the gold figures (`widen_gold`), since the analyst can check the figure there; hits on declared pages alone are reported too. Refusals are scored on unanswerable questions, and each failure is attributed to its first failing stage from the trace. Gold facts are machine-checked against the PDF text of their page (`tcb vset check`, calculations recomputed), and I reviewed every item and read every q10, test and test2 answer against its cited page; the notes saved inside `runs/test1` predate that review. Each run is one sample at the provider's default sampling.
+- Method: deterministic scorers, no LLM judge.
+  - Facts: a fact counts only with the magnitude the gold prints (`100 tỷ` does not satisfy `100 triệu`); the gold stated more precisely or in another unit counts.
+  - Pages: citations must be pages of retrieved evidence. Page hit counts the declared gold pages and any page that prints all the gold figures (`widen_gold`), since the analyst can check the figure there; hits on declared pages alone are reported too.
+  - Refusals are scored on unanswerable questions, and each failure is attributed to its first failing stage from the trace.
+  - Gold facts are machine-checked against the PDF text of their page (`tcb vset check`, calculations recomputed), and I reviewed every item and read every q10, test and test2 answer against its cited page; the notes saved inside `runs/test1` predate that review.
+  - Each run is one sample at the provider's default sampling.
 
 | Set | Items | Role |
 |---|---|---|

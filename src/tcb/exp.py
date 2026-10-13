@@ -1,6 +1,7 @@
-"""Retrieval experiments: E2 tokenizer, E3 fusion, E3b RRF k, E4 final k, E5 glossary expansion. No cross-encoder (DESIGN 17.1).
+"""Retrieval experiments: E2 tokenizer, E3 fusion, E3b RRF k, E4 final k, E5 glossary expansion,
+E8 KPI label ranking. No cross-encoder (DESIGN 17.1).
 Retrieval only: no LLM, no tokens spent. Gold = printed pages (gold + alt) of verified answerable items.
-The script SUGGESTS decisions by the plan's rules; it never edits conf.py. Tokenizer/chunk winners need a rebuild."""
+The script suggests decisions by the plan's rules; it never edits conf.py. Tokenizer/chunk winners need a rebuild."""
 from __future__ import annotations
 
 import json

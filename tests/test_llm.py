@@ -167,7 +167,7 @@ def test_ollama_unreachable_timeout_missing_model():
 
 # ---------------- repair retry (same provider, exactly once) ----------------
 class Seq:
-    """Scripted provider; counts calls. Stands in for ANY real provider."""
+    """Scripted provider; counts calls. Stands in for any real provider."""
     name, model = "scripted", "m1"
 
     def __init__(self, *texts): self.texts, self.calls = list(texts), []

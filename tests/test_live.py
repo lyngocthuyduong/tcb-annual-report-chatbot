@@ -62,7 +62,7 @@ def test_end_to_end_shipped_index_real_models_real_provider():
     """Shipped idx/ + baked models + configured PROVIDER. The only test that exercises the full submission path."""
     idx = ROOT / "idx"
     if not (idx / "manifest.json").exists():
-        pytest.skip("idx/ not built yet (needs the real BGE-M3 -> see README 'Build the index')")
+        pytest.skip("idx/ not built yet (needs the real BGE-M3 -> see the development runbook in README)")
     if not (conf.MODELS_DIR / "bge-m3").exists():
         pytest.skip("baked models missing")
     from tcb.boot import load_engine

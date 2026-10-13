@@ -48,7 +48,7 @@ def poppler(name: str) -> str:
 
 
 def load_env(path: str | Path = ".env") -> list[str]:
-    """Local (non-Docker) runs: read KEY=VALUE lines from .env into os.environ WITHOUT overriding real env vars.
+    """Local (non-Docker) runs: read KEY=VALUE lines from .env into os.environ without overriding real env vars.
     Docker Compose does this itself via env_file. Returns the keys that were set (never their values)."""
     p = Path(path)
     if not p.exists():
@@ -88,9 +88,9 @@ def settings() -> Settings:
         log_level=os.getenv("LOG_LEVEL", "INFO"),
     )
 
-# Top fused blocks given to the LLM (E1..E12). Run m4 (dev+val, 85 answerable): recall 0.882 at 10; a cross-encoder over 20-40
-# candidates reached 0.894 (one item) at ~2 s per candidate on 2 CPU cores, so there is no reranker (DESIGN 17.1).
-FINAL_EVIDENCE = 12          # E4 run m7 (final index): recall 0.871 at 10, 0.929 at 12 and 15, 0.941 at 20 -> smallest k within 2 pts of the best
+# Top fused blocks given to the LLM (E1..E12): the smallest k within 2 points of the best recall (E4). No cross-encoder reranks
+# them: it added one item of recall in 85 for most of the CPU time per question (DESIGN 17.1).
+FINAL_EVIDENCE = 12
 # $/1M tokens (in, out) -- public list prices checked 10 Oct 2026; used only for the cost estimate in traces
 PRICES = {"gpt-4o-mini": (0.15, 0.60), "claude-sonnet-5-5": (2.0, 10.0),
           "claude-haiku-5-5": (0.10, 0.50)}   # Haiku: Anthropic price page, prompts up to 100k tokens (13 Oct 2026)

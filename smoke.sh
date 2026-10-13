@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Clean-environment smoke test: from a fresh checkout to a verified answer. Each stage prints PASS/FAIL; the first FAIL stops
-# the run and the summary lists exactly which stages executed. Nothing is "ready" until its stage printed PASS.
+# the run and the summary lists the stages that ran.
 #   ./smoke.sh            needs .env with PROVIDER + key
 #   ./smoke.sh --dry-run  print the stages without running them
 set -uo pipefail

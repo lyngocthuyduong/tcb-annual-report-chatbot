@@ -1,5 +1,5 @@
 """Experiment runner. Unit parts check the math; integration parts run on the TEST-HASH index from the real PDF.
-The numbers produced here say NOTHING about real retrieval quality -- only that the measuring code works."""
+The numbers produced here show that the measuring code works, not how good real retrieval is."""
 import json
 
 import pytest

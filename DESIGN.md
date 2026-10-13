@@ -1,4 +1,4 @@
-# DESIGN — Vietnamese chatbot over the Techcombank Annual Report 2025
+# DESIGN: Vietnamese chatbot over the Techcombank Annual Report 2025
 
 
 ---
@@ -7,7 +7,7 @@
 
 **Goal.** Answer Vietnamese questions about one document (Techcombank Annual Report 2025, 196 two-page spreads) with answers that are (a) grounded in the report, (b) cited by printed page `[tr. N]`, (c) numerically correct when arithmetic is needed, and (d) refused when the report does not contain the answer.
 
-**Fixed by the assessment / by me and not to be changed without asking**
+**Fixed choices**
 
 | Item | Decision |
 |---|---|
@@ -17,7 +17,7 @@
 | LLM providers | Anthropic (every reported result, `claude-haiku-5-5`), OpenAI, or a local Ollama model on the host, chosen by `PROVIDER`. **No automatic fallback between providers** |
 | Depth tracks | Document Intelligence + Retrieval and reasoning; an evaluation harness serves both |
 | Index | Built once, committed as `idx/`, validated fail-closed at start-up. Never rebuilt or downloaded at run time |
-| Time | 4-day sprint; minimal code, no speculative abstractions |
+| Code scope | built in four days; only what one document needs, no speculative abstractions |
 
 **Non-goals.** Multi-document support, an LLM judge, OCR of image-only content (inventoried but not read), streaming answers, authentication, multi-process serving, runtime fine-tuning.
 
@@ -140,7 +140,7 @@ Second pass (13 Oct 2026, after reading the notes tables row by row):
 
 **Quality flag.** `quality="high"` only if every column header carries a date or `Năm YYYY`, or the table has ≤ 3 clean columns. Currently 66 high / 53 low chunks (36 of 67 tables). The primary statements (printed pages 297–302, forms B02 to B04: financial position, off-balance items, income, cash flow) are all high. Low tables (multi-column notes: provisions, segment, related-party, maturity gaps) keep their text view and are **excluded from calculator quantities** rather than guessed.
 
-*Alternative rejected:* marking every table high and letting the LLM sort out columns — that is exactly how wrong numbers get produced from scrambled headers.
+*Alternative rejected:* marking every table high and letting the LLM sort out columns; that is exactly how wrong numbers get produced from scrambled headers.
 
 ### 4.5 Tokenizer `tcb-vi-v2` (BM25)
 `bm25s`' default tokenizer splits `1.192` into `192`. `vi.tokens` instead keeps dates, form codes (`B03/TCTD-HN`) and numbers whole, emits the canonical form too (`1.192.344.137` → `1192344137`, `14,6%` → `14.6%`), and emits a diacritic-folded copy of every word, so `Tăng trưởng` and `tang truong` both match. v2 differs from v1 only in canonical decimals (`16,0` → `16`). On the final index BM25 alone reaches R@20 0.929 against 0.718 for dense alone (E3, run m7).
@@ -180,8 +180,8 @@ An earlier design retried a query once when the top cross-encoder score fell bel
 ### 6.4 Why this shape
 - BM25 + dense because figures/abbreviations need lexical exactness while paraphrased narrative needs semantics.
 - RRF because it needs no score calibration between BM25 and cosine; k = 60 is the literature default and is only changed if E3b shows ≥ 5 points of R@20 on **every** set.
-- No reranker (E4, run m4: dev+val, 85 answerable items): a cross-encoder over 20 to 40 candidates found a gold page for 0.894 of items, the fused top 10 for 0.882, i.e. one item, at about 2 s of CPU per candidate pair on 2 cores (≈ 60 s per question at 30). With 10 candidates and 10 blocks the reranker would only reorder them.
-- Tokenizer stays `vi`: E2 favoured `default` by one item at R@20 (0.894 vs 0.882) while `vi` is ahead at R@5/R@8, so no rebuild.
+- No reranker (E4, run m4: dev+val, 85 answerable items): a cross-encoder over 20 to 40 candidates found a gold page for 0.894 of items, the fused top 10 for 0.882, i.e. one item, at about 2 s of CPU per candidate pair on 2 cores (≈ 60 s per question at 30). Over the fused top 10 that were then given to the LLM it could only reorder them.
+- Tokenizer stays `vi`: E2 favoured `default` by one item at R@20 (0.894 vs 0.882 in run m4; 0.941 vs 0.929 in m7) while `vi` is ahead at R@5/R@8, so no rebuild.
 - One retrieval path: no HyDE, multi-query or agents; each adds LLM calls and a failure surface.
 
 ---
@@ -219,7 +219,7 @@ If the reply is not parseable JSON for the schema, or `cite.check` finds problem
 `cite.check(plan, evidence, quantities, question)` per claim:
 1. Every `evidence` id exists among the retrieved blocks and has a printed page.
 2. Every `{C#}`/`calc_refs` id exists among the plan's calculations; calculation inputs exist among the extracted quantities.
-3. The text contains **no** page reference (`tr. 5`, `trang 5` …) — pages are never LLM output.
+3. The text contains **no** page reference (`tr. 5`, `trang 5` …): pages are never LLM output.
 4. **Every number in the claim text must appear in the cited evidence** (or in the raw cells of quantities used by the claim's calculations, or in the question), compared in canonical form only, so `14,6%` ≡ `14.6`. Raw forms are not compared: the raw `179.501` (thousands) is the canonical form of `179,501` (179.5), and comparing both let a claim `179,501 nghìn tỷ` pass against evidence `179.501 tỷ` (found in run dev9, fixed and tested). Integers ≤ 12 are exempt (list counts, months), a documented gap.
 5. **Magnitude.** A number printed with a magnitude in the cited evidence (`1.192 | Nghìn tỷ đồng`, `18 triệu`, `40,4%`, or the unit of a table column, `31/12/2025 Triệu đồng: 1.192.344.137`) must carry the same magnitude in the claim. `1.192 tỷ đồng` or a bare `1.192` fails although every digit matches: that is the silent factor-of-1,000 error. `điểm phần trăm` has the magnitude of `%`, because the report prints percentage-point changes with `%` (`1,9% (▼) so với 32,7%`); before this, a correct `giảm 1,9 điểm phần trăm` was dropped (dev13 `n-cir-diff`).
 6. At least one evidence id or calculation per claim.
@@ -251,9 +251,9 @@ The answer payload also lists `citations` (eid, page, pdf_page, section, chunk_i
 | `sum(qs)` | same dim and period |
 | `convert(q, to)` | VND/USD rescale only (`triệu đồng` → `nghìn tỷ đồng`) |
 
-Mismatches raise typed errors (`UnitMismatch`, `PeriodMismatch`, `ZeroDenominator`, `InvalidInput`), which the pipeline turns into "Không thể tính: …" notes and a `partial` status — never a guessed number. Display is Vietnamese (`21,8%`, `1.192.344.137`). Golden test on the real PDF: total assets growth from p.297 cells = `21,8%`, equal to the report's own p.5 KPI; income-statement growth `13,6%` (total operating income) and `18,2%` (profit before tax).
+Mismatches raise typed errors (`UnitMismatch`, `PeriodMismatch`, `ZeroDenominator`, `InvalidInput`), which the pipeline turns into "Không thể tính: …" notes and a `partial` status, never a guessed number. Display is Vietnamese (`21,8%`, `1.192.344.137`). Golden test on the real PDF: total assets growth from p.297 cells = `21,8%`, equal to the report's own p.5 KPI; income-statement growth `13,6%` (total operating income) and `18,2%` (profit before tax).
 
-*Alternative rejected:* letting the LLM compute and then checking it — a check that recomputes is just the calculator with extra steps.
+*Alternative rejected:* letting the LLM compute and then checking it: a check that recomputes is just the calculator with extra steps.
 
 ---
 
@@ -324,7 +324,7 @@ For each failed item, the first failing stage in this order: `system` (provider/
 ### 14.5 Experiments (`tcb exp`, retrieval only, zero token cost)
 | ID | Question | Decision rule |
 |---|---|---|
-| E2 | tokenizer `tcb-vi-v1` vs default vs bigram | switch only with ≥ 2 pts R@20 (a switch needs an index rebuild) |
+| E2 | tokenizer `tcb-vi` (production) vs default vs bigram | switch only with ≥ 2 pts R@20 (a switch needs an index rebuild) |
 | E3 / E3b | BM25 vs dense vs RRF vs RSF; RRF k sweep | keep k = 60 unless ≥ 5 pts R@20 on **every** set |
 | E4 | how many fused blocks go to the LLM (k = 5 … 20) | smallest k within 2 pts of the best recall (run m4 measured the former reranker grid N × k instead; §17.1) |
 | E5 | glossary expansion | keep only if no regression |
@@ -343,7 +343,7 @@ The runner *suggests* a decision by these rules and never edits `conf.py`. Order
 | `integ` | `data/ar.pdf`, poppler | page map, extraction, table golden figures, header regressions, gold-on-page for q10/dev/val, index build/validate with a hash embedder in tmp, vset round trip | retrieval quality; the submission index |
 | `live_models` | real model | BGE-M3 load, dim, revision | answer quality |
 | `live_anthropic`, `live_openai`, `live_ollama` | key / running Ollama | one schema-constrained call returns a valid grounded plan | quality at scale |
-| `live` | `idx/` + models + provider | end-to-end answer and refusal | — |
+| `live` | `idx/` + models + provider | end-to-end answer and refusal | |
 
 `pytest` runs unit and integration tests by default, and all of them pass; the five live tests need keys or running services and run on demand (`pytest -m live_anthropic`, …). Tests of note: golden B02/B03 figures; no header text in statement labels; production validator rejects the hash index and chunk-variant indexes; `check` catches a wrong gold fact; independent growth formula equals `calc`.
 
@@ -392,7 +392,7 @@ Data: `data/dev.json` + `data/val.json`, 85 answerable items with gold pages, 19
 
 | Option | What was measured | Result | Decision |
 |---|---|---|---|
-| BM25 tokenizer: `tcb-vi-v1` vs bm25s default vs +bigrams (E2) | BM25-only recall | R@20: default 0.894, vi 0.882, bigram 0.894; R@5: vi 0.824, default 0.800. The only R@20 difference is one glossary item (`g-alco`) | keep `tcb-vi-v1`; a switch needs ≥ 2 pts R@20 and an index rebuild |
+| BM25 tokenizer: `tcb-vi-v1` vs bm25s default vs +bigrams (E2) | BM25-only recall | R@20: default 0.894, vi 0.882, bigram 0.894; R@5: vi 0.824, default 0.800. The only R@20 difference is one glossary item (`g-alco`) | keep `vi` (v1 then; v2 differs only in canonical decimals); a switch needs ≥ 2 pts R@20 and an index rebuild |
 | BM25 vs dense vs RRF vs RSF (E3) | R@20 | BM25 0.918, dense 0.694, RRF 0.941, RSF 0.929 | keep RRF |
 | RRF k ∈ {10, 30, 60, 100} (E3b) | R@20 per set | no k beats 60 by ≥ 5 pts on both sets | keep k = 60 |
 | Rerank pool N × final k (E4) | recall within the k blocks given to the LLM | N10: 0.882; N20/30/40 with k ≥ 8: 0.894 (one item more). CPU rerank time grows with N (≈ 60 s per question at N = 30 on 2 cores) | pool 30 → 10, all 10 blocks to the LLM |
@@ -404,7 +404,7 @@ Data: `data/dev.json` + `data/val.json`, 85 answerable items with gold pages, 19
 | No cross-encoder at all | follows from E4: with N = k = 10 the reranker no longer selects blocks, it only orders them | recall unchanged by construction (0.882); removes ≈ 20 s per question on 2 CPU cores (val1 with the reranker at N = 10: p50 30.3 s) | **adopted 13 Oct 2026**: model, download, `tcb check` step, E4 grid and E7 removed; Docker image ≈ 2.2 GB smaller. Decided without an answer-level A/B run, because recall cannot change and the time saving is the whole rerank stage |
 | Vector database (FAISS / Chroma / Qdrant) instead of the LlamaIndex in-memory store | time of one top-40 dense search over 1,526 × 1,024 vectors (an earlier index), query vector given | LlamaIndex simple store 49 ms (median), numpy 0.17 ms, FAISS flat 0.30 ms; BM25 0.14 ms | not adopted: at most 0.05 s saved per question against a rerank of tens of seconds, and a DB server adds a service to Docker |
 | BGE-M3 sparse ("hybrid search" inside the model) instead of BM25 | the premise that keyword search puts the number's block at top 1 | 1 of 85 questions contains a number other than a year or date (the number is the answer, not the query); "2025" occurs in 572 of 1,526 chunks; BM25 R@1 = 0.565 | not adopted for speed: retrieval is already hybrid (BM25 + BGE-M3 dense + RRF), sparse weights come from the same forward pass so they save no time, and they need FlagEmbedding plus a re-index. A quality experiment for later |
-| Larger chunks (400 to 500 words, 50 to 100 words overlap) | current chunk shape | narrative median 176 words (cap 220), table chunks are whole rows with column header and unit repeated on every row, KPI tiles 19 words, glossary 7; 0 chunks cross a printed page | not adopted: 10 blocks of ~450 words is ~2.5× the prompt (slower and dearer LLM call; the 22,000-character evidence budget would keep only ~8 blocks), blocks over ~350 words exceed the reranker's 512 tokens, and overlap across pages breaks one-page citations. Chunk size for quality (E6) not run |
+| Larger chunks (400 to 500 words, 50 to 100 words overlap) | current chunk shape | narrative median 176 words (cap 220), table chunks are whole rows with column header and unit repeated on every row, KPI tiles 19 words, glossary 7; 0 chunks cross a printed page | not adopted: blocks of ~450 words make the prompt ~2.5× longer (slower and dearer LLM call; the 22,000-character evidence budget would keep only ~8 blocks), blocks over ~350 words exceed the 512 tokens embedded per block (`max_length`), and overlap across pages breaks one-page citations. Chunk size for quality (E6) not run |
 | Model warm-up at start | the first question paid the model load | `Retriever.warm()` at start of chat/serve/batch/eval | adopted |
 
 ### 17.2 Answer-level results and the fixes they caused

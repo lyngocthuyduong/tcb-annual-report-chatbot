@@ -24,7 +24,7 @@ def test_rrf_math():
 
 def test_lexical_side_finds_exact_vietnamese_number(rt):
     r = rt.search("1.192.344.137")
-    assert 297 in {page_of(rt, c) for c in r.bm25[:5]}               # number kept whole by tcb-vi-v1
+    assert 297 in {page_of(rt, c) for c in r.bm25[:5]}               # number kept whole by the tcb-vi tokenizer
     r = rt.search("1192344137")                                       # canonical form also matches
     assert 297 in {page_of(rt, c) for c in r.bm25[:5]}
 

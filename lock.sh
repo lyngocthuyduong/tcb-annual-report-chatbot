@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Regenerate requirements.lock from pyproject.toml (run on a networked machine; needs `pip install uv`).
-# Hash-pinned, Linux x86_64 / py3.12, WITHOUT torch + CUDA (Docker installs CPU torch separately).
+# Hash-pinned, Linux x86_64 / py3.12, without torch + CUDA (Docker installs CPU torch separately).
 set -euo pipefail
 cd "$(dirname "$0")"
 SKIP=""

@@ -406,7 +406,7 @@ def verify_rendered(answer: str, evs: list[Ev], quantities: dict[str, Quantity] 
 
 
 def check_text_numbers(text: str, evs: list[Ev], question: str = "") -> list[str]:
-    """Numbers in free text (e.g. the 'missing part' note of a partial answer) not present in ANY evidence."""
+    """Numbers in free text (e.g. the 'missing part' note of a partial answer) not present in any evidence."""
     ok = num_tokens(" ".join(e.text for e in evs)) | num_tokens(question)
     return sorted({m.group(0) for m in _NUM.finditer(vi.nfc(text))
                    if not _trivial(m.group(0)) and vi.canon_num(m.group(0)).rstrip("%") not in ok})
