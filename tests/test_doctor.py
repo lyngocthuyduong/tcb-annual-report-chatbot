@@ -18,6 +18,7 @@ def test_pins_match_pyproject():
 
 def test_doctor_reports_missing_pieces(tmp_path, monkeypatch):
     monkeypatch.setattr(conf, "MODELS_DIR", tmp_path / "models")
+    monkeypatch.delenv("INDEX_DIR", raising=False)                     # compose sets an absolute INDEX_DIR=/app/idx
     rows = {r["check"]: r for r in doctor.checks(tmp_path)}
     assert rows["data/ar.pdf"]["status"] == "FAIL" and "git pull" in rows["data/ar.pdf"]["fix"]
     assert rows["model bge-m3"]["status"] == "FAIL" and "tcb.models download" in rows["model bge-m3"]["fix"]
