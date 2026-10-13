@@ -46,13 +46,13 @@ def test_figure_answer_cites_real_printed_page(N):
     assert a.trace["llm"]["calls"] == 1 and a.trace["citation_leak"] == []
 
 
-def test_same_figure_from_two_pages_is_stated_once(N):
+def test_restated_figure_is_flagged_not_removed(N):
     h = lambda rq, i: {"status": "answered", "claims": [
         {"text_vi": "Tổng tài sản năm 2025 là 1.192 nghìn tỷ đồng, tăng 21,8% so với năm trước.", "evidence": [eid_of(rq, "Tổng tài sản | 1.192")]},
         {"text_vi": "Báo cáo cũng ghi tổng tài sản là 1.192.344.137 triệu đồng.", "evidence": [eid_of(rq, "1.192.344.137")]}]}
     a, _ = run(N, h)
-    assert a.status == "answered" and a.answer.count("\n") == 0 and a.answer.endswith("[tr. 5].")
-    assert a.trace["duplicates_removed"] == ["Báo cáo cũng ghi tổng tài sản là 1.192.344.137 triệu đồng."]
+    assert a.status == "answered" and "1.192.344.137" in a.answer
+    assert a.trace["restated_figures"] == ["Báo cáo cũng ghi tổng tài sản là 1.192.344.137 triệu đồng."]
 
 
 def test_kpi_and_glossary_pages(N):
