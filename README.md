@@ -1,6 +1,6 @@
 # TCB — Vietnamese Chatbot over the Techcombank Annual Report 2025
 
-Evidence-first: every answer cites printed pages `[tr. N]` taken from index metadata (never from the LLM); numbers in answers must appear in the cited evidence or come from a deterministic calculator; the bot refuses when the report lacks the answer. Design and measurements: `DESIGN.md`. Submission summary: `SUBMISSION.md`.
+Evidence-first: every answer cites printed pages `[tr. N]` taken from index metadata (never from the LLM); numbers in answers must appear in the cited evidence or come from a deterministic calculator; the bot refuses when the report lacks the answer. Read in this order: run (below) → batch → tests → `SUBMISSION.md` (decisions and results) → `DESIGN.md` (details and experiment log).
 
 ## Run (online)
 ```bash
@@ -23,6 +23,24 @@ docker compose run --rm app tcb eval  --compare out/runs/eval/val1 out/runs/eval
 docker compose run --rm app tcb ask "Tỷ lệ CASA năm 2025?" --json
 ```
 `eval` writes `traces.jsonl`, `results.jsonl` (score + failing stage per item), `summary.json` (pass rate, recall by stage, refusal P/R, p50/p95 latency, median seconds per stage, tokens, cost when the model has a price in `conf.PRICES`) and `config.json`. Only `"verified": true` items count.
+
+## Tests: what each category proves
+| Command | Proves | Does not prove |
+|---|---|---|
+| `pytest -m unit` | calculator, citations, refusal, retry, error mapping, API routing, scorers | any real model or provider works |
+| `pytest -m integ` | page mapping, extraction, golden figures, index build/validate (hash embedder in tmp), pipeline wiring with a scripted LLM | retrieval quality |
+| `pytest -m live_models` | BGE-M3 loads, dim and revision | answer quality |
+| `pytest -m "live_openai or live_ollama"` | one schema-constrained call returns a valid, grounded plan | quality at scale |
+| `pytest -m live` | shipped `idx/` + BGE-M3 + `PROVIDER` answer and refuse | |
+| `./smoke.sh [offline]` | Docker build, `tcb check`, validate, tests, HTTP answer/refusal | quality |
+| `tcb eval` | metrics on verified gold | |
+
+Default `pytest` runs unit + integ. Skips are not passes. The hash embedder lives only in `tests/`; the production validator rejects any index not built with the pinned BGE-M3 revision.
+
+## Layout
+`src/tcb/`: `pdf` `parse` `nodes` `vi` (ingestion) · `build` `index` (index) · `find` (BM25 + dense → RRF → top 12) · `num` `calc` (quantities, calculator) · `plan` `gen` `llm/` (LLM plan, one repair retry, providers) · `cite` `refuse` (validation, policy) · `chat` `ask` (pipeline) · `api` `ui.html` `cli` `smoke` `doctor` · `ev` `exp` `vset` (evaluation) · `conf` (fixed model and constants) · `models` (Docker download).
+`data/`: `ar.pdf`; `q10.json` (the 10 published questions; used to debug, so not an independent benchmark); `dev.json` / `val.json` (70 / 34 items: development and validation); `test.json` (22 items written after the last code change, on pages no other set uses, run once). Gold facts machine-checked by Claude against the PDF text. `runs/`: summaries, configs, per-item results and traces of the reported runs.
+Dependencies: exact pins in `pyproject.toml`; `requirements.lock` (hash-pinned, py3.12 linux-x86_64, no torch/CUDA) from `./lock.sh`; Docker installs CPU torch first.
 
 ## Run on Colab (development; two notebooks)
 Secrets (key icon, **Notebook access** ON): `gh-token` (Contents read), `hf_token`, `anthropic_key`.
@@ -91,21 +109,3 @@ os.environ.update(TCB_MODELS_DIR="/content/models", HF_TOKEN=userdata.get("hf_to
 !tcb eval data/q10.json --label q10j
 !tcb eval data/test.json --label test1     # once, on the code that is submitted
 ```
-
-## Tests: what each category proves
-| Command | Proves | Does not prove |
-|---|---|---|
-| `pytest -m unit` | calculator, citations, refusal, retry, error mapping, API routing, scorers | any real model or provider works |
-| `pytest -m integ` | page mapping, extraction, golden figures, index build/validate (hash embedder in tmp), pipeline wiring with a scripted LLM | retrieval quality |
-| `pytest -m live_models` | BGE-M3 loads, dim and revision | answer quality |
-| `pytest -m "live_openai or live_ollama"` | one schema-constrained call returns a valid, grounded plan | quality at scale |
-| `pytest -m live` | shipped `idx/` + BGE-M3 + `PROVIDER` answer and refuse | |
-| `./smoke.sh [offline]` | Docker build, `tcb check`, validate, tests, HTTP answer/refusal | quality |
-| `tcb eval` | metrics on verified gold | |
-
-Default `pytest` runs unit + integ. Skips are not passes. The hash embedder lives only in `tests/`; the production validator rejects any index not built with the pinned BGE-M3 revision.
-
-## Layout
-`src/tcb/`: `pdf` `parse` `nodes` `vi` (ingestion) · `build` `index` (index) · `find` (BM25 + dense → RRF → top 12) · `num` `calc` (quantities, calculator) · `plan` `gen` `llm/` (LLM plan, one repair retry, providers) · `cite` `refuse` (validation, policy) · `chat` `ask` (pipeline) · `api` `ui.html` `cli` `smoke` `doctor` · `ev` `exp` `vset` (evaluation) · `conf` (fixed model and constants) · `models` (Docker download).
-`data/`: `ar.pdf`; `q10.json` (the 10 published questions; used to debug, so not an independent benchmark); `dev.json` / `val.json` (70 / 34 items: development and validation); `test.json` (22 items written after the last code change, on pages no other set uses, run once). Gold facts machine-checked by Claude against the PDF text. `runs/`: summaries, configs, per-item results and traces of the reported runs.
-Dependencies: exact pins in `pyproject.toml`; `requirements.lock` (hash-pinned, py3.12 linux-x86_64, no torch/CUDA) from `./lock.sh`; Docker installs CPU torch first.
