@@ -21,7 +21,7 @@
 
 **Index.** BGE-M3 dense vectors (LlamaIndex) and BM25 over a Vietnamese tokenizer that keeps numbers whole (`1.192.344.137`, `14,6%`) and also indexes diacritic-folded forms. A manifest pins the PDF hash, model revision, tokenizer, chunking and a sha256 per file; the server refuses to start on any mismatch.
 
-**Retrieval.** Follow-ups are rewritten into a standalone question. Abbreviations are expanded with the report's own glossary (`CASA` → `CASA (Tiền gửi không kỳ hạn)`). BM25 top 40 and dense top 40 are fused with reciprocal rank fusion (k = 60); the top 15 blocks go to the LLM with the table quantities whose labels best match the question.
+**Retrieval.** Follow-ups are rewritten into a standalone question. Abbreviations are expanded with the report's own glossary (`CASA` → `CASA (Tiền gửi không kỳ hạn)`). BM25 top 40 and dense top 40 are fused with reciprocal rank fusion (k = 60); the top 20 blocks go to the LLM with the table quantities whose labels best match the question.
 
 **Generation contract.** The LLM returns only a JSON plan (forced tool call / JSON schema): claims, each naming its evidence ids, and calculations over quantity ids `Q*` (from tables) or literals `L*` (a number copied from an evidence block with its unit and period). The model never writes page numbers and never does arithmetic.
 
@@ -39,10 +39,10 @@
 ## Evaluation
 - Method: deterministic scoring, no LLM judge: fact presence with unit alternatives, citation validity, page hit against gold and alternative pages, refusal precision and recall, and the first failing stage (recall miss, fusion drop, rank drop, citation, calculation, generation, over/under-refusal), printed per failed item from its trace. Retrieval experiments (`tcb exp`) cost no tokens. Dev (70) and val (34) are hand-written across statements, KPI tiles, narrative, business segments, subsidiaries, governance, investor relations, glossary, calculations, follow-ups and 19 unanswerable or ambiguous questions; each gold fact was checked against the PDF text of its page and each calculation recomputed.
 - Results on the 10 published questions: <!-- fill from `tcb eval data/q10.json --label q10` -->
-- What the numbers made you change: E4 and latency removed the reranker and set the evidence count to 15 (recall 0.871 at 10, 0.929 at 15); E2 kept the Vietnamese tokenizer; E3b kept RRF k = 60; the three val failures led to literals in the calculator and quantity selection by question relevance; the batch refusal of sq-07 (RBG loan balance, p.59) led to page-title context in every node, a general fix tested on other pages (RBG, TCBS, TCC, board, cash-flow continuation, glossary).
+- What the numbers made you change: E4 and latency removed the reranker and set the evidence count to 20 on the final index (fused recall 0.859 at 10, 0.906 at 15, 0.929 at 20); E2 kept the Vietnamese tokenizer; E3b kept RRF k = 60; the three val failures led to literals in the calculator and quantity selection by question relevance; the batch refusal of sq-07 (RBG loan balance, p.59) led to page-title context in every node, a general fix tested on other pages (RBG, TCBS, TCC, board, cash-flow continuation, glossary).
 
 ## Cost and latency
-- Ingestion (Colab, 2 vCPU + T4 for embedding): parse 13.4 s, embed 80.1 s for 1,512 nodes, BM25 0.7 s (`idx/report.json`). One-off, no API cost.
+- Ingestion (Colab, 2 vCPU + T4 for embedding): parse 19.8 s, embed 85.7 s for 1,463 nodes, BM25 0.7 s (`idx/report.json`). One-off, no API cost.
 - Per query: <!-- fill from summary.json of the final val/q10 run: p50, p95, stage_seconds_p50, tokens, cost_usd_per_question; state CPU and model -->
 - Models used: embedding BAAI/bge-m3; generation claude-haiku-5-5 (development), gpt-4o-mini, claude-sonnet-5-5 or Ollama `qwen2.5:7b` selectable; each run's `config.json` records the model that produced its numbers.
 

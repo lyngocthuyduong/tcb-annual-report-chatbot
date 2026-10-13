@@ -70,7 +70,7 @@ question
  -> rewrite (only for follow-ups)
  -> glossary expansion
  -> BM25 top-40  +  dense top-40
- -> RRF (k=60) -> top 15 = evidence blocks E1..E15
+ -> RRF (k=60) -> top 20 = evidence blocks E1..E20
     + quantities Q1..Qn (high-quality tables; the 60 whose labels best match the question)
  -> LLM returns a JSON plan
     (claims -> evidence ids, calculations -> quantity ids or literals L1..Ln
@@ -156,7 +156,7 @@ The validator and build are tested with a hash embedder in tmp, and the validato
 ### 6.1 Pipeline
 1. **BM25** over `tcb-vi-v1` tokens → top 40 (`TOP_BM25`).
 2. **Dense** (BGE-M3 via LlamaIndex) → top 40 (`TOP_DENSE`).
-3. **RRF** with k = 60 (`RRF_K`) over the two rankings; the top **15** (`FINAL_EVIDENCE`, E4) go to the LLM, further limited by a 22,000-character prompt budget (`PROMPT_EVIDENCE_CHARS`) so a local 8k-context model is never silently truncated.
+3. **RRF** with k = 60 (`RRF_K`) over the two rankings; the top **20** (`FINAL_EVIDENCE`, E4 run m6) go to the LLM, further limited by a 22,000-character prompt budget (`PROMPT_EVIDENCE_CHARS`) so a local 8k-context model is never silently truncated.
 
 There is no cross-encoder and no score threshold (§17.1). `Result` keeps every stage's ranking (`bm25`, `dense`, `fused`, `ranked`) and the seconds spent on BM25, query embedding and dense search, so evaluation can say *which stage lost the gold page* and *where the time went* (§14).
 
@@ -374,6 +374,7 @@ Data: `data/dev.json` + `data/val.json`, 85 answerable items with gold pages, 19
 | BM25 vs dense vs RRF vs RSF (E3) | R@20 | BM25 0.918, dense 0.694, RRF 0.941, RSF 0.929 | keep RRF |
 | RRF k ∈ {10, 30, 60, 100} (E3b) | R@20 per set | no k beats 60 by ≥ 5 pts on both sets | keep k = 60 |
 | Rerank pool N × final k (E4) | recall within the k blocks given to the LLM | N10: 0.882; N20/30/40 with k ≥ 8: 0.894 (one item more). CPU rerank time grows with N (≈ 60 s per question at N = 30 on 2 cores) | pool 30 → 10, all 10 blocks to the LLM |
+| Evidence count k after the final index rebuild (E4, run m6, no reranker) | recall of the fused top k | k 5: 0.753, 8: 0.835, 10: 0.859, 12: 0.894, 15: 0.906, 20: 0.929 | k = 20 (rule: smallest k within 2 pts of the best). Evidence stays under the 22,000-character budget: mean block 677 characters |
 | Glossary expansion (E5) | items lost / gained | none lost, none gained | keep (needed for abbreviations such as RBG, CASA) |
 | Weak-retrieval retry τ_low (E7) | F1 of flagging unanswerable by top rerank score | τ = 0.599 (on pool 30) | not enabled: the retry is a second full search and rerank on exactly the weak and unanswerable questions, and no experiment shows it recovers a page |
 | No cross-encoder at all | follows from E4: with N = k = 10 the reranker no longer selects blocks, it only orders them | recall unchanged by construction (0.882); removes ≈ 20 s per question on 2 CPU cores (val1 with the reranker at N = 10: p50 30.3 s) | **adopted 13 Oct 2026**: model, download, `tcb check` step, E4 grid and E7 removed; Docker image ≈ 2.2 GB smaller. Decided without the planned A/B eval because recall cannot change and the time saving is the whole rerank stage |

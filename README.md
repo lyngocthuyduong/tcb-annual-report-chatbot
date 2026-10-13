@@ -82,12 +82,12 @@ os.environ.update(TCB_MODELS_DIR="/content/models", HF_TOKEN=userdata.get("hf_to
 ```
 ```python
 # B4: retrieval experiments (no tokens)
-!tcb exp data/dev.json data/val.json --label m5 2>&1 | tail -40
+!tcb exp data/dev.json data/val.json --label m6 2>&1 | tail -40
 ```
 ```python
 # B5: answer quality, latency, cost (a new --label each run)
-!tcb eval data/val.json --label val3
-!tcb eval data/q10.json --label q10
+!tcb eval data/val.json --label val5
+!tcb eval data/q10.json --label q10c
 ```
 
 ## Tests: what each category proves
@@ -104,6 +104,6 @@ os.environ.update(TCB_MODELS_DIR="/content/models", HF_TOKEN=userdata.get("hf_to
 Default `pytest` runs unit + integ. Skips are not passes. The hash embedder lives only in `tests/`; the production validator rejects any index not built with the pinned BGE-M3 revision.
 
 ## Layout
-`src/tcb/`: `pdf` `parse` `nodes` `vi` (ingestion) · `build` `index` (index) · `find` (BM25 + dense → RRF → top 15) · `num` `calc` (quantities, calculator) · `plan` `gen` `llm/` (LLM plan, one repair retry, providers) · `cite` `refuse` (validation, policy) · `chat` `ask` (pipeline) · `api` `ui.html` `cli` `smoke` `doctor` · `ev` `exp` `vset` (evaluation) · `conf` (fixed model and constants) · `models` (Docker download).
+`src/tcb/`: `pdf` `parse` `nodes` `vi` (ingestion) · `build` `index` (index) · `find` (BM25 + dense → RRF → top 20) · `num` `calc` (quantities, calculator) · `plan` `gen` `llm/` (LLM plan, one repair retry, providers) · `cite` `refuse` (validation, policy) · `chat` `ask` (pipeline) · `api` `ui.html` `cli` `smoke` `doctor` · `ev` `exp` `vset` (evaluation) · `conf` (fixed model and constants) · `models` (Docker download).
 `data/`: `ar.pdf`; `q10.json` (the 10 published questions, never tuned on); `dev.json` / `val.json` (70 / 34 items written by hand, checked against the PDF text by Claude, human spot-check pending).
 Dependencies: exact pins in `pyproject.toml`; `requirements.lock` (hash-pinned, py3.12 linux-x86_64, no torch/CUDA) from `./lock.sh`; Docker installs CPU torch first.
