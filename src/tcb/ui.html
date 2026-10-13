@@ -55,7 +55,7 @@ const svg=(k)=>{const d=document.createElement('span');d.innerHTML='<svg width="
 // answer text: figures highlighted, [tr. N] linked to the PDF page; built with text nodes only (no HTML injection)
 function render(box,text,pages){const re=/(\[tr\. [\d, ]+\])|(\d[\d.,]*\s?(?:%|nghìn tỷ đồng|nghìn tỷ|tỷ đồng|triệu đồng|triệu|tỷ)?)/g;let i=0,m;
  while((m=re.exec(text))){box.appendChild(document.createTextNode(text.slice(i,m.index)));
-  if(m[1]){const a=el('a','cite',m[1]);const p=+m[1].match(/\d+/)[0];if(pages[p]){a.href='/pdf#page='+pages[p];a.target='_blank'}box.appendChild(a)}
+  if(m[1]){box.appendChild(document.createTextNode('[tr. '));m[1].match(/\d+/g).forEach((n,k)=>{if(k)box.appendChild(document.createTextNode(', '));const a=el('a','cite',n);if(pages[+n]){a.href='/pdf#page='+pages[+n];a.target='_blank'}box.appendChild(a)});box.appendChild(document.createTextNode(']'))}
   else if(/[%ỷu]/.test(m[2])||/[.,]/.test(m[2]))box.appendChild(el('span','num',m[2]));else box.appendChild(document.createTextNode(m[2]));
   i=re.lastIndex}box.appendChild(document.createTextNode(text.slice(i)))}
 function copy(t,b){navigator.clipboard.writeText(t).then(()=>{const o=b.lastChild.textContent;b.lastChild.textContent='Đã sao chép';setTimeout(()=>b.lastChild.textContent=o,1200)})}
@@ -66,7 +66,7 @@ function card(j){const c=el('div','a');const [h,k]=HEAD[j.status]||HEAD.error;co
  const ps=Object.keys(pages).map(Number).sort((a,b)=>a-b);
  if(ps.length){const src=el('div','src');src.appendChild(el('div','t','Bằng chứng nguồn')).style.fontWeight=600;
   ps.forEach(p=>{const r=el('div','row');r.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M9 15l2 2 4-4"/></svg>';
-   const a=el('a');a.href='/pdf#page='+pages[p];a.target='_blank';a.title=(j.citations.find(x=>x.page==p)||{}).snippet||'';a.appendChild(el('div','m',DOC+' · Trang in '+p));r.appendChild(a);r.appendChild(el('span','ok','Đã đối chiếu'));src.appendChild(r)});
+   const a=el('a');a.href='/pdf#page='+pages[p];a.target='_blank';a.title=(j.citations.find(x=>x.page==p)||{}).snippet||'';a.appendChild(el('div','m',DOC+' · Trang in '+p));r.appendChild(a);src.appendChild(r)});
   c.appendChild(src)}
  if(j.answer){const bs=el('div','btns');bs.appendChild(btn('Sao chép câu trả lời','M4 16V6a2 2 0 0 1 2-2h10',b=>copy(j.answer,b)));
   if(ps.length)bs.appendChild(btn('Sao chép kèm nguồn','M4 16V6a2 2 0 0 1 2-2h10',b=>copy(j.answer+'\n\nNguồn: '+DOC+', trang in '+ps.join(', ')+'.',b)));c.appendChild(bs)}

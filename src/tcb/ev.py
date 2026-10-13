@@ -86,14 +86,14 @@ def facts_ok(item: Item, answer: str) -> tuple[bool | None, str]:
     def same_value(t: str) -> bool:
         """The gold figure stated more precisely or in another unit: '53,4 nghìn tỷ' ≈ '53.391 tỷ' (within half a unit of
         the gold's last digit). An answer less precise than the gold ('40%' for '40,4%') does not count. A gold count
-        without a magnitude is rounded at its last non-zero digit when it ends in 3+ zeros ('hơn 303.000' is met by
-        '303.446', '1.000.000' by '1 triệu'); otherwise it only matches exactly."""
+        without a magnitude that ends in 3+ zeros is read as rounded to the thousand ('hơn 303.000' is met by '303.446');
+        a word scale is an exact conversion ('1 triệu' = '1.000.000', never '600.000'); otherwise it only matches exactly."""
         g = []
         for f in cite.figures(item.gold_answer, keep=t):
             if f[2] == cite.Decimal("0.5"):
                 z = len(t) - len(t.rstrip("0")) if t.isdigit() else 0
                 if z < 3: continue
-                f = (f[0], f[1], cite.Decimal(5) * 10 ** (z - 1))
+                f = (f[0], f[1], cite.Decimal(500))
             g.append(f)
         return any(f[0] == x[0] and abs(f[1] - x[1]) <= f[2] for f in g for x in a_fig)
 
@@ -147,7 +147,8 @@ def attribute(item: Item, ans: dict, hits: dict | None, fact: bool | None, cite_
     return "pass"
 
 
-def score_item(item: Item, ans: dict, page_of: Callable[[str], int | None]) -> dict:
+def score_item(item: Item, ans: dict, page_of: Callable[[str], int | None], declared: set[int] | None = None) -> dict:
+    """declared = the gold and alt pages written in the set, before `widen_gold`; page_hit_declared counts only those."""
     tr = ans.get("trace", {})
     gold = set(item.gold_printed_pages) | set(item.alt_pages)
     hits = stage_hits(gold, tr, page_of) if (item.answerable and gold) else None
@@ -163,6 +164,7 @@ def score_item(item: Item, ans: dict, page_of: Callable[[str], int | None]) -> d
             "expect_status": item.expect_status, "verified": item.verified, "status": ans["status"], "verdict": verdict, "passed": verdict == "pass",
             "fact_ok": fact, "fact_method": method, "cited_pages": cited, "gold_pages": sorted(gold),
             "citation_valid": not bad, "page_hit": bool(set(cited) & gold) if gold else None,
+            "page_hit_declared": bool(set(cited) & (declared if declared is not None else gold)) if gold else None,
             "page_precision": (len(set(cited) & gold) / len(cited)) if (gold and cited) else None,
             "stage_ranks": hits, "rr": rr, "rewrite_mode": tr.get("rewrite_mode"),
             "latency_s": tr.get("total_s"), "llm_calls": llm_.get("calls"), "cost_usd": llm_.get("cost_usd"),
@@ -213,6 +215,7 @@ def summarize(rows: list[dict]) -> dict:
                     "fact_unscorable": sum(r["fact_ok"] is None for r in ans),
                     "citation_valid": _rate([r["citation_valid"] for r in rows if r["status"] != "error"]),
                     "page_hit": _rate([r["page_hit"] for r in ans]),
+                    "page_hit_declared": _rate([r.get("page_hit_declared") for r in ans]),
                     "page_precision": round(statistics.mean([r["page_precision"] for r in ans if r["page_precision"] is not None]), 4)
                     if any(r["page_precision"] is not None for r in ans) else None},
         "refusal": {"precision": _rate([not r["answerable"] and not r.get("expect_status") for r in refused]),
@@ -264,7 +267,7 @@ def widen_gold(item: Item, nodes: dict) -> Item:
 def _commit() -> str | None:
     """The code that produced the numbers (None outside a git checkout, e.g. inside the Docker image)."""
     try:
-        return subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, timeout=5).stdout.strip() or None
+        return subprocess.run(["git", "describe", "--always", "--dirty"], capture_output=True, text=True, timeout=5).stdout.strip() or None
     except (OSError, subprocess.SubprocessError):
         return None
 
@@ -272,7 +275,9 @@ def _commit() -> str | None:
 def run_eval(set_path: str, out_dir: str, engine, label: str = "", include_unverified: bool = False) -> dict:
     """Run every item through `engine`, write traces/results/summary/config, return the report."""
     nodes = engine.rt.ix.nodes
-    items = [widen_gold(it, nodes) for it in load_items(set_path)]
+    raw = load_items(set_path)
+    declared = {it.id: set(it.gold_printed_pages) | set(it.alt_pages) for it in raw}
+    items = [widen_gold(it, nodes) for it in raw]
     page_of = lambda c: (nodes.get(c) or {}).get("printed_page_number")
     out = Path(out_dir) / (label or time.strftime("%Y%m%d-%H%M%S"))
     out.mkdir(parents=True, exist_ok=True)
@@ -281,7 +286,7 @@ def run_eval(set_path: str, out_dir: str, engine, label: str = "", include_unver
         for it in items:
             turns = [chat.Turn(h.question, h.question, h.answer, "answered") for h in it.history]
             a = engine.ask(it.question, turns).to_dict(trace=True)
-            row = score_item(it, a, page_of)
+            row = score_item(it, a, page_of, declared[it.id])
             rows.append(row)
             tf.write(json.dumps({"id": it.id, "question": it.question, "gold": it.model_dump(), "answer": a, "score": row},
                                 ensure_ascii=False) + "\n")
@@ -292,7 +297,8 @@ def run_eval(set_path: str, out_dir: str, engine, label: str = "", include_unver
            "index_embedding": m["embedding"], "index_built_at": m["built_at"], "index_nodes": m["counts"]["nodes"],
            "final_evidence": engine.rt.k, "device": os.getenv("TCB_DEVICE", "cpu"), "rrf_k": engine.rt.rrf_k,
            "top_bm25": engine.rt.top_bm25, "top_dense": engine.rt.top_dense, "include_unverified": include_unverified,
-           "submission_grade": m["embedding"]["model"] == conf.EMBED_MODEL, "commit": _commit(),
+           "submission_grade": (m["embedding"]["model"], m["embedding"].get("revision")) == (conf.EMBED_MODEL, conf.EMBED_REV),
+           "commit": _commit(),                                        # '-dirty' when the working tree had uncommitted changes
            "index_manifest_sha256": hashlib.sha256(json.dumps(m, sort_keys=True).encode()).hexdigest(),
            "hardware": {"cpu": platform.machine(), "cores": os.cpu_count()},
            "seconds": round(time.time() - t0, 1)}
@@ -314,10 +320,13 @@ def rescore(run_dir: str, out_dir: str, label: str, nodes: dict) -> dict:
     out = Path(out_dir) / label
     out.mkdir(parents=True, exist_ok=True)
     rows, lines = [], []
+    cfg0 = json.loads((src / "config.json").read_text(encoding="utf-8"))
+    sp = Path(cfg0.get("set", ""))
+    declared = {it.id: set(it.gold_printed_pages) | set(it.alt_pages) for it in load_items(str(sp))} if sp.is_file() else {}
     for ln in (src / "traces.jsonl").read_text(encoding="utf-8").splitlines():
         if not ln.strip(): continue
         t = json.loads(ln)
-        row = score_item(Item(**t["gold"]), t["answer"], page_of)
+        row = score_item(Item(**t["gold"]), t["answer"], page_of, declared.get(t["id"]))
         rows.append(row); lines.append(json.dumps({**t, "score": row}, ensure_ascii=False))
     cfg = json.loads((src / "config.json").read_text(encoding="utf-8"))
     cfg.update(label=label, rescored_from=src.name, scorer_commit=_commit())

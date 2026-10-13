@@ -28,7 +28,7 @@ def cmd_check(a) -> int:
     out: dict = {"embed": conf.EMBED_MODEL}
     p = conf.MODELS_DIR / "bge-m3"
     if not p.exists():
-        print(f"FAIL: {p} missing (models are baked into the image)", file=sys.stderr); return 3
+        print(f"FAIL: {p} missing (models are baked into the image; outside Docker: python -m tcb.models download)", file=sys.stderr); return 5
     r = p / ".rev"
     out["embed_snapshot_rev_ok"] = r.exists() and r.read_text(encoding="utf-8").strip() == conf.EMBED_REV
     t = time.time()
@@ -109,18 +109,30 @@ def load_questions(path) -> list[dict]:
         except json.JSONDecodeError:
             data = lines                                               # plain text
     if isinstance(data, dict): data = data.get("questions", [])
-    return [{"id": f"q{i}", "question": q} if isinstance(q, str) else {"id": q.get("id", f"q{i}"), **q}
-            for i, q in enumerate(data, 1)]
+    qs = [{"id": f"q{i}", "question": q} if isinstance(q, str) else {"id": q.get("id", f"q{i}"), **q}
+          for i, q in enumerate(data if isinstance(data, list) else [], 1)]
+    if not qs or not all(isinstance(q.get("question"), str) and q["question"].strip() for q in qs):
+        raise SystemExit(f"{path}: no questions found (expected a list of questions, see `tcb batch --help`)")
+    return qs
 
 
 def cmd_batch(a) -> int:
     from pathlib import Path
+    from . import chat
     qs = load_questions(Path(a.file))
     e, out = _engine(), Path(a.out); out.mkdir(parents=True, exist_ok=True)
     n_err = 0
     with open(out / "answers.jsonl", "w", encoding="utf-8") as f:
+        sessions: dict[str, list] = {}
         for i, q in enumerate(qs, 1):
-            ans = e.ask(q["question"])
+            # a follow-up keeps its context: an explicit "history" list (as in data/*.json), or earlier questions that
+            # share its "session" id
+            turns = [chat.Turn(h["question"], h["question"], h.get("answer", ""), "answered") for h in q.get("history") or []]
+            sid = q.get("session")
+            if sid is not None: turns = sessions.get(sid, []) + turns
+            ans = e.ask(q["question"], turns or None)
+            if sid is not None and ans.status != "error":
+                sessions.setdefault(sid, []).append(chat.Turn(q["question"], ans.standalone, ans.answer, ans.status))
             n_err += ans.status == "error"
             f.write(json.dumps({"id": q["id"], **ans.to_dict(trace=True)}, ensure_ascii=False) + "\n")
             print(f"{i}/{len(qs)} {q['id']} {ans.status}", flush=True)
@@ -185,7 +197,7 @@ def cmd_doctor(a) -> int:
 
 def cmd_models(a) -> int:
     from . import models
-    {"download": models.download, "convert": models.convert}[a.action]()
+    models.download()
     return 0
 
 
@@ -211,14 +223,16 @@ def main(argv=None) -> int:
     k = sp.add_parser("ask"); k.add_argument("question"); k.add_argument("--json", action="store_true")
     k.add_argument("--trace", action="store_true"); k.set_defaults(f=cmd_ask)
     sp.add_parser("chat").set_defaults(f=cmd_chat)
-    bt = sp.add_parser("batch"); bt.add_argument("file"); bt.add_argument("--out", default="out/runs/batch"); bt.set_defaults(f=cmd_batch)
+    bt = sp.add_parser("batch", help="answer every question in a file: a JSON list of strings or of objects with "
+                       "'question' (optional 'id', 'history' [{question, answer}], 'session' to chain follow-ups), "
+                       "{'questions': [...]}, JSON Lines, or one question per line"); bt.add_argument("file"); bt.add_argument("--out", default="out/runs/batch"); bt.set_defaults(f=cmd_batch)
     ev_ = sp.add_parser("eval"); ev_.add_argument("set", nargs="?"); ev_.add_argument("--out", default="out/runs/eval")
     ev_.add_argument("--compare", nargs=2, metavar=("RUN_A", "RUN_B"), help="diff two finished run folders (A=baseline)")
     ev_.add_argument("--rescore", metavar="RUN", help="score a finished run again with the current scorer (no model calls)")
     ev_.add_argument("--index", default="idx", help="index whose nodes map chunk ids to pages (for --rescore)")
     ev_.add_argument("--include-unverified", action="store_true")
     ev_.add_argument("--label", default=""); ev_.set_defaults(f=cmd_eval)
-    ex = sp.add_parser("exp", help="retrieval experiments (E2,E3,E3b,E4,E5); no LLM, no token cost")
+    ex = sp.add_parser("exp", help="retrieval experiments (E2, E3, E3b, E4, E5, E8); no LLM, no token cost")
     ex.add_argument("sets", nargs="+", help="verified dev/val JSON files, e.g. data/dev.json data/val.json")
     ex.add_argument("--exp", default=",".join(__import__("tcb.exp", fromlist=["EXPS"]).EXPS)); ex.add_argument("--index", default=str(conf.settings().index_dir))
     ex.add_argument("--out", default="out/exp"); ex.add_argument("--label", default="m3"); ex.add_argument("--include-unverified", action="store_true")
@@ -232,8 +246,8 @@ def main(argv=None) -> int:
     sp.add_parser("serve").set_defaults(f=cmd_serve)
     dr = sp.add_parser("doctor", help="check this machine: python, packages, poppler, PDF, models, index, keys, RAM/disk, Docker")
     dr.add_argument("--json", action="store_true"); dr.set_defaults(f=cmd_doctor)
-    mo = sp.add_parser("models", help="download/convert the two fixed models into TCB_MODELS_DIR (needs network)")
-    mo.add_argument("action", choices=["download", "convert"]); mo.set_defaults(f=cmd_models)
+    mo = sp.add_parser("models", help="download the fixed embedding model (BGE-M3, pinned revision) into TCB_MODELS_DIR (needs network)")
+    mo.add_argument("action", choices=["download"]); mo.set_defaults(f=cmd_models)
     a = p.parse_args(argv)
     conf.load_env()                                         # local runs: pick up ./.env (Docker uses env_file)
     from .index import IndexError_

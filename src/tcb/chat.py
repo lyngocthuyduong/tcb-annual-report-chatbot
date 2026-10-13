@@ -10,7 +10,7 @@ from . import cite, conf
 from .llm import LLMRequest, LLMResponse, Provider
 
 MAX_TURNS = 4
-_MARK = re.compile(r"\b(còn|vậy|thế|nó|đó|này|kia|trên|tương tự|so với|ngoài ra|tiếp|năm trước|năm ngoái|cái|những)\b", re.I)
+_MARK = re.compile(r"\b(còn|vậy|thế|nó|đó|này|kia|tương tự|ngoài ra|tiếp|năm trước|năm ngoái)\b", re.I)   # words that point back
 SCHEMA = {"type": "object", "properties": {"standalone": {"type": "string"}}, "required": ["standalone"]}
 SYS = ("Viết lại CÂU HỎI CUỐI thành một câu hỏi độc lập, đầy đủ chủ thể/chỉ tiêu/kỳ báo cáo dựa trên hội thoại trước. "
        "Giữ nguyên mọi con số và năm có trong câu hỏi cuối. Không trả lời câu hỏi. Chỉ trả JSON {\"standalone\": \"...\"}.")
@@ -25,7 +25,9 @@ class Turn:
 
 
 def is_followup(q: str, turns: list[Turn]) -> bool:
-    return bool(turns) and (len(q.split()) <= 9 or bool(_MARK.search(q)))
+    """A word that points back ('Còn năm 2024 thì sao?'), or a fragment of four words or fewer ('Năm 2024?'). A short
+    question that names its own subject ('Tỷ lệ CASA năm 2025 là bao nhiêu?') is asked as it is."""
+    return bool(turns) and (bool(_MARK.search(q)) or len(q.split()) <= 4)
 
 
 def history_text(turns: list[Turn], n: int = 2) -> str:

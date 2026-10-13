@@ -4,12 +4,12 @@ Evidence-first: every answer cites printed pages `[tr. N]` taken from index meta
 
 ## Run (online)
 ```bash
-cp .env.example .env          # set PROVIDER + its API key
+mkdir -p out && cp .env.example .env   # set the API key (PROVIDER=anthropic by default); out/ first so the container can write to it
 docker compose up --build     # http://127.0.0.1:8000  (UI)  ·  /health  ·  POST /chat  ·  /docs
 ```
 Needs `idx/` (shipped index) and `data/ar.pdf`. If `idx/` is missing, corrupt, or built with another model the server exits with code 3 and says how to fix it; it never rebuilds or downloads at run time. Missing key / bad `PROVIDER` → exit 2.
 
-If `/chat` returns 503 `APIConnectionError` while `/health` is fine, the container cannot resolve the provider's host. Seen in GitHub Codespaces on the Compose network; a host-specific override fixes it without changing `compose.yaml`:
+If `/chat` returns 503 `APIConnectionError` while `/health` is fine, the container cannot reach the provider. Check DNS first (`docker compose exec app python -c "import socket; print(socket.gethostbyname('api.anthropic.com'))"`), then proxy, TLS and outbound access. In GitHub Codespaces DNS failed on the Compose network; a host-specific override fixed it without changing `compose.yaml`:
 ```bash
 printf 'services:\n  app:\n    network_mode: bridge\n    dns: [1.1.1.1]\n' > /tmp/bridge.yaml
 COMPOSE_FILE=compose.yaml:/tmp/bridge.yaml docker compose up -d app      # or: COMPOSE_FILE=... ./smoke.sh
@@ -113,10 +113,11 @@ os.environ.update(TCB_MODELS_DIR="/content/models", HF_TOKEN=userdata.get("hf_to
 !tcb exp data/dev.json data/val.json --label m8 2>&1 | tail -40
 ```
 ```python
-# B5: answer quality, latency, cost (a new --label each run)
-!tcb eval data/dev.json --label dev13
-!tcb eval data/val.json --label val13
-!tcb eval data/q10.json --label q10k
-!tcb eval data/test.json --label test1b    # test1 re-run after its fixes (not independent)
-!tcb eval data/test2.json --label test2    # once
+# B5: answer quality, latency, cost (a new --label each run). Index unchanged since 5c5f329: no rebuild needed
+!tcb eval data/dev.json --label dev14
+!tcb eval data/val.json --label val14
+!for l in q10l q10m q10n; do tcb eval data/q10.json --label $l; done          # three samples: the Anthropic adapter uses the API default sampling
+!for l in test2b test2c; do tcb eval data/test2.json --label $l; done         # test2 again at the submitted commit (first run: test2)
+!cd out/runs/eval && zip -rq /content/runs.zip dev14 val14 q10l q10m q10n test2b test2c
+from google.colab import files; files.download("/content/runs.zip")
 ```

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import threading
 import uuid
 from pathlib import Path
@@ -50,8 +51,10 @@ def create_app(engine, trace_dir: Path | None = None, pdf: Path = PDF) -> FastAP
                 tdir.mkdir(parents=True, exist_ok=True)
                 with open(tdir / "chat.jsonl", "a", encoding="utf-8") as f:
                     f.write(json.dumps({"session_id": sid, **a.to_dict(trace=True)}, ensure_ascii=False) + "\n")
-            except OSError:
-                pass                                           # tracing must never break an answer
+            except OSError as e:                               # tracing must never break an answer, but say so once
+                if not getattr(app.state, "trace_warned", False):
+                    app.state.trace_warned = True
+                    logging.getLogger("tcb").warning("trace not written to %s (%s); fix: mkdir -p out && chmod a+rwx out", tdir, e)
         d = {"session_id": sid, **a.to_dict()}
         return JSONResponse(d, status_code=HTTP.get(a.error_kind or "llm", 502) if a.status == "error" else 200)
 

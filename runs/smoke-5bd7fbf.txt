@@ -1,0 +1,16 @@
+./smoke.sh at commit 5bd7fbf, GitHub Codespaces (Docker Compose, PROVIDER=anthropic, claude-haiku-5-5),
+run as COMPOSE_FILE=compose.yaml:/tmp/tcb-bridge.override.yaml ./smoke.sh (DNS override for Codespaces, see README).
+Summary as printed by the script; the full log stays on that machine (out/smoke.log).
+
+---- summary ----
+PASS  0 prerequisites
+PASS  1 docker build
+PASS  2 real models (tcb check)
+PASS  3 index validate (fail-closed)
+PASS  4 tests: unit+integration
+PASS  5 server up
+PASS  6 e2e answer + citation
+PASS  7 e2e refusal
+PASS  8 server down
+PASS  9 eval on q10 (quality, informational)
+not listed above = NOT executed

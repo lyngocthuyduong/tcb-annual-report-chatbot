@@ -10,8 +10,8 @@ from .base import LLMRequest, LLMResponse, ProviderRejected, ProviderTimeout, Pr
 class OllamaProvider:
     name = "ollama"
 
-    def __init__(self, base_url: str, model: str, timeout: float, client: httpx.Client | None = None, num_ctx: int = 12288):
-        self.model, self.base, self.num_ctx = model, base_url.rstrip("/"), num_ctx   # Ollama's default context (2-4k) would silently truncate our ~5k-token prompts
+    def __init__(self, base_url: str, model: str, timeout: float, client: httpx.Client | None = None, num_ctx: int = 32768):
+        self.model, self.base, self.num_ctx = model, base_url.rstrip("/"), num_ctx   # Ollama's default context (2-4k) would silently truncate prompts of up to ~15k tokens
         self.client = client or httpx.Client(timeout=timeout)
 
     def generate(self, req: LLMRequest) -> LLMResponse:

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-STATUSES = ("answered", "partial", "not_in_report", "ambiguous", "error")
-
 MSG_NOT_IN_REPORT = "Báo cáo thường niên 2025 của Techcombank không có thông tin để trả lời câu hỏi này."
+MSG_NOT_VERIFIED = ("Không đối chiếu được câu trả lời với các trang tìm thấy trong báo cáo, nên hệ thống không đưa ra số liệu. "
+                    "Bạn có thể hỏi lại cụ thể hơn (chỉ tiêu, kỳ báo cáo).")
 MSG_UNVERIFIED = "Lưu ý: một số nội dung bị loại vì không thể đối chiếu với đoạn trích dẫn trong báo cáo."
 MSG_AMBIGUOUS = "Câu hỏi chưa đủ rõ. Bạn có thể nói rõ hơn (chỉ tiêu, kỳ báo cáo, đối tượng) không?"
 
@@ -27,7 +27,8 @@ def decide(plan_status: str, n_claims: int, n_kept: int, calc_errors: list[str],
         return Decision("not_in_report", "llm_declined", [MSG_NOT_IN_REPORT])
     if n_kept == 0:
         why = "all_claims_invalid" if n_claims else "no_claims"
-        notes = [MSG_NOT_IN_REPORT] + ([f"Không thể tính: {e}" for e in calc_errors] if calc_errors else [])
+        # every sentence failed the checks: the report may well hold the answer, so do not say it does not
+        notes = [MSG_NOT_VERIFIED if n_claims else MSG_NOT_IN_REPORT] + ([f"Không thể tính: {e}" for e in calc_errors] if calc_errors else [])
         return Decision("not_in_report", why, notes)
     notes = [f"Không thể tính: {e}" for e in calc_errors]
     if n_kept < n_claims or problems_left:

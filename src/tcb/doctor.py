@@ -79,15 +79,11 @@ def checks(root: Path = Path(".")) -> list[dict]:
         d = conf.MODELS_DIR / sub
         r = d / ".rev"
         if not d.exists():
-            add(f"model {sub}", FAIL, f"{d} missing", "python -m tcb.models download && python -m tcb.models convert   (set TCB_MODELS_DIR to change the folder)")
+            add(f"model {sub}", FAIL, f"{d} missing", "python -m tcb.models download   (set TCB_MODELS_DIR to change the folder)")
         elif not r.exists() or r.read_text(encoding="utf-8").strip() != rev:
             add(f"model {sub}", FAIL, f"{d} present but .rev != pinned {rev[:7]}", "delete the folder and download again")
         else:
-            w = [p.name for p in d.iterdir() if p.suffix in (".safetensors", ".bin")]
-            if sub == "bge-m3" and "model.safetensors" not in w:
-                add(f"model {sub}", WARN, f"revision ok, weights {w}", "python -m tcb.models convert   (bge-m3 ships .bin only)")
-            else:
-                add(f"model {sub}", OK, f"{d} @ {rev[:7]}")
+            add(f"model {sub}", OK, f"{d} @ {rev[:7]}")
 
     idx = root / conf.settings().index_dir
     if (idx / "manifest.json").exists():

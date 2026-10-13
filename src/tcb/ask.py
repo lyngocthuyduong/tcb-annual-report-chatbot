@@ -123,6 +123,8 @@ class Engine:
                 refs = set(cite._PLACEHOLDER.findall(cl.text_vi)) | set(cl.calc_refs)
                 bad = [r for r in refs if r in cerr]
                 if bad: used_err += [cerr[r] for r in bad]; continue
+                eq = cite.equivalence_problems(cite.render_claim(cl, results))   # after calculation results are in
+                if eq: tr["check_problems"] = tr["check_problems"] + [f"claim {i + 1}: {p}" for p in eq]; continue
                 kept.append(cl)
             tr["calc_errors"] = used_err
             d = refuse.decide(plan.status, len(plan.claims), len(kept), used_err, plan.clarification_vi, bool(g.problems))
@@ -140,7 +142,7 @@ class Engine:
                 lines.append(cite.with_marker(cite.render_claim(cl, results), pg))
                 refs = set(cite._PLACEHOLDER.findall(cl.text_vi)) | set(cl.calc_refs)
                 calc_chunks = {qmap[q].chunk_id for x in plan.calculations if x.cid in refs for q in x.inputs if q in qmap}
-                for e in list(cl.evidence) + [x.eid for x in evs if x.chunk_id in calc_chunks]:   # calculation inputs are sources too
+                for e in cite.source_ids(cl, evs) + [x.eid for x in evs if x.chunk_id in calc_chunks]:   # calculation inputs are sources too
                     ev = next(x for x in evs if x.eid == e)
                     if not any(c["chunk_id"] == ev.chunk_id for c in cites):
                         cites.append({"eid": ev.eid, "page": ev.page, "pdf_page": ev.pdf_page, "section": ev.section,

@@ -98,8 +98,10 @@ def test_decide(args, status, reason):
 
 
 def test_refusal_never_claims_content():
+    """Every sentence failed the checks: no figure is shown, and the user is not told the report lacks the answer."""
     d = refuse.decide("answered", 3, 0, [], None, True)
-    assert d.status == "not_in_report" and refuse.MSG_NOT_IN_REPORT in d.notes
+    assert d.status == "not_in_report" and refuse.MSG_NOT_VERIFIED in d.notes and refuse.MSG_NOT_IN_REPORT not in d.notes
+    assert refuse.MSG_NOT_IN_REPORT in refuse.decide("not_in_report", 0, 0, [], None, False).notes
 
 
 def test_bracketed_ids_from_the_model_are_normalised():
@@ -227,3 +229,48 @@ def test_percentage_points_match_a_change_printed_as_percent():
     ev = "Tỷ lệ chi phí/thu nhập | 30,8% | 1,9% (▼) so với 32,7% trong năm 2024"
     assert cite.magnitude_problems("CIR là 30,8%, giảm 1,9 điểm phần trăm so với 32,7%.", ev) == []
     assert cite.magnitude_problems("CIR giảm 1,9 tỷ đồng.", ev)
+
+
+def _lit(text, number, unit, period, question=""):
+    evs = cite.evidence_from([node("c", text, 1)])
+    pl = P.Plan.model_validate({"status": "answered", "claims": [],
+                                "literals": [{"lid": "L1", "evidence": "E1", "number": number, "unit": unit, "period": period}]})
+    return cite.literal_quantities(pl, evs, question)
+
+
+@pytest.mark.parametrize("text,number,unit,period,question,ok", [
+    ("Tổng số nhân sự tại | cuối năm 2025 là | 12.705 | Người | 857 (▲) CBNV so với năm 2024", "12.705", "người", "2025", "", True),
+    ("Tổng số nhân sự tại | cuối năm 2025 là | 12.705 | Người | 857 (▲) CBNV so với năm 2024", "12.705", "người", "2024", "", False),
+    ("Tính đến ngày 31/12/2025, nhân sự đạt 12.705 người, tăng so với 11.848 người của năm trước.", "11.848", "người", "2024", "", True),
+    ("Tiền thu | Năm 2025 Triệu đồng: 3.503; Năm 2024 Triệu đồng: 1.741.528", "3.503", "triệu đồng", "2025", "", True),
+    ("Lợi nhuận năm 2025 đạt 100 triệu đồng", "100", "triệu đồng", "2030", "Năm 2030 thì sao?", False),   # question year is no evidence
+    ("Lợi nhuận đạt 100 triệu đồng", "100", "triệu đồng", "2025", "Năm 2025?", True),                    # block prints no year
+    ("Lợi nhuận năm 2025 đạt 100 triệu đồng", "100", "triệu USD", "2025", "", False),                   # currency
+    ("Lỗ (100) triệu đồng năm 2025", "100", "triệu đồng", "2025", "", False),                            # sign dropped
+    ("Lỗ (100) triệu đồng năm 2025", "(100)", "triệu đồng", "2025", "", True),
+])
+def test_copied_figure_keeps_its_year_currency_and_sign(text, number, unit, period, question, ok):
+    q, probs = _lit(text, number, unit, period, question)
+    assert (not probs) == ok, probs
+
+
+def test_figure_printed_negative_needs_a_word_that_carries_the_sign():
+    ev = "Lợi nhuận thuần | (100) triệu đồng"
+    assert cite.sign_problems("Kết quả là 100 triệu đồng.", ev)
+    assert not cite.sign_problems("Khoản lỗ 100 triệu đồng.", ev)
+    assert not cite.sign_problems("Kết quả là (100) triệu đồng.", ev)
+
+
+def test_restated_amount_must_be_the_same_amount():
+    assert cite.equivalence_problems("Tổng tiền gửi đạt 834.241.663 triệu đồng, tương đương khoảng 776,5 nghìn tỷ đồng.")
+    assert not cite.equivalence_problems("Tổng tiền gửi đạt 834.241.663 triệu đồng, tương đương khoảng 834,2 nghìn tỷ đồng.")
+    assert not cite.equivalence_problems("Dư nợ đạt 824.104 tỷ đồng, tương đương mức tăng 20,7%.")
+
+
+@pytest.mark.parametrize("text,shown", [
+    ("Lợi nhuận năm 2024 là 27.538 tỷ đồng, tương đương 27.538 tỷ đồng.", "Lợi nhuận năm 2024 là 27.538 tỷ đồng."),
+    ("Thu nhập đạt 53,4 nghìn tỷ đồng, được báo cáo tóm tắt ở phần điểm nhấn.", "Thu nhập đạt 53,4 nghìn tỷ đồng."),
+    ("Lợi nhuận là 27.538 tỷ đồng, và báo cáo ghi nhận chỉ tiêu này trong bảng lợi nhuận theo năm.", "Lợi nhuận là 27.538 tỷ đồng."),
+])
+def test_remarks_about_the_report_layout_are_removed(text, shown):
+    assert cite.render_claim(P.Claim.model_validate({"text_vi": text, "evidence": ["E1"]}), {}) == shown

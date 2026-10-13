@@ -1,0 +1,24 @@
+{
+ "label": "q10e",
+ "set": "data/q10.json",
+ "set_sha256": "3de592dcc9ac15db7d085d58ffde9d102dd10ff8bae01c3b738f8f7bea09646a",
+ "provider": "anthropic",
+ "model": "claude-haiku-5-5",
+ "index_embedding": {
+  "model": "BAAI/bge-m3",
+  "revision": "5617a9f61b028005a4858fdac845db406aefb181",
+  "dim": 1024,
+  "normalize": true,
+  "max_length": 512
+ },
+ "index_built_at": "2026-10-13T11:18:47Z",
+ "index_nodes": 1445,
+ "final_evidence": 12,
+ "device": "cpu",
+ "rrf_k": 60,
+ "top_bm25": 40,
+ "top_dense": 40,
+ "include_unverified": false,
+ "submission_grade": true,
+ "seconds": 20.6
+}

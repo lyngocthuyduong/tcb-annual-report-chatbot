@@ -1,5 +1,4 @@
 # syntax=docker/dockerfile:1
-# NOT BUILT in the authoring sandbox (Docker/PyTorch/Hugging Face unreachable there). First real build = first proof.
 # Stage 1: the embedding model (BGE-M3) at its pinned revision (revisions live in src/tcb/conf.py, single source of truth)
 FROM python:3.12-slim-bookworm AS models
 RUN pip install --no-cache-dir "huggingface_hub==1.33.0"
@@ -19,8 +18,8 @@ COPY pyproject.toml ./
 COPY src ./src
 RUN pip install --no-deps .
 COPY --from=models --chown=app:app /models /models
-# No chown RUN and no .bin->safetensors convert here: each would copy the 2.3 GB of weights into a new layer (a Docker build ran out of disk
-# exporting layers). torch 2.14 can load .bin; if `tcb check` ever refuses it, run `python -m tcb.models convert` as a fallback. UNVERIFIED until the first real `tcb check`.
+# No chown RUN and no weight conversion here: each would copy the 2.3 GB of weights into a new layer (a Docker build ran out of disk
+# exporting layers). torch loads BGE-M3's pytorch_model.bin as shipped (smoke stage 2, `tcb check`, runs/smoke-5bd7fbf.txt).
 COPY tests ./tests
 RUN mkdir -p out idx data && chown -R app:app /app
 USER app

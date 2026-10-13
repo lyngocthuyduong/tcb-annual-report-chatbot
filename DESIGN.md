@@ -15,7 +15,7 @@
 | Reranker | none (measured and removed, §17.1) |
 | Orchestration | LlamaIndex for ingestion/vector retrieval only. No agent framework |
 | LLM providers | Anthropic (every reported result, `claude-haiku-5-5`), OpenAI, or a local Ollama model on the host, chosen by `PROVIDER`. **No automatic fallback between providers** |
-| Depth tracks | Document Intelligence + Retrieval + Evaluation |
+| Depth tracks | Document Intelligence + Retrieval and reasoning; an evaluation harness serves both |
 | Index | Built once, committed as `idx/`, validated fail-closed at start-up. Never rebuilt or downloaded at run time |
 | Time | 4-day sprint; minimal code, no speculative abstractions |
 
@@ -167,7 +167,7 @@ The validator and build are tested with a hash embedder in tmp, and the validato
 1. **BM25** over `tcb-vi-v2` tokens → top 40 (`TOP_BM25`).
 2. **Dense** (BGE-M3 via LlamaIndex) → top 40 (`TOP_DENSE`).
 3. **KPI label match** (`find.label_matches`): a tile whose whole label (3 or more syllables, no figure; 94 labels) occurs in the question forms a third ranking, longest label first. Added after test1 `x-credcost`: the tile `Chi phí tín dụng | 0,6%` is short, so it ranked below longer statement rows on provision expense. E8 measures it.
-4. **RRF** with k = 60 (`RRF_K`) over the two or three rankings; the top **12** (`FINAL_EVIDENCE`, E4 run m7) go to the LLM, further limited by a 22,000-character prompt budget (`PROMPT_EVIDENCE_CHARS`) so a local 8k-context model is never silently truncated.
+4. **RRF** with k = 60 (`RRF_K`) over the two or three rankings; the top **12** (`FINAL_EVIDENCE`, E4 run m7) go to the LLM, further limited by a 22,000-character prompt budget (`PROMPT_EVIDENCE_CHARS`) so prompts stay within the local model's context (`OLLAMA_NUM_CTX`).
 
 There is no cross-encoder and no score threshold (§17.1). `Result` keeps every stage's ranking (`bm25`, `dense`, `fused`, `ranked`) and the seconds spent on BM25, query embedding and dense search, so evaluation can say *which stage lost the gold page* and *where the time went* (§14).
 
@@ -205,7 +205,7 @@ Evidence blocks are `[E1]…[E12]`; extractable numbers from high-quality tables
 |---|---|---|
 | OpenAI | `response_format: json_schema` | SDK retries off (`max_retries=0`) so retry policy is ours |
 | Anthropic | forced `tool_use` with the schema | |
-| Ollama | `format=<schema>`, `num_ctx` 12288 (`OLLAMA_NUM_CTX`) | default `qwen2.5:7b`; truncation guarded by the evidence budget |
+| Ollama | `format=<schema>`, `num_ctx` 32768 (`OLLAMA_NUM_CTX`) | default `qwen2.5:7b`; the measured prompts (median ~10k, max ~15k tokens in the final runs) fit |
 
 Errors are typed: `ConfigError` (exit 2), `ProviderTimeout`, `ProviderUnavailable`, `ProviderRejected`, `GenerationError`; every message names provider and model. An `error` answer is returned to the user as such. **No other provider is ever tried.** Token usage, latency and a list-price cost estimate (`conf.PRICES`) are recorded per call.
 
@@ -223,10 +223,15 @@ If the reply is not parseable JSON for the schema, or `cite.check` finds problem
 4. **Every number in the claim text must appear in the cited evidence** (or in the raw cells of quantities used by the claim's calculations, or in the question), compared in canonical form only, so `14,6%` ≡ `14.6`. Raw forms are not compared: the raw `179.501` (thousands) is the canonical form of `179,501` (179.5), and comparing both let a claim `179,501 nghìn tỷ` pass against evidence `179.501 tỷ` (found in run dev9, fixed and tested). Integers ≤ 12 are exempt (list counts, months), a documented gap.
 5. **Magnitude.** A number printed with a magnitude in the cited evidence (`1.192 | Nghìn tỷ đồng`, `18 triệu`, `40,4%`, or the unit of a table column, `31/12/2025 Triệu đồng: 1.192.344.137`) must carry the same magnitude in the claim. `1.192 tỷ đồng` or a bare `1.192` fails although every digit matches: that is the silent factor-of-1,000 error. `điểm phần trăm` has the magnitude of `%`, because the report prints percentage-point changes with `%` (`1,9% (▼) so với 32,7%`); before this, a correct `giảm 1,9 điểm phần trăm` was dropped (dev13 `n-cir-diff`).
 6. At least one evidence id or calculation per claim.
+7. **Sign, both ways.** A figure written negative must be printed negative; a figure the evidence prints only negative (`(100)`) may be written positive only with a word that carries the sign (`lỗ`, `giảm`, `chi phí`, `dự phòng` …).
+8. **Copied figures (literals).** The number must be printed in the cited block with the same sign, the currency and magnitude printed next to it (or, when none is, present in the block), and the declared year must be the year it is printed under: the last year before it in the same sentence or table cell (`Năm 2025 Triệu đồng: 3.503; Năm 2024 …`), else the first after it, else the closest; `năm trước` / `cùng kỳ` right after it means the year before. Only a block that prints no year lets the question's year stand in.
+9. **Restated amounts.** After calculation results are inserted, an amount given as `X, tương đương Y` must equal Y within rounding (dev13 `n-fu-eq` paired a sum of 834.241.663 triệu đồng with 776,5 nghìn tỷ).
+
+These checks tie a figure to its block, not to a row or a year inside a table block: `978.798.549` (the 2024 total) stated as the 2025 total of the same statement block passes. The citation is what lets the analyst see the row; tying claim figures to rows is a next step (§18).
 
 **Restated figures.** Run `q10e` showed 4 of 10 answers restating a figure from a second page. The prompt now asks for one claim per figure listing every evidence id (rule 9), and the code flags in the trace (`restated_figures`) any claim whose figures were all stated by an earlier claim (same number, or the same figure at another rounding or unit within half a unit of the rounded one). Removing such claims was tried (runs dev9/val9) and dropped: both claims it removed on dev+val carried a remark the earlier claim did not ("dẫn đầu hệ thống ngân hàng"), while the prompt alone left no restatement in q10.
 
-A claim failing any check is **dropped**, not patched. A drawn-arrow marker (`(▲)`, §4.1) is removed from a rendered sentence that already has `tăng` or `giảm`, and kept where it is the only sign of direction. Rendering then joins the kept claims into one paragraph, each sentence ending `... [tr. N].` where N is `printed_page_number` of the cited nodes, merged and sorted (the prompt asks for a first sentence with its subject and follow-on sentences that do not repeat it, one claim per indicator with its change and the remark the report prints next to it); calculator results use the pages of their input quantities. A final `verify_rendered` pass asserts every page in the rendered answer belongs to retrieved evidence (defence in depth; failure → `error` status).
+A claim failing any check is **dropped**, not patched. Rendering removes an amount restated as itself (`27.538 tỷ đồng, tương đương 27.538 tỷ đồng`) and remarks on where the report places a figure (`… được báo cáo tóm tắt ở phần điểm nhấn`). A drawn-arrow marker (`(▲)`, §4.1) is removed from a rendered sentence that already has `tăng` or `giảm`, and kept where it is the only sign of direction. Rendering then joins the kept claims into one paragraph, each sentence ending `... [tr. N].` where N is the `printed_page_number` of the cited blocks that print the most of the sentence's figures (`cite.source_ids`; all cited blocks for a sentence without figures), merged and sorted. Before, every page listed for a sentence was shown (test2: up to five pages for one figure) (the prompt asks for a first sentence with its subject and follow-on sentences that do not repeat it, one claim per indicator with its change and the remark the report prints next to it); calculator results use the pages of their input quantities. A final `verify_rendered` pass asserts every page in the rendered answer belongs to retrieved evidence (defence in depth; failure → `error` status).
 
 The answer payload also lists `citations` (eid, page, pdf_page, section, chunk_id, snippet) for the UI to open the source.
 
@@ -258,7 +263,7 @@ Mismatches raise typed errors (`UnitMismatch`, `PeriodMismatch`, `ZeroDenominato
 |---|---|
 | `answered` | all claims kept, no calc errors, no validation leftovers |
 | `partial` | some claims/calcs dropped or LLM said partial; answer plus a note on what could not be verified |
-| `not_in_report` | LLM declined, or **no** claim survived validation (fail closed) |
+| `not_in_report` | LLM declined ("the report has no information"), or **no** claim survived validation (fail closed; the message then says the figures could not be verified, not that the report lacks them) |
 | `ambiguous` | the question lacks entity/period; returns a clarifying question |
 | `error` | provider/index/retrieval failure; message names provider/model |
 
@@ -268,7 +273,7 @@ Fail-closed means an answer exists only through claims that survived §8. Retrie
 
 ## 11. Multi-turn (`chat.py`)
 
-A question is treated as a follow-up only if there is history **and** it is short (≤ 9 words) or contains an anaphoric marker. One LLM call (JSON `standalone`) rewrites it using the last two turns. The rewrite is accepted only if every number in the user's question is still present in it (faithfulness guard); otherwise the deterministic fallback `"<previous standalone> — <question>"` is used. The mode (`none | llm | concat`) is recorded in the trace. A provider error during rewrite is **not** swallowed: it surfaces as an `error` answer (no silent fallback). History is *context for understanding the question, never evidence*: an earlier answer cannot be cited. Sessions live in memory (cap 200) keyed by `session_id`.
+A question is treated as a follow-up only if there is history **and** it contains a word that points back (`còn`, `đó`, `này`, `năm trước` …) or is a fragment of four words or fewer (`Năm 2024?`); a short question that names its own subject is asked as it is. Batch files carry context the same way, through a `history` list or a shared `session` id. One LLM call (JSON `standalone`) rewrites it using the last two turns. The rewrite is accepted only if every number in the user's question is still present in it (faithfulness guard); otherwise the deterministic fallback `"<previous standalone> — <question>"` is used. The mode (`none | llm | concat`) is recorded in the trace. A provider error during rewrite is **not** swallowed: it surfaces as an `error` answer (no silent fallback). History is *context for understanding the question, never evidence*: an earlier answer cannot be cited. Sessions live in memory (cap 200) keyed by `session_id`.
 
 ---
 
@@ -306,7 +311,7 @@ Item types: `single`, `multi`, `calc`, `followup`, `refusal`; `expect_status: am
 ### 14.2 Scorers (deterministic, no LLM judge)
 - **Fact present:** every `gold_facts` entry must appear in the answer; `a | b` = either alternative; numbers compared in canonical form and with the magnitude the gold prints (`100 tỷ` does not satisfy `100 triệu`). The gold figure stated more precisely or in another unit also counts (`53.391 tỷ` for `53,4 nghìn tỷ`, within half a unit of the gold's last digit); a less precise one does not (`40%` for `40,4%`). Re-scoring runs dev11/val11/q10i with this rule changed two items (sq-06, n-equity), both correct answers stated in another unit. After test2 the rule was extended to round counts without a magnitude: a gold ending in three or more zeros is rounded at its last non-zero digit (`hơn 303.000` is met by `303.446`, `1.000.000` by `1 triệu`); re-scoring the five final runs changed two items to pass (test2 `y-visaeco`, val `n-tinchap`) and nothing else.
 - **Citation valid:** every cited page belongs to the evidence retrieved for that question.
-- **Page hit / precision:** cited pages vs `gold_printed_pages ∪ alt_pages`.
+- **Page hit / precision:** cited pages vs `gold_printed_pages ∪ alt_pages`, widened at scoring time by `widen_gold` to every page with one node that prints all the numeric gold facts (only for facts with a distinctive number: a decimal or 4+ digits). `page_hit_declared` counts the written pages only; SUBMISSION reports both.
 - **Refusal:** precision and recall over unanswerable items, plus false-answer rate.
 - **Cost/latency:** per question from traces (p50/p95, tokens, estimated USD).
 
@@ -397,7 +402,7 @@ Data: `data/dev.json` + `data/val.json`, 85 answerable items with gold pages, 19
 | Glossary expansion (E5) | items lost / gained | none lost, none gained | keep (needed for abbreviations such as RBG, CASA) |
 | Weak-retrieval retry τ_low (E7) | F1 of flagging unanswerable by top rerank score | τ = 0.599 (on pool 30) | not enabled: the retry is a second full search and rerank on exactly the weak and unanswerable questions, and no experiment shows it recovers a page |
 | No cross-encoder at all | follows from E4: with N = k = 10 the reranker no longer selects blocks, it only orders them | recall unchanged by construction (0.882); removes ≈ 20 s per question on 2 CPU cores (val1 with the reranker at N = 10: p50 30.3 s) | **adopted 13 Oct 2026**: model, download, `tcb check` step, E4 grid and E7 removed; Docker image ≈ 2.2 GB smaller. Decided without the planned A/B eval because recall cannot change and the time saving is the whole rerank stage |
-| Vector database (FAISS / Chroma / Qdrant) instead of the LlamaIndex in-memory store | time of one top-40 dense search over 1,526 × 1,024 vectors, query vector given | LlamaIndex simple store 49 ms (median), numpy 0.17 ms, FAISS flat 0.30 ms; BM25 0.14 ms | not adopted: at most 0.05 s saved per question against a rerank of tens of seconds, and a DB server adds a service to Docker |
+| Vector database (FAISS / Chroma / Qdrant) instead of the LlamaIndex in-memory store | time of one top-40 dense search over 1,526 × 1,024 vectors (an earlier index), query vector given | LlamaIndex simple store 49 ms (median), numpy 0.17 ms, FAISS flat 0.30 ms; BM25 0.14 ms | not adopted: at most 0.05 s saved per question against a rerank of tens of seconds, and a DB server adds a service to Docker |
 | BGE-M3 sparse ("hybrid search" inside the model) instead of BM25 | the premise that keyword search puts the number's block at top 1 | 1 of 85 questions contains a number other than a year or date (the number is the answer, not the query); "2025" occurs in 572 of 1,526 chunks; BM25 R@1 = 0.565 | not adopted for speed: retrieval is already hybrid (BM25 + BGE-M3 dense + RRF), sparse weights come from the same forward pass so they save no time, and they need FlagEmbedding plus a re-index. A quality experiment for later |
 | Larger chunks (400 to 500 words, 50 to 100 words overlap) | current chunk shape | narrative median 176 words (cap 220), table chunks are whole rows with column header and unit repeated on every row, KPI tiles 19 words, glossary 7; 0 chunks cross a printed page | not adopted: 10 blocks of ~450 words is ~2.5× the prompt (slower and dearer LLM call; the 22,000-character evidence budget would keep only ~8 blocks), blocks over ~350 words exceed the reranker's 512 tokens, and overlap across pages breaks one-page citations. Chunk size for quality (E6) not run |
 | Model warm-up at start | the first question paid the model load | `Retriever.warm()` at start of chat/serve/batch/eval | adopted |
@@ -444,7 +449,7 @@ The answers also cite every page that repeats a figure (page precision 0.72 to 0
 ## 18. Known gaps and limits
 
 1. Gold facts are checked against the PDF text of their page by code; the wording of a gold answer was reviewed by the author, not by a panel of analysts.
-2. 31 low-quality note tables (53 chunks) give no table quantities; a calculation over them is possible only through literals copied from the text. A layout model could recover them (out of scope).
+2. 31 low-quality note tables (53 chunks) expose no automatically parsed quantities; a calculation over them is possible only through checked literals copied from the text. A layout model could recover them (out of scope).
 3. Number grounding exempts integers up to 12 that carry no unit, percent or currency (list counts such as `3 yếu tố`); `5 tỷ đồng` is checked.
 4. Fact-presence scoring cannot judge a purely textual answer without numeric or keyword gold; it relies on `gold_facts` being well chosen.
 5. Rounded vs exact figures: the scorer accepts the gold figure stated more precisely or in another unit (§14.2). The report states some values twice at different precision (p.5 vs p.297/300); gold facts use `a | b` alternatives and `alt_pages`; this is manual per item.
@@ -457,6 +462,9 @@ The answers also cite every page that repeats a figure (page precision 0.72 to 0
 12. The KPI label ranking needs the question to name the tile's whole label; a paraphrase (`chi phí rủi ro tín dụng`) relies on BM25 and dense alone.
 13. Rule 7 of the plan prompt (no substitute metric; a total is summed from its components) is a prompt rule, not a code check; evaluation catches a violation only through the gold figure.
 14. The ambiguity dev items (2) are subjective; the LLM may reasonably answer "Lợi nhuận" for the only reported year.
+15. A claim's figure is tied to its block, not to the row or column inside a table block (§8); a wrong-row figure from the right table passes the check and is caught only by reading the citation.
+16. Dense vectors are computed on the first 512 tokens of a node (`max_length=512`); 13 table chunks exceed about 1,500 characters (up to 3,556), roughly that limit, so their last rows may be found by BM25 only. Splitting tables by tokens needs an index rebuild.
+17. Every reported number is one run at the provider's default sampling; variance across runs is estimated only where a set was run more than once.
 
 ---
 

@@ -20,7 +20,7 @@ BM25_K1, BM25_B = 1.5, 0.75  # bm25s defaults, recorded in manifest
 TOP_BM25 = TOP_DENSE = 40
 RRF_K = 60                   # E3b
 def _models_dir() -> Path:
-    """Where the two fixed models live. Docker: /models (baked). Local: $TCB_MODELS_DIR or <repo>/models.
+    """Where the fixed embedding model lives. Docker: /models (baked). Local: $TCB_MODELS_DIR or <repo>/models.
     This changes only the LOCATION; model identity/revision stay fixed above and are checked via <dir>/<model>/.rev."""
     env = os.getenv("TCB_MODELS_DIR")
     if env:
@@ -94,4 +94,4 @@ FINAL_EVIDENCE = 12          # E4 run m7 (final index): recall 0.871 at 10, 0.92
 # $/1M tokens (in, out) -- public list prices checked 10 Oct 2026; used only for the cost estimate in traces
 PRICES = {"gpt-4o-mini": (0.15, 0.60), "claude-sonnet-5-5": (2.0, 10.0),
           "claude-haiku-5-5": (0.10, 0.50)}   # Haiku: Anthropic price page, prompts up to 100k tokens (13 Oct 2026)
-PROMPT_EVIDENCE_CHARS = 22000   # budget for evidence text in one prompt (~7k tokens @ ~3 chars/token; Ollama runs with num_ctx 12288)
+PROMPT_EVIDENCE_CHARS = 22000   # cap on evidence text in one prompt; measured prompts reach ~15k tokens in all, so Ollama runs with num_ctx 32768

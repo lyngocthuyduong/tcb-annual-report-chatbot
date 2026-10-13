@@ -137,15 +137,40 @@ def question_numbers(question: str) -> set[str]:
     return {p for m in _QDATE.finditer(vi.nfc(question)) for p in re.split(r"/", m.group(0))}
 
 
+def _negative_at(text: str, m) -> bool:
+    """Accounting '(100)' closed right after the number, or '-100'."""
+    before, after = text[:m.start()].rstrip(), text[m.end():]
+    return (before.endswith("(") and after.startswith(")")) or bool(re.search(r"(?<![\d\w%])-\s?$", text[max(0, m.start() - 2):m.start()]))
+
+
+def _signs(text: str) -> dict[str, set[bool]]:
+    """canonical number -> {True if printed negative, False if positive} over its occurrences."""
+    out: dict[str, set[bool]] = {}
+    for m in _NUM.finditer(text):
+        out.setdefault(vi.canon_num(m.group(0)).rstrip("%"), set()).add(_negative_at(text, m))
+    return out
+
+
+# words that state a printed-negative figure as a positive amount ('chi phí 17.000' for '(17.000)')
+_NEG_WORDS = re.compile(r"\b(?:lỗ|giảm|âm|chi phí|chi trả|dự phòng|trích lập|khấu hao|thâm hụt)\b", re.I)
+
+
 def sign_problems(claim_text: str, cited_text: str) -> list[str]:
-    """A figure written negative ('-100', or accounting style '(100)' closed right after the number) must be printed
-    negative in the evidence. A parenthetical such as '(64.561 triệu đồng)' is not a sign."""
-    neg = r"(?:(?<![\d\w%])-\s?(\d+(?:[.,]\d+)*)|\((\d+(?:[.,]\d+)*)\))"
-    neg_ev = {vi.canon_num(m.group(1) or m.group(2)) for m in re.finditer(neg, vi.nfc(cited_text))}
+    """Signs must agree both ways. A figure written negative ('-100', or '(100)' closed right after the number) must be
+    printed negative in the evidence; a parenthetical such as '(64.561 triệu đồng)' is not a sign. A figure the evidence
+    prints only negative may be written positive only with a word that carries the sign (lỗ, giảm, chi phí, dự phòng ...)."""
+    claim_text, cited_text = vi.nfc(claim_text), vi.nfc(cited_text)
+    ev = _signs(cited_text)
     out = []
-    for m in re.finditer(neg, vi.nfc(claim_text)):
-        if vi.canon_num(m.group(1) or m.group(2)) in neg_ev: continue
-        out.append(f"{m.group(0).strip()} is negative but the evidence prints it positive")
+    for m in _NUM.finditer(claim_text):
+        t = m.group(0)
+        if _trivial(t) or _YEAR.match(t): continue
+        signs = ev.get(vi.canon_num(t).rstrip("%"))
+        if not signs: continue
+        if _negative_at(claim_text, m):
+            if True not in signs: out.append(f"{t} is negative but the evidence prints it positive")
+        elif signs == {True} and not _NEG_WORDS.search(claim_text):
+            out.append(f"{t} is positive but the evidence prints it negative")
     return out
 
 
@@ -164,6 +189,29 @@ class Check:
 
 
 _SCALE_OF = {10**12: "nghìn tỷ", 10**9: "tỷ", 10**6: "triệu", 10**3: "nghìn", 1: None}
+_CURRENCY = {"VND": r"(?:đồng|VND)(?![^\W\d_])", "USD": r"(?:USD|đô la)(?![^\W\d_])"}
+
+
+_YR = re.compile(r"(?<!\d)(?:19|20)\d{2}(?!\d)")
+
+
+def _year_of(text: str, m) -> set[str]:
+    """The year a number belongs to: the last year printed before it in the same segment (a table cell follows its column
+    header, 'Năm 2025 Triệu đồng: 3.503; Năm 2024 ...'; a tile its caption), else the first one after it, else the
+    closest one in the block; 'năm trước' / 'cùng kỳ' right after the number means the year before. Empty if no year."""
+    a = max(text.rfind(". ", 0, m.start()), text.rfind(";", 0, m.start())) + 1
+    ends = [i for i in (text.find(". ", m.end()), text.find(";", m.end())) if i >= 0]
+    seg_end = min(ends) if ends else len(text)
+    before = [y.group(0) for y in _YR.finditer(text, a, m.start())]
+    after = [y.group(0) for y in _YR.finditer(text, m.end(), seg_end)]
+    ys = [y for y in _YR.finditer(text)]
+    y = before[-1] if before else after[0] if after else \
+        (min(ys, key=lambda z: abs(z.start() - m.start())).group(0) if ys else None)
+    if y is None: return set()
+    out = {y}
+    if re.match(r"[^.;|]{0,40}?(?:năm trước|năm ngoái|cùng kỳ)", text[m.end():], re.I):
+        out.add(str(int(y) - 1))           # '12.705 người, tăng so với 11.848 người của năm trước'
+    return out
 
 
 def literal_quantities(plan, evs: list[Ev], question: str = "") -> tuple[dict[str, Quantity], list[str]]:
@@ -179,21 +227,33 @@ def literal_quantities(plan, evs: list[Ev], question: str = "") -> tuple[dict[st
             probs.append(f"{x.lid}: unknown evidence id {x.evidence}"); continue
         n = vi.nfc(x.number).strip()
         text = vi.nfc(e.text)
-        occ = [m for m in _NUM.finditer(text) if vi.canon_num(m.group(0)).rstrip("%") == vi.canon_num(n).rstrip("%")]
+        digits = re.sub(r"^[(\-\s]+|[)\s]+$", "", n)               # '(100)' and '-100' are looked up as '100'
+        occ = [m for m in _NUM.finditer(text) if vi.canon_num(m.group(0)).rstrip("%") == vi.canon_num(digits).rstrip("%")]
         if not occ:
             probs.append(f"{x.lid}: number {x.number} not found in {x.evidence}"); continue
         try:
             q = literal(x.lid, n, x.unit, x.period, x.label, e.chunk_id, e.page)
         except NumError as err:
             probs.append(f"{x.lid}: {err}"); continue
+        signs = {_negative_at(text, m) for m in occ}
+        if signs == {True} and q.value > 0 or signs == {False} and q.value < 0:
+            probs.append(f"{x.lid}: {x.number} has the opposite sign of the one printed in {x.evidence}"); continue
+        if q.dim in _CURRENCY:
+            near = {c for m in occ for c, rx in _CURRENCY.items() if re.match(rf"[\s|]*(?:nghìn tỷ|ngàn tỷ|tỷ|tỉ|triệu|nghìn|ngàn)?[\s|]*{rx}", text[m.end():], re.I)}
+            if near and q.dim not in near or not near and not re.search(_CURRENCY[q.dim], text, re.I):
+                probs.append(f"{x.lid}: currency of '{x.unit}' is not the one printed in {x.evidence}"); continue
         printed = {_scale_at(text, m.start(), m.end()) for m in occ} - {None}
         want = "%" if q.dim == "%" else _SCALE_OF.get(q.scale)
         if printed and want not in printed:
             probs.append(f"{x.lid}: unit '{x.unit}' but {x.evidence} prints {x.number} as '{'/'.join(sorted(printed))}'"); continue
         if not printed and want and not re.search(rf"(?<![^\W\d_]){re.escape(want)}(?![^\W\d_])", text, re.I):
             probs.append(f"{x.lid}: unit '{x.unit}' does not occur in {x.evidence}"); continue
-        if q.period.year and str(q.period.year) not in text and str(q.period.year) not in question:
-            probs.append(f"{x.lid}: period {x.period} occurs neither in {x.evidence} nor in the question"); continue
+        if q.period.year:
+            got = {y for m in occ for y in _year_of(text, m)}
+            if got and str(q.period.year) not in got:
+                probs.append(f"{x.lid}: period {x.period} but {x.evidence} prints {x.number} under {'/'.join(sorted(got))}"); continue
+            if not got and str(q.period.year) not in question:
+                probs.append(f"{x.lid}: period {x.period} occurs neither in {x.evidence} nor in the question"); continue
         out[x.lid] = q
     return out, probs
 
@@ -246,9 +306,40 @@ def check(plan, evs: list[Ev], quantities: dict[str, Quantity], question: str = 
     return c
 
 
+_EQUIV = re.compile(r"(\d[\d.,]*\s*(?:nghìn tỷ|tỷ|triệu|nghìn)?\s*(?:đồng|USD)?)[^.;\d]{0,25}?\btương (?:đương|ứng)\s+(?:với\s+)?(?:khoảng\s+|mức\s+)?(\d[\d.,]*\s*(?:nghìn tỷ|tỷ|triệu|nghìn)?\s*(?:đồng|USD)?)", re.I)
+
+
+def equivalence_problems(claim_text: str) -> list[str]:
+    """'X, tương đương Y' restates X in another unit, so both must be the same amount within rounding:
+    '834.241.663 triệu đồng, tương đương khoảng 776,5 nghìn tỷ đồng' puts a second, different figure next to the first
+    (dev13 n-fu-eq). Only amounts with a magnitude are compared ('tương ứng 55%' is a different quantity)."""
+    out = []
+    for m in _EQUIV.finditer(vi.nfc(claim_text)):
+        a, b = figures(m.group(1)), figures(m.group(2))
+        if not a or not b or a[0][0] != "n" or b[0][0] != "n" or a[0][2] == Decimal("0.5") and b[0][2] == Decimal("0.5"):
+            continue
+        (_, va, ha), (_, vb, hb) = a[0], b[0]
+        if abs(va - vb) > max(ha, hb):
+            out.append(f"'{m.group(1).strip()}' and '{m.group(2).strip()}' are given as equal but are different amounts")
+    return out
+
+
+def source_ids(claim, evs: list[Ev]) -> list[str]:
+    """The blocks a sentence's figures were copied from, so the analyst checks the page that prints them rather than
+    every page listed for the sentence: among the claim's evidence ids, those that print the most of its figures. A
+    sentence without figures keeps all its ids. The full list stays in the plan and the trace."""
+    by = {e.eid: e for e in evs}
+    ids = [e for e in claim.evidence if e in by]
+    figs = {t for t in num_tokens(render_claim(claim, {})) if not _trivial(t)}
+    if not ids or not figs: return ids
+    score = {e: len(figs & num_tokens(by[e].text)) for e in ids}
+    best = max(score.values())
+    return [e for e in ids if score[e] == best] if best else ids
+
+
 def pages_of(claim, evs: list[Ev], plan, results: dict[str, CalcResult], quantities: dict[str, Quantity]) -> list[int]:
     by = {e.eid: e for e in evs}
-    pg = {by[e].page for e in claim.evidence if e in by and by[e].page is not None}
+    pg = {by[e].page for e in source_ids(claim, evs) if by[e].page is not None}
     refs = set(_PLACEHOLDER.findall(claim.text_vi)) | set(claim.calc_refs)
     for x in plan.calculations:
         if x.cid in refs:
@@ -276,6 +367,10 @@ def render_claim(claim, results: dict[str, CalcResult]) -> str:
     s = re.sub(r"((?:tăng|giảm|Tăng|Giảm)\s+(?:thêm\s+|khoảng\s+)?)?\{(C\d+)\}", put, claim.text_vi)
     s = re.sub(r"%\s*%", "%", s)
     s = re.sub(rf"({_UNITS})(\s+\1)+", r"\1", s)
+    # an amount restated as itself ('27.538 tỷ đồng, tương đương 27.538 tỷ đồng') and remarks on where the report puts
+    # a figure ('... được báo cáo tóm tắt ở phần điểm nhấn') add nothing the citation does not already say
+    s = re.sub(r"(\d[\d.,]*\s*(?:nghìn tỷ|tỷ|triệu|nghìn)?\s*(?:đồng|USD)?),\s*tương đương\s+\1(?=[\s,.;]|$)", r"\1", s)
+    s = re.sub(r",?\s*(?:và\s+)?(?:được\s+)?báo cáo\s+(?:tóm tắt|ghi nhận|trình bày|nêu)\b[^.,;]*?\b(?:ở|tại|trong)\s+(?:phần|bảng|mục)\b[^.,;]*", "", s)
     if re.search(r"\b(?:tăng|giảm)\b", s, re.I):          # the drawn-arrow marker is evidence text; once a verb states
         s = re.sub(r"\s*\([▲▼]\)", "", s)                  # the direction it only repeats it ('tăng 24% (▲)')
     return s.strip()

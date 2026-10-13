@@ -200,6 +200,7 @@ def test_rounded_gold_count_is_met_by_the_exact_count_or_a_word_scale():
     it = item(gold_answer="Hơn 1.000.000 thẻ.", gold_facts=["1.000.000"])
     assert ev.facts_ok(it, "Techcombank đã phát hành hơn 1 triệu thẻ [tr. 246].")[0] is True
     assert ev.facts_ok(it, "Techcombank đã phát hành hơn 1 tỷ thẻ [tr. 246].")[0] is False
+    assert ev.facts_ok(it, "Techcombank đã phát hành hơn 600.000 thẻ [tr. 246].")[0] is False
     assert ev.facts_ok(item(gold_answer="3.500 nhân viên.", gold_facts=["3.500"]), "3.512 nhân viên")[0] is False
 
 

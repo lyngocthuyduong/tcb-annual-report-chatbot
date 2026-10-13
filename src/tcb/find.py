@@ -1,4 +1,4 @@
-"""Hybrid retrieval: BM25 (tcb-vi-v1 tokens) + dense BGE-M3 (LlamaIndex) -> RRF -> top FINAL_EVIDENCE blocks.
+"""Hybrid retrieval: BM25 (tcb-vi-v2 tokens) + dense BGE-M3 (LlamaIndex) -> RRF -> top FINAL_EVIDENCE blocks.
 No cross-encoder: it bought one item of recall in 85 for most of the CPU time per question (DESIGN 17.1).
 Every stage's ranking is kept so eval can attribute a miss to the stage that lost the gold page."""
 from __future__ import annotations

@@ -90,9 +90,6 @@ class Quantity:
     def base(self) -> Decimal:
         return self.value * self.scale
 
-    def show(self) -> str:
-        return f"{fmt(self.value)} {unit_vi(self.dim, self.scale)}".strip()
-
 
 _SCALE_NAME = {("VND", 1): "đồng", ("VND", 10**3): "nghìn đồng", ("VND", 10**6): "triệu đồng",
                ("VND", 10**9): "tỷ đồng", ("VND", 10**12): "nghìn tỷ đồng",

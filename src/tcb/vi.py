@@ -1,4 +1,4 @@
-"""Vietnamese text helpers: NFC, number canonicalisation, BM25 tokenizer (tcb-vi-v1)."""
+"""Vietnamese text helpers: NFC, number canonicalisation, BM25 tokenizer (tcb-vi-v2)."""
 from __future__ import annotations
 
 import re

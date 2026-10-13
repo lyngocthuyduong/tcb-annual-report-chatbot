@@ -222,3 +222,13 @@ def test_calculation_with_a_missing_input_is_not_computed(N):
     a, _ = run(N, h, "Tổng nhân sự năm 2025?", keys=("hr",))
     assert a.status != "answered" and "12.705" not in a.answer
     assert any("L999" in x for x in a.trace["calc_errors"])
+
+
+def test_amount_restated_as_a_different_amount_is_dropped(N):
+    """dev13 n-fu-eq paired a figure with a different one as 'tương đương'. Both numbers are in the block, so only the
+    equivalence check catches it."""
+    def h(rq, i):
+        return {"status": "answered", "claims": [{"text_vi": "Tổng tài sản đạt 1.192.344.137 triệu đồng, tương đương 978.798.549 triệu đồng.",
+                                                  "evidence": [eid_of(rq, "TỔNG TÀI SẢN")]}]}
+    a, _ = run(N, h, "Tổng tài sản?")
+    assert a.status == "not_in_report" and any("different amounts" in p for p in a.trace["check_problems"])
