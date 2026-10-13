@@ -180,7 +180,7 @@ An earlier design retried a query once when the top cross-encoder score fell bel
 ### 6.4 Why this shape
 - BM25 + dense because figures/abbreviations need lexical exactness while paraphrased narrative needs semantics.
 - RRF because it needs no score calibration between BM25 and cosine; k = 60 is the literature default and is only changed if E3b shows ≥ 5 points of R@20 on **every** set.
-- No reranker (E4, run m4: dev+val, 85 answerable items): a cross-encoder over 20 to 40 candidates found a gold page for 0.894 of items, the fused top 10 for 0.882, i.e. one item, at about 2 s of CPU per candidate pair on 2 cores (≈ 60 s per question at 30). Over the fused top 10 that were then given to the LLM it could only reorder them.
+- No reranker (E4, run m4: dev+val, 85 answerable items): a cross-encoder over 20 to 40 candidates found a gold page for 0.894 of items, the fused top 10 for 0.882, i.e. one item, at about 3 s of CPU per candidate pair on 2 cores (≈ 60 s per question at 20, ≈ 90 s at 30; 5 questions each). Over the fused top 10 that were then given to the LLM it could only reorder them.
 - Tokenizer stays `vi`: E2 favoured `default` by one item at R@20 (0.894 vs 0.882 in run m4; 0.941 vs 0.929 in m7) while `vi` is ahead at R@5/R@8, so no rebuild.
 - One retrieval path: no HyDE, multi-query or agents; each adds LLM calls and a failure surface.
 
@@ -386,7 +386,7 @@ The runner *suggests* a decision by these rules and never edits `conf.py`. Order
 | No reranker, no τ_low retry | BGE-reranker-v2-m3 over a pool; a score-triggered retry | one item of recall in 85 for most of the CPU time; the retry doubled retrieval on weak questions with no gain (§17.1) |
 | Hash embedder only in `tests/` | use it to produce the index when BGE-M3 is unavailable | it would let a fake index pass as real |
 
-### 17.1 Retrieval and speed options tried (measured, 13 Oct 2026)
+### 17.1 Retrieval and speed options tried (measured 11 to 13 Oct 2026)
 
 Data: `data/dev.json` + `data/val.json`, 85 answerable items with gold pages, 19 unanswerable/ambiguous. Run `m4` on Colab (quality on a T4 GPU, rerank timing on 2 CPU cores). Recall = a gold printed page is among the blocks considered. One item = 1.2 points.
 
@@ -395,11 +395,11 @@ Data: `data/dev.json` + `data/val.json`, 85 answerable items with gold pages, 19
 | BM25 tokenizer: `tcb-vi-v1` vs bm25s default vs +bigrams (E2) | BM25-only recall | R@20: default 0.894, vi 0.882, bigram 0.894; R@5: vi 0.824, default 0.800. The only R@20 difference is one glossary item (`g-alco`) | keep `vi` (v1 then; v2 differs only in canonical decimals); a switch needs ≥ 2 pts R@20 and an index rebuild |
 | BM25 vs dense vs RRF vs RSF (E3) | R@20 | BM25 0.918, dense 0.694, RRF 0.941, RSF 0.929 | keep RRF |
 | RRF k ∈ {10, 30, 60, 100} (E3b) | R@20 per set | no k beats 60 by ≥ 5 pts on both sets | keep k = 60 |
-| Rerank pool N × final k (E4) | recall within the k blocks given to the LLM | N10: 0.882; N20/30/40 with k ≥ 8: 0.894 (one item more). CPU rerank time grows with N (≈ 60 s per question at N = 30 on 2 cores) | pool 30 → 10, all 10 blocks to the LLM |
+| Rerank pool N × final k (E4) | recall within the k blocks given to the LLM | N10: 0.882; N20/30/40 with k ≥ 8: 0.894 (one item more). CPU rerank time grows with N (≈ 60 s per question at N = 20, ≈ 90 s at N = 30, on 2 cores) | pool 30 → 10, all 10 blocks to the LLM |
 | Evidence count k on the rebuilt indexes (E4, no reranker) | recall of the fused top k | m6 (1,463 nodes): k 10: 0.859, 12: 0.894, 15: 0.906, 20: 0.929. m7 (1,445 nodes): 5: 0.777, 8: 0.824, 10: 0.871, 12: 0.929, 15: 0.929, 20: 0.941. m8 (final index, KPI label ranking on): 5: 0.788, 8: 0.847, 10: 0.882, 12: 0.929, 15: 0.941, 20: 0.953 | rule: smallest k within 2 pts of the best. It chose 15 (m5), 20 (m6), 12 (m7), 15 (m8): one item is 1.2 pts, so the choice moves with single items. k = 12 was frozen before test2 and kept |
 | KPI label ranking on or off (E8, m8) | gold page in the final 12 | no gain and no loss on dev+val (no question there names a short tile that was ranked out); it is what brought test1 `x-credcost` into the evidence (test1b) | keep |
 | BM25 vs dense vs RRF vs RSF on the final index (E3, m7) | R@20 | BM25 0.929, dense 0.718, RRF 0.941, RSF 0.953 | keep RRF (RSF is one item better, the rule needs 5 pts) |
-| Glossary expansion (E5) | items lost / gained | none lost, none gained | keep (needed for abbreviations such as RBG, CASA) |
+| Glossary expansion (E5) | items lost / gained | m4 to m7: R@8 unchanged; m4: one item lower at R@5 with expansion; m8: one item higher at R@8 (0.929 vs 0.918) | keep (needed for abbreviations such as RBG, CASA) |
 | Weak-retrieval retry τ_low (E7) | F1 of flagging unanswerable by top rerank score | τ = 0.599 (on pool 30) | not enabled: the retry is a second full search and rerank on exactly the weak and unanswerable questions, and no experiment shows it recovers a page |
 | No cross-encoder at all | follows from E4: with N = k = 10 the reranker no longer selects blocks, it only orders them | recall unchanged by construction (0.882); removes ≈ 20 s per question on 2 CPU cores (val1 with the reranker at N = 10: p50 30.3 s) | **adopted 13 Oct 2026**: model, download, `tcb check` step, E4 grid and E7 removed; Docker image ≈ 2.2 GB smaller. Decided without an answer-level A/B run, because recall cannot change and the time saving is the whole rerank stage |
 | Vector database (FAISS / Chroma / Qdrant) instead of the LlamaIndex in-memory store | time of one top-40 dense search over 1,526 × 1,024 vectors (an earlier index), query vector given | LlamaIndex simple store 49 ms (median), numpy 0.17 ms, FAISS flat 0.30 ms; BM25 0.14 ms | not adopted: at most 0.05 s saved per question against a rerank of tens of seconds, and a DB server adds a service to Docker |

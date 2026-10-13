@@ -19,7 +19,7 @@ COPY src ./src
 RUN pip install --no-deps .
 COPY --from=models --chown=app:app /models /models
 # No chown RUN and no weight conversion here: each would copy the 2.3 GB of weights into a new layer (a Docker build ran out of disk
-# exporting layers). torch loads BGE-M3's pytorch_model.bin as shipped (smoke stage 2, `tcb check`, runs/smoke-5bd7fbf.txt).
+# exporting layers). torch loads BGE-M3's pytorch_model.bin as shipped (smoke stage 2, `tcb check`, runs/smoke-9ee2ce1.txt).
 COPY tests ./tests
 RUN mkdir -p out idx data && chown -R app:app /app
 USER app

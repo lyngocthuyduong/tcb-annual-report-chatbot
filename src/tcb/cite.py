@@ -151,8 +151,14 @@ def _signs(text: str) -> dict[str, set[bool]]:
     return out
 
 
-# words that state a printed-negative figure as a positive amount ('chi phí 17.000' for '(17.000)')
-_NEG_WORDS = re.compile(r"\b(?:lỗ|giảm|âm|chi phí|chi trả|dự phòng|trích lập|khấu hao|thâm hụt)\b", re.I)
+# words that state a printed-negative figure as a positive amount ('chi phí 17.000' for '(17.000)'), only when they stand
+# just before the figure: 'lợi nhuận 100 triệu đồng sau chi phí' is a positive amount
+_NEG_LEAD = re.compile(r"(?:lỗ|giảm|âm|chi phí|chi trả|dự phòng|trích lập|khấu hao|thâm hụt)"
+                       r"(?:\s+(?:ròng|thuần|là|của|khoảng|đạt|ghi nhận|tương ứng))*\s*[:(]?\s*$", re.I)
+
+
+def _neg_word_before(text: str, m) -> bool:
+    return bool(_NEG_LEAD.search(text[max(0, m.start() - 40):m.start()]))
 
 
 def sign_problems(claim_text: str, cited_text: str) -> list[str]:
@@ -169,8 +175,35 @@ def sign_problems(claim_text: str, cited_text: str) -> list[str]:
         if not signs: continue
         if _negative_at(claim_text, m):
             if True not in signs: out.append(f"{t} is negative but the evidence prints it positive")
-        elif signs == {True} and not _NEG_WORDS.search(claim_text):
+        elif signs == {True} and not _neg_word_before(claim_text, m):
             out.append(f"{t} is positive but the evidence prints it negative")
+    return out
+
+
+def _currency_after(text: str, m) -> str | None:
+    tail = text[m.end():m.end() + 30]
+    for c, rx in _CURRENCY.items():
+        if re.match(rf"[\s|]*(?:nghìn tỷ|ngàn tỷ|tỷ|tỉ|triệu|nghìn|ngàn)?[\s|]*{rx}", tail, re.I):
+            return c
+    return None
+
+
+def currency_problems(claim_text: str, cited_text: str) -> list[str]:
+    """A figure printed in one currency is not the same figure in another: '100 triệu USD' is not '100 triệu đồng'.
+    Checked only where both the claim and the evidence print a currency next to the figure."""
+    claim_text, cited_text = vi.nfc(claim_text), vi.nfc(cited_text)
+    printed: dict[str, set[str]] = {}
+    for m in _NUM.finditer(cited_text):
+        c = _currency_after(cited_text, m)
+        if c: printed.setdefault(vi.canon_num(m.group(0)).rstrip("%"), set()).add(c)
+    out = []
+    for m in _NUM.finditer(claim_text):
+        t = m.group(0)
+        if _trivial(t) or _YEAR.match(t): continue
+        c = _currency_after(claim_text, m)
+        ev = printed.get(vi.canon_num(t).rstrip("%"))
+        if c and ev and c not in ev:
+            out.append(f"{t} is written in {c} but the evidence prints it in {'/'.join(sorted(ev))}")
     return out
 
 
@@ -303,6 +336,7 @@ def check(plan, evs: list[Ev], quantities: dict[str, Quantity], question: str = 
             ps.append("numbers not found in the cited evidence: " + ", ".join(bad[:6]))
         ps += magnitude_problems(body, cited_text)
         ps += sign_problems(body, cited_text)
+        ps += currency_problems(body, cited_text)
         if ps: c.per_claim[i] = ps
     return c
 

@@ -259,6 +259,15 @@ def test_figure_printed_negative_needs_a_word_that_carries_the_sign():
     assert cite.sign_problems("Kết quả là 100 triệu đồng.", ev)
     assert not cite.sign_problems("Khoản lỗ 100 triệu đồng.", ev)
     assert not cite.sign_problems("Kết quả là (100) triệu đồng.", ev)
+    assert cite.sign_problems("Lợi nhuận 100 triệu đồng sau chi phí.", ev)
+    assert not cite.sign_problems("Chi phí 100 triệu đồng.", ev)
+
+
+def test_claim_currency_must_match_the_printed_one():
+    ev = "Doanh thu đạt 100 triệu đồng năm 2025"
+    assert cite.currency_problems("Doanh thu 100 triệu USD năm 2025.", ev)
+    assert not cite.currency_problems("Doanh thu 100 triệu đồng năm 2025.", ev)
+    assert not cite.currency_problems("Doanh thu 100 triệu năm 2025.", ev)
 
 
 def test_restated_amount_must_be_the_same_amount():
