@@ -9,7 +9,13 @@ docker compose up --build     # http://127.0.0.1:8000  (UI)  ·  /health  ·  PO
 ```
 Needs `idx/` (shipped index) and `data/ar.pdf`. If `idx/` is missing, corrupt, or built with another model the server exits with code 3 and says how to fix it; it never rebuilds or downloads at run time. Missing key / bad `PROVIDER` → exit 2.
 
-## Run (offline LLM, separate service, never an automatic fallback)
+If `/chat` returns 503 `APIConnectionError` while `/health` is fine, the container cannot resolve the provider's host. Seen in GitHub Codespaces on the Compose network; a host-specific override fixes it without changing `compose.yaml`:
+```bash
+printf 'services:\n  app:\n    network_mode: bridge\n    dns: [1.1.1.1]\n' > /tmp/bridge.yaml
+COMPOSE_FILE=compose.yaml:/tmp/bridge.yaml docker compose up -d app      # or: COMPOSE_FILE=... ./smoke.sh
+```
+
+## Run (local LLM, separate service, never an automatic fallback; not run end to end for the reported results)
 ```bash
 docker compose --profile offline up --build app-offline           # local Ollama + qwen2.5:7b (pulled once, ~4.7 GB)
 docker compose --profile offline run --rm app-offline tcb smoke   # logs: "Ollama smoke test: Executed|Not Executed ..."
