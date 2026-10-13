@@ -44,12 +44,20 @@
 
 ## Evaluation
 - Method: deterministic scoring, no LLM judge: fact presence with unit alternatives, citation validity, page hit against gold and alternative pages, refusal precision and recall, and the first failing stage (recall miss, fusion drop, rank drop, citation, calculation, generation, over/under-refusal), printed per failed item from its trace. Retrieval experiments (`tcb exp`) cost no tokens. Dev (70) and val (34) are hand-written across statements, KPI tiles, narrative, business segments, subsidiaries, governance, investor relations, glossary, calculations, follow-ups and 19 unanswerable or ambiguous questions; each gold fact was checked against the PDF text of its page and each calculation recomputed.
-- Results on the 10 published questions: <!-- fill from `tcb eval data/q10.json --label q10` -->
+- Results on the 10 published questions (run `q10e`, claude-haiku-5-5, final index and code):
+  - Automatic: 10/10 pass; fact correct 1.0, citation valid 1.0, page hit 1.0, page precision 0.815 (some citations add a second page that prints the same figure), the unanswerable sq-10 refused.
+  - Manual reading of the 10 answers against the gold and the cited pages: all figures and pages are correct. Four answers repeat the same figure from a second page (sq-01 p.27, sq-03 p.256, sq-04 p.53, sq-06 p.256); in sq-03 that second line is worded badly ("1.192.344 tỷ đồng (tương đương 1.192.344 tỷ đồng …)"). An analyst would delete those lines before pasting.
+  - Held-out val (34 items, run `val7`): 33/34; fact correct, citation valid and page hit 1.0; refusal precision and recall 1.0 on 5 unanswerable items. The failure is `a-year` ("Lợi nhuận năm đó là bao nhiêu?" with no year): expected a clarifying question, got a partial answer for 2025.
+  - Before the final fixes the same q10 run scored 8/10: the new magnitude check rejected sq-07 because the tile prints `Nghìn` and `tỷ đồng` on two lines (fixed and tested), and sq-03 missed one of its two gold facts.
 - What the numbers made you change: E4 and latency removed the reranker and set the evidence count by a fixed rule (smallest k within 2 points of the best recall) on each rebuilt index: 15, then 20, then 12 on the final index (fused recall 0.871 at 10, 0.929 at 12, 0.941 at 20), a sign that one item moves the choice; E2 kept the Vietnamese tokenizer; E3b kept RRF k = 60; the three val failures led to literals in the calculator and quantity selection by question relevance; the batch refusal of sq-07 (RBG loan balance, p.59) led to page-title context in every node, a general fix tested on other pages (RBG, TCBS, TCC, board, cash-flow continuation, glossary).
 
 ## Cost and latency
 - Ingestion (Colab, 2 vCPU + T4 for embedding): parse 20.5 s, embed 82.4 s for 1,445 nodes, BM25 1.0 s (`idx/report.json`). One-off, no API cost.
-- Per query: <!-- fill from summary.json of the final val/q10 run: p50, p95, stage_seconds_p50, tokens, cost_usd_per_question; state CPU and model -->
+- Per query (Colab, 2 vCPU, no GPU; claude-haiku-5-5 at $0.10 / $0.50 per million input / output tokens):
+  - q10: p50 2.21 s, p95 2.90 s; $0.00086 per question (7.3k input, 250 output tokens); 1.0 LLM call per question.
+  - val (34, with follow-ups): p50 2.05 s, p95 3.19 s; $0.00108 per question; 1.12 LLM calls per question (rewrites and repairs).
+  - Median seconds by stage (val): query embedding 0.47, dense search 0.09, BM25 0.001, LLM 1.49.
+  - One-off at start: BGE-M3 load 25.1 s, peak memory 2.5 GB (`tcb check`).
 - Models used: embedding BAAI/bge-m3; generation claude-haiku-5-5 (development), gpt-4o-mini, claude-sonnet-5-5 or Ollama `qwen2.5:7b` selectable; each run's `config.json` records the model that produced its numbers.
 
 ## What I deliberately did not build
