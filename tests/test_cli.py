@@ -50,3 +50,13 @@ def test_followup_needs_a_word_that_points_back_or_a_fragment():
     t = [chat.Turn("Tổng tài sản 2025?", "Tổng tài sản 2025?", "1.192 nghìn tỷ", "answered")]
     assert chat.is_followup("Còn năm 2024 thì sao?", t) and chat.is_followup("Năm 2024?", t)
     assert not chat.is_followup("Tỷ lệ CASA năm 2025 là bao nhiêu?", t) and not chat.is_followup("Còn năm 2024?", [])
+
+
+def test_unwritable_output_folder_fails_before_loading_models(tmp_path):
+    import os
+    from tcb.cli import _writable
+    ro = tmp_path / "ro"; ro.mkdir(); os.chmod(ro, 0o500)
+    if os.access(ro, os.W_OK):
+        pytest.skip("running as root: permissions are not enforced")
+    with pytest.raises(SystemExit, match="chmod"):
+        _writable(ro / "runs")

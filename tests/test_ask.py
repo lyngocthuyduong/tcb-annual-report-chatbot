@@ -232,3 +232,15 @@ def test_amount_restated_as_a_different_amount_is_dropped(N):
                                                   "evidence": [eid_of(rq, "TỔNG TÀI SẢN")]}]}
     a, _ = run(N, h, "Tổng tài sản?")
     assert a.status == "not_in_report" and any("different amounts" in p for p in a.trace["check_problems"])
+
+
+def test_a_calculation_cannot_take_another_calculation_as_input(N):
+    """Chaining C1 -> C2 is refused: every input must be a table quantity or a checked literal."""
+    def h(rq, i):
+        q25, q24 = qid_of(rq, "TỔNG TÀI SẢN", "31/12/2025"), qid_of(rq, "TỔNG TÀI SẢN", "31/12/2024")
+        return {"status": "answered",
+                "calculations": [{"cid": "C1", "op": "diff", "inputs": [q25, q24]},
+                                 {"cid": "C2", "op": "growth_pct", "inputs": ["C1", q24]}],
+                "claims": [{"text_vi": "Tổng tài sản tăng {C2}.", "evidence": [eid_of(rq, "TỔNG TÀI SẢN")], "calc_refs": ["C2"]}]}
+    a, _ = run(N, h, "Tổng tài sản tăng bao nhiêu phần trăm?")
+    assert a.status != "answered" and "{C2}" not in (a.answer or "") and "C2" not in a.trace["calcs"]

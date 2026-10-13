@@ -239,7 +239,7 @@ The answer payload also lists `citations` (eid, page, pdf_page, section, chunk_i
 
 ## 9. Calculator (`num.py`, `calc.py`)
 
-`num.from_node` converts cells of **high-quality tables only** into `Quantity(value: Decimal, dim, scale, period, page, raw)`; units/periods come from the column header (e.g. `Năm 2025 Triệu đồng` → VND, 10⁶, year 2025). Seven typed operations, all `Decimal`, all strict:
+`num.from_node` converts cells of **high-quality tables only** into `Quantity(value: Decimal, dim, scale, period, page, raw)`; units/periods come from the column header (e.g. `Năm 2025 Triệu đồng` → VND, 10⁶, year 2025). Seven typed operations, all `Decimal`, all strict. Every input is a table quantity or a checked literal; a calculation cannot take another calculation's result (`C1` as an input of `C2` fails the check and the claim is dropped), so each result is one step from printed figures:
 
 | op | Rule |
 |---|---|

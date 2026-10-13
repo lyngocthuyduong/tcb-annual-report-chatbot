@@ -116,11 +116,21 @@ def load_questions(path) -> list[dict]:
     return qs
 
 
+def _writable(out):
+    """Fail before any model loads if the output folder cannot be written (Docker creates a missing bind-mounted out/ as root)."""
+    try:
+        out.mkdir(parents=True, exist_ok=True); (out / ".w").touch(); (out / ".w").unlink()
+    except OSError as e:
+        raise SystemExit(f"cannot write to {out} ({e}). Fix on the host: mkdir -p out && chmod a+rwx out")
+    return out
+
+
 def cmd_batch(a) -> int:
     from pathlib import Path
     from . import chat
     qs = load_questions(Path(a.file))
-    e, out = _engine(), Path(a.out); out.mkdir(parents=True, exist_ok=True)
+    out = _writable(Path(a.out))
+    e = _engine()
     n_err = 0
     with open(out / "answers.jsonl", "w", encoding="utf-8") as f:
         sessions: dict[str, list] = {}
@@ -162,6 +172,8 @@ def cmd_eval(a) -> int:
         return 0
     if not a.set:
         print("eval needs a dataset (or --compare RUN_A RUN_B, or --rescore RUN)", file=sys.stderr); return 2
+    from pathlib import Path
+    _writable(Path(a.out))
     rep = ev.run_eval(a.set, a.out, _engine(), label=a.label, include_unverified=a.include_unverified)
     print(json.dumps(rep["summary"], ensure_ascii=False, indent=1))
     fails = ev.failure_lines(rep["rows"])
