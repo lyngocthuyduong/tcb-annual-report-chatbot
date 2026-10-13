@@ -14,7 +14,7 @@ import numpy as np
 from . import conf, ev, find, vi
 
 KS = (5, 8, 20, 40)
-EXPS = ("E2", "E3", "E3b", "E4", "E5")
+EXPS = ("E2", "E3", "E3b", "E4", "E5", "E8")
 RRF_KS = (10, 30, 60, 100)
 FINAL_KS = (5, 8, 10, 12, 15, 20)
 
@@ -205,6 +205,19 @@ def run_exp(set_paths: list[str], ctx: Ctx, which: tuple[str, ...] = EXPS, inclu
         gain = [i for i in on if off[i] is None and on[i] is not None]
         res["decisions"]["E5"] = {"regressions": reg, "gains": gain, "keep_expansion": not reg,
                                   "rule": f"keep if no regressions (gold lost from the top-{k} only when expansion is on)"}
+
+    if "E8" in which:                                      # KPI label named in the question as a third RRF ranking
+        k, labels = conf.FINAL_EVIDENCE, find.kpi_labels(ctx.nodes)
+        with_lab = lambda i: find.rrf([[c for c, _ in fs[i]["bmx"]], [c for c, _ in fs[i]["dnx"]], find.label_matches(fs[i]["qx"], labels)], conf.RRF_K)
+        on = {it.id: rank([c for c, _ in with_lab(it.id)][:k], fs[it.id]["gold"]) for _, it in ans}
+        off = {it.id: rank(fused(it.id)[:k], fs[it.id]["gold"]) for _, it in ans}
+        rr = rows()
+        res["E8"] = {"label_on": _by_set(rr, lambda sub: agg([on[x["id"]] for x in sub], (3, 5, k))),
+                     "label_off": _by_set(rr, lambda sub: agg([off[x["id"]] for x in sub], (3, 5, k)))}
+        reg = [i for i in on if off[i] is not None and (on[i] is None or on[i] > k)]
+        gain = [i for i in on if (off[i] is None or off[i] > k) and on[i] is not None and on[i] <= k]
+        res["decisions"]["E8"] = {"regressions": reg, "gains": gain, "keep_label_ranking": not reg,
+                                  "rule": f"keep if no gold page leaves the top-{k} when label ranking is on"}
     return res
 
 
@@ -222,6 +235,7 @@ def to_markdown(res: dict) -> str:
         if key in res: tbl(title, res[key])
     if "E4" in res: tbl("E4 final k of the fused list", {"fused": res["E4"]}, tuple(f"R@{k}" for k in FINAL_KS))
     if "E5" in res: tbl("E5 glossary expansion (final top-k)", res["E5"], ("R@5", f"R@{conf.FINAL_EVIDENCE}", "mrr"))
+    if "E8" in res: tbl("E8 KPI label ranking (final top-k)", res["E8"], ("R@3", "R@5", f"R@{conf.FINAL_EVIDENCE}", "mrr"))
     L.append("## Suggested decisions (not applied)"); L.append("```json"); L.append(json.dumps(res["decisions"], ensure_ascii=False, indent=1)); L.append("```")
     return "\n".join(L) + "\n"
 

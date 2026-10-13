@@ -24,6 +24,36 @@ def expand(query: str, gloss: dict) -> str:
     return q if not extra else f"{q} ({'; '.join(extra)})"
 
 
+def _norm(s: str) -> str:
+    return " " + re.sub(r"[^\w%]+", " ", vi.fold(vi.nfc(s).lower())).strip() + " "
+
+
+_OPEN = {"tu", "tren", "va", "cua", "cho", "voi", "trong", "theo", "den", "la", "da"}
+
+
+def kpi_labels(nodes: dict) -> dict[str, str]:
+    """chunk_id -> label of a KPI tile ('Chi phí tín dụng' in '[…] Chi phí tín dụng | 0,6%'). A tile is two or three
+    words and a figure, so it ranks below longer blocks that repeat the same words; naming its label in the question is
+    the strongest signal there is that the tile is the answer."""
+    out = {}
+    for cid, n in nodes.items():
+        if n.get("content_type") != "kpi": continue
+        body = re.sub(r"^\[[^\]]*\]\s*", "", n["text"])
+        lab = _norm(body.split(" | ")[0])
+        w = lab.split()
+        # a metric name: 3+ syllables, no figure, not a sentence opening ('Techcombank đã'), not cut mid-phrase ('… từ')
+        if len(w) >= 3 and not re.search(r"\d", lab) and w[0] != vi.fold(conf.DOC_SUBJECT.lower()) and w[-1] not in _OPEN:
+            out[cid] = lab
+    return out
+
+
+def label_matches(query: str, labels: dict[str, str]) -> list[str]:
+    """Tiles whose whole label occurs in the question, longest label first: a third ranking for RRF."""
+    q = _norm(query)
+    hits = [(len(lab), cid) for cid, lab in labels.items() if lab in q]
+    return [cid for _, cid in sorted(hits, key=lambda x: (-x[0], x[1]))]
+
+
 def rrf(rankings: list[list[str]], k: int = conf.RRF_K) -> list[tuple[str, float]]:
     s: dict[str, float] = {}
     for r in rankings:
@@ -37,6 +67,7 @@ class Result:
     query: str
     bm25: list[str] = field(default_factory=list)
     dense: list[str] = field(default_factory=list)
+    label: list[str] = field(default_factory=list)              # KPI tiles whose label is named in the question
     fused: list[str] = field(default_factory=list)
     ranked: list[tuple[str, float]] = field(default_factory=list)     # (chunk_id, RRF score) given to the LLM, best first
     seconds: dict = field(default_factory=dict)
@@ -48,6 +79,7 @@ class Retriever:
         self.ix, self.gloss = index, gloss or {}
         self.top_bm25, self.top_dense, self.rrf_k, self.k = top_bm25, top_dense, rrf_k, k
         self._dense = index.vector.as_retriever(similarity_top_k=top_dense)
+        self.labels = kpi_labels(index.nodes)
 
     def _bm25(self, q: str) -> list[str]:
         import numpy as np
@@ -67,7 +99,8 @@ class Retriever:
         t = time.time(); emb = self.ix.vector._embed_model.get_query_embedding(q); r.seconds["embed"] = round(time.time() - t, 3)
         t = time.time(); r.dense = [h.node.node_id for h in self._dense.retrieve(QueryBundle(q, embedding=emb))]
         r.seconds["dense"] = round(time.time() - t, 3)
-        fused = rrf([r.bm25, r.dense], self.rrf_k)
+        r.label = label_matches(q, self.labels)
+        fused = rrf([r.bm25, r.dense] + ([r.label] if r.label else []), self.rrf_k)
         r.fused = [c for c, _ in fused]
         r.ranked = fused[: self.k]
         return r

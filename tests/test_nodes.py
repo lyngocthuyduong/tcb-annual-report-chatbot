@@ -117,3 +117,9 @@ def test_statement_page_band_is_not_narrative(doc):
     fs = [n for n in doc["nodes"] if n.section == "Báo cáo tài chính" and n.content_type == "narrative"]
     assert not any("HỢP NHẤT (tiếp theo)" in n.text or re.search(r"(^|\n|\] )B05/TCTD-HN($|\n)", n.text) for n in fs)
     assert any(n.text.startswith("[Báo cáo tài chính › Thuyết minh báo cáo tài chính hợp nhất]") for n in fs)
+
+
+def test_sub_table_caption_is_kept_under_the_note_heading(doc):
+    p369 = [n.text for n in doc["nodes"] if n.content_type == "table" and n.printed_page_number == 369]
+    assert any("41. GIAO DỊCH VỚI CÁC BÊN LIÊN QUAN" in t and "\nThu nhập từ hoạt động dịch vụ | \nCông ty Cổ phần Tập đoàn Masan (i) | Năm 2025 Triệu đồng: 12.613" in t for t in p369)
+    assert all(re.search(r"\n[^|\n]+ \| \n", t) for t in p369)        # every chunk opens with its sub-table heading

@@ -1,0 +1,327 @@
+[
+ {
+  "id": "y-rewards",
+  "category": "retail",
+  "type": "single",
+  "question": "Chương trình Techcombank Rewards có khoảng bao nhiêu hội viên trong năm 2025?",
+  "gold_answer": "Khoảng 13,1 triệu hội viên.",
+  "gold_printed_pages": [
+   117
+  ],
+  "gold_facts": [
+   "13,1"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author."
+ },
+ {
+  "id": "y-redeem",
+  "category": "retail",
+  "type": "single",
+  "question": "Năm 2025 hệ thống Techcombank Rewards xử lý bao nhiêu giao dịch đổi thưởng và tăng bao nhiêu so với năm 2024?",
+  "gold_answer": "Khoảng 9 triệu giao dịch, tăng 530% so với năm 2024.",
+  "gold_printed_pages": [
+   121
+  ],
+  "gold_facts": [
+   "530"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author."
+ },
+ {
+  "id": "y-upgrade",
+  "category": "retail",
+  "type": "single",
+  "question": "Số lượng khách hàng nâng cấp lên gói dịch vụ cao cấp hơn năm 2025 thay đổi bao nhiêu?",
+  "gold_answer": "Tăng 56%.",
+  "gold_printed_pages": [
+   118
+  ],
+  "gold_facts": [
+   "56"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author."
+ },
+ {
+  "id": "y-unsecured",
+  "category": "retail",
+  "type": "single",
+  "question": "Dư nợ tín chấp của Khối Ngân hàng Bán lẻ tăng trưởng bao nhiêu so với năm trước?",
+  "gold_answer": "Tăng 123% N/N.",
+  "gold_printed_pages": [
+   63
+  ],
+  "gold_facts": [
+   "123"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author."
+ },
+ {
+  "id": "y-cibg-dep",
+  "category": "corporate",
+  "type": "single",
+  "question": "Số dư tiền gửi của Khối Ngân hàng Doanh nghiệp và Định chế Tài chính (CIBG) năm 2025 thay đổi thế nào so với năm trước?",
+  "gold_answer": "Tăng 24% N/N.",
+  "gold_printed_pages": [
+   71
+  ],
+  "gold_facts": [
+   "24"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author."
+ },
+ {
+  "id": "y-databrain",
+  "category": "digital",
+  "type": "single",
+  "question": "Hệ thống dữ liệu của Techcombank mô tả mỗi khách hàng bằng bao nhiêu thuộc tính?",
+  "gold_answer": "Hơn 12.500 thuộc tính.",
+  "gold_printed_pages": [
+   18
+  ],
+  "gold_facts": [
+   "12.500"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author."
+ },
+ {
+  "id": "y-visaeco",
+  "category": "sustainability",
+  "type": "single",
+  "question": "Techcombank đã phát hành bao nhiêu thẻ Visa Eco Debit và Eco Credit?",
+  "gold_answer": "Hơn 1.000.000 thẻ.",
+  "gold_printed_pages": [
+   246
+  ],
+  "gold_facts": [
+   "1.000.000"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author."
+ },
+ {
+  "id": "y-community",
+  "category": "sustainability",
+  "type": "single",
+  "question": "Năm 2025 Techcombank đóng góp tổng cộng bao nhiêu tiền cho các hoạt động vì cộng đồng?",
+  "gold_answer": "231 tỷ đồng.",
+  "gold_printed_pages": [
+   232
+  ],
+  "gold_facts": [
+   "231"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author."
+ },
+ {
+  "id": "y-volunteer",
+  "category": "sustainability",
+  "type": "single",
+  "question": "Năm 2025 có khoảng bao nhiêu cán bộ nhân viên và người thân tham gia các thử thách dựa trên hành vi, và đóng góp bao nhiêu tiền?",
+  "gold_answer": "Khoảng 9.000 người tham gia, đóng góp 5,4 tỷ đồng.",
+  "gold_printed_pages": [
+   267
+  ],
+  "gold_facts": [
+   "9.000",
+   "5,4"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author."
+ },
+ {
+  "id": "y-master",
+  "category": "human_capital",
+  "type": "single",
+  "question": "Năm 2025 Techcombank tổ chức bao nhiêu buổi Master Sharing?",
+  "gold_answer": "181 buổi.",
+  "gold_printed_pages": [
+   226
+  ],
+  "gold_facts": [
+   "181"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author."
+ },
+ {
+  "id": "y-perf",
+  "category": "human_capital",
+  "type": "single",
+  "question": "Chỉ số hiệu suất nhân viên (Performance Index) của Techcombank là bao nhiêu và thay đổi thế nào so với năm 2023?",
+  "gold_answer": "89%, tăng 9% so với năm 2023.",
+  "gold_printed_pages": [
+   142
+  ],
+  "gold_facts": [
+   "89"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author."
+ },
+ {
+  "id": "y-followers",
+  "category": "human_capital",
+  "type": "calc",
+  "question": "Tính đến cuối năm 2025, tổng số lượt theo dõi của Techcombank trên LinkedIn và trên các trang tuyển dụng Facebook là bao nhiêu?",
+  "gold_answer": "264.000 lượt (147.000 trên LinkedIn và 117.000 trên Facebook).",
+  "gold_printed_pages": [
+   138
+  ],
+  "gold_facts": [
+   "264.000"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author."
+ },
+ {
+  "id": "y-tcgi",
+  "category": "subsidiary",
+  "type": "single",
+  "question": "TCGI phân phối bảo hiểm qua Techcombank với bao nhiêu chi nhánh và bao nhiêu nhân viên bán hàng?",
+  "gold_answer": "280 chi nhánh và 3.500 nhân viên bán hàng.",
+  "gold_printed_pages": [
+   98
+  ],
+  "gold_facts": [
+   "280",
+   "3.500"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author."
+ },
+ {
+  "id": "y-tcbs-ib",
+  "category": "subsidiary",
+  "type": "single",
+  "question": "Tổng doanh thu mảng ngân hàng đầu tư của TCBS năm 2025 là bao nhiêu tỷ đồng?",
+  "gold_answer": "2.018 tỷ đồng, tăng 50% so với năm 2024.",
+  "gold_printed_pages": [
+   79
+  ],
+  "gold_facts": [
+   "2.018"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author."
+ },
+ {
+  "id": "y-other-inc",
+  "category": "key_figures",
+  "type": "single",
+  "question": "Thu nhập khác của Techcombank năm 2025 đạt bao nhiêu nghìn tỷ đồng?",
+  "gold_answer": "3,8 nghìn tỷ đồng, tăng 245% N/N.",
+  "gold_printed_pages": [
+   51
+  ],
+  "gold_facts": [
+   "3,8"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author."
+ },
+ {
+  "id": "y-insur",
+  "category": "financial_statements",
+  "type": "calc",
+  "question": "Theo thuyết minh báo cáo tài chính hợp nhất, thu nhập từ dịch vụ hợp tác bảo hiểm năm 2025 tăng bao nhiêu phần trăm so với năm 2024?",
+  "gold_answer": "Tăng khoảng 91,8% (1.161.966 so với 605.677 triệu đồng).",
+  "gold_printed_pages": [
+   356
+  ],
+  "gold_facts": [
+   "91,8"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author.",
+  "alt_pages": [
+   50
+  ]
+ },
+ {
+  "id": "y-payfee",
+  "category": "financial_statements",
+  "type": "calc",
+  "question": "Theo thuyết minh báo cáo tài chính hợp nhất, thu nhập từ dịch vụ thanh toán và tiền mặt năm 2025 tăng hay giảm bao nhiêu phần trăm so với năm 2024?",
+  "gold_answer": "Giảm khoảng 16,7% (6.761.581 so với 8.118.354 triệu đồng).",
+  "gold_printed_pages": [
+   356
+  ],
+  "gold_facts": [
+   "16,7"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author."
+ },
+ {
+  "id": "y-fu-nfi",
+  "category": "conversation",
+  "type": "followup",
+  "question": "Còn thu nhập từ hoạt động dịch vụ (NFI) thì sao?",
+  "gold_answer": "11,5 nghìn tỷ đồng, tăng 7,8% N/N.",
+  "gold_printed_pages": [
+   50
+  ],
+  "gold_facts": [
+   "11,5"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author.",
+  "history": [
+   {
+    "question": "Thu nhập lãi thuần (NII) của Techcombank năm 2025 đạt bao nhiêu?",
+    "answer": "Thu nhập lãi thuần năm 2025 đạt 38,2 nghìn tỷ đồng, tăng 7,5% so với cùng kỳ [tr. 50]."
+   }
+  ]
+ },
+ {
+  "id": "y-u-agribank",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "Tỷ lệ nợ xấu của Agribank năm 2025 là bao nhiêu?",
+  "gold_answer": "Không có trong báo cáo.",
+  "gold_printed_pages": [],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author. Topic absent from the full PDF text."
+ },
+ {
+  "id": "y-u-doge",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "Techcombank đang nắm giữ bao nhiêu Dogecoin?",
+  "gold_answer": "Không có trong báo cáo.",
+  "gold_printed_pages": [],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author. Topic absent from the full PDF text."
+ },
+ {
+  "id": "y-u-olympic",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "Techcombank tài trợ bao nhiêu tiền cho đoàn thể thao Việt Nam dự Olympic?",
+  "gold_answer": "Không có trong báo cáo.",
+  "gold_printed_pages": [],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author. Topic absent from the full PDF text."
+ },
+ {
+  "id": "y-u-tesla",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "Techcombank giải ngân bao nhiêu khoản vay mua xe Tesla năm 2025?",
+  "gold_answer": "Không có trong báo cáo.",
+  "gold_printed_pages": [],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after the post-test1 fixes, frozen before its first run, on pages no other set uses; gold machine-checked against the PDF text of the cited page (calculations recomputed); reviewed by the author. Topic absent from the full PDF text."
+ }
+]

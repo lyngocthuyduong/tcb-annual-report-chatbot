@@ -56,7 +56,7 @@ class Engine:
 
     def _retrieve(self, q: str, trace: dict):
         r = self.rt.search(q)
-        trace["retrieval"] = {"query": r.query, "bm25": r.bm25, "dense": r.dense, "fused": r.fused[: self.rt.top_bm25],
+        trace["retrieval"] = {"query": r.query, "bm25": r.bm25, "dense": r.dense, "label": r.label, "fused": r.fused[: self.rt.top_bm25],
                               "ranked": [[c, round(s, 5)] for c, s in r.ranked], "seconds": r.seconds}
         return r
 

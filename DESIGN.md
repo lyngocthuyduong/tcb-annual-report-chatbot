@@ -21,7 +21,7 @@
 
 **Non-goals.** Multi-document support, an LLM judge, OCR of image-only content (inventoried but not read), streaming answers, authentication, multi-process serving, runtime fine-tuning.
 
-**Honesty rules baked into the project.** A mock pass is never reported as proof that a real model works. The hash embedder exists only in `tests/` and writes to a tmp dir; the production validator rejects any index not built with the pinned BGE-M3 revision. Eval items count only when `verified: true`, which in this repository means machine-checked: every gold fact was found in the PDF text of its page and every calculation recomputed (by Claude); no item has been reviewed by a person yet. The item notes say this.
+**Honesty rules baked into the project.** A mock pass is never reported as proof that a real model works. The hash embedder exists only in `tests/` and writes to a tmp dir; the production validator rejects any index not built with the pinned BGE-M3 revision. Eval items count only when `verified: true`, which in this repository means machine-checked: every gold fact was found in the PDF text of its page and every calculation recomputed (`tcb vset check`); the items and the q10, test and test2 answers were also reviewed by the author. The item notes say this.
 
 ---
 
@@ -33,7 +33,7 @@ Facts measured on the real PDF:
 - Printed page numbers are read from footers on 380 halves; 13 divider/blank halves are inferred from neighbours (node-level: 1,439 nodes footer-sourced, 6 inferred).
 - Content kinds: narrative prose, **KPI tiles** (big number + caption), **financial-statement tables** (forms B01–B05 and notes), and a **glossary** (163 terms).
 - Vietnamese numbers: `.` is the thousands separator and `,` the decimal (`1.192.344.137`, `14,6%`, negative as `(181.150)`). Units are in headers (`Triệu đồng`, `Nghìn tỷ đồng`). The same quantity appears at different scales: total assets is `1.192 nghìn tỷ đồng` on p.5 and `1.192.344.137 triệu đồng` on p.297.
-- Images: 428 embedded images on 117 pages, counted in `report.json`. A visual audit (13 Oct 2026) of every raster image covering at least 1 % of a half-page found photographs, portraits, logos, backdrops and adverts; text over badges and diagrams is vector text and is extracted. Information carried only by graphics, not read: the labels of one diagram (p.10, the "Customer Brain" labels) and the up or down triangles drawn before KPI change figures (vector glyphs of about 4 × 2 pt; a size scan finds about 380 on 54 spreads). The change figures are extracted without their direction; on p.264 the model then wrote "giảm 7%" for an up triangle (run test1). No OCR or vision model is used.
+- Images: 428 embedded images on 117 pages, counted in `report.json`. A visual audit (13 Oct 2026) of every raster image covering at least 1 % of a half-page found photographs, portraits, logos, backdrops and adverts; text over badges and diagrams is vector text and is extracted. Information carried only by graphics: the labels of one diagram (p.10, the "Customer Brain" labels), not read; and the up or down triangles drawn before KPI change figures. Run test1 showed the cost of the second: on p.264 the change figure was extracted without its direction and the model wrote "giảm 7%" for an up triangle. The triangles are vector paths, so they are now read without OCR (§4.1): 90 on 30 spreads, of which 63 sit just left of a figure on the same line and become a marker after it (`7% (▲) so với năm 2023`); the rest decorate charts. No OCR or vision model is used.
 
 Failure modes that a naive "split text, embed, ask GPT" pipeline hits on this document, and where this design answers each:
 
@@ -104,6 +104,8 @@ The one design idea running through everything: **the LLM is not trusted with fa
 ### 4.1 Extraction
 `pdftotext -bbox-layout` (poppler) returns words with boxes. Its output is not well-formed XML, so `pdf.read_words` parses it with a regex. Poppler is located via `PATH` or `POPPLER_BIN` (portable across Windows/macOS/Linux); a missing tool produces an actionable message.
 
+**Drawn direction triangles** (`pdf.direction_arrows`, pdfminer.six): a filled path of 2.5 to 7 × 1.2 to 4.5 pt with exactly three corners and a horizontal base is an up triangle if the base is at the bottom, down otherwise. One placed just left of a figure on the same text line adds `(▲)` or `(▼)` after that figure. The marker is ignored when tiles are detected (it is not text weight), and the plan prompt says what it means. A marker, not the word `tăng`, because the triangle is printed next to levels too (`Tỷ lệ CASA 40,4% (▲)`), where "tăng 40,4%" would be false. Scan cost about 18 s per build.
+
 *Alternative rejected:* pdfplumber layout extraction (initial plan). On this spread layout the poppler boxes were reliable and faster, and no extra dependency was needed.
 
 ### 4.2 Spread split and the printed-page map
@@ -134,6 +136,7 @@ Second pass (13 Oct 2026, after reading the notes tables row by row):
 - The unit line under a year row (`Triệu đồng Triệu đồng`) sets the column unit; a sentence above the table (`thuế suất 20% (2024: 20%)`, p.351) had made the columns `%`. The unit stored for a column is the one its cleaned header shows; `hợp đồng` is not the unit `đồng`.
 - Note tables are named by the nearest numbered heading above them (`6. TIỀN GỬI TẠI NGÂN HÀNG NHÀ NƯỚC VIỆT NAM`), carried to the next pages until the next heading. Before, the second table on a page took the last rows of the table above as its title.
 - The statement band repeated at the top of 80 pages (`THUYẾT MINH BÁO CÁO TÀI CHÍNH HỢP NHẤT (tiếp theo)`, the period line, the form code) is page furniture: it is removed from narrative and table text, and the statement name goes into the context prefix (`[Báo cáo tài chính › Thuyết minh báo cáo tài chính hợp nhất]`). A narrative chunk that only repeats a table's own title is not indexed.
+- Run test1 (`x-masan-fee`) showed the note heading replacing the caption of a sub-table under it (`Thu nhập từ hoạt động dịch vụ` under note 44, related parties): the rows lost their metric and the model declined. A short caption line within 45 pt above the table, below the note heading and not band text, is now kept as the table's first row, and a chunk that starts inside a sub-table repeats that sub-table's heading row.
 
 **Quality flag.** `quality="high"` only if every column header carries a date or `Năm YYYY`, or the table has ≤ 3 clean columns. Currently 66 high / 53 low chunks (36 of 67 tables). The primary statements (printed pages 297–302, forms B02 to B04: financial position, off-balance items, income, cash flow) are all high. Low tables (multi-column notes: provisions, segment, related-party, maturity gaps) keep their text view and are **excluded from calculator quantities** rather than guessed.
 
@@ -163,7 +166,8 @@ The validator and build are tested with a hash embedder in tmp, and the validato
 ### 6.1 Pipeline
 1. **BM25** over `tcb-vi-v2` tokens → top 40 (`TOP_BM25`).
 2. **Dense** (BGE-M3 via LlamaIndex) → top 40 (`TOP_DENSE`).
-3. **RRF** with k = 60 (`RRF_K`) over the two rankings; the top **12** (`FINAL_EVIDENCE`, E4 run m7) go to the LLM, further limited by a 22,000-character prompt budget (`PROMPT_EVIDENCE_CHARS`) so a local 8k-context model is never silently truncated.
+3. **KPI label match** (`find.label_matches`): a tile whose whole label (3 or more syllables, no figure; 94 labels) occurs in the question forms a third ranking, longest label first. Added after test1 `x-credcost`: the tile `Chi phí tín dụng | 0,6%` is short, so it ranked below longer statement rows on provision expense. E8 measures it.
+4. **RRF** with k = 60 (`RRF_K`) over the two or three rankings; the top **12** (`FINAL_EVIDENCE`, E4 run m7) go to the LLM, further limited by a 22,000-character prompt budget (`PROMPT_EVIDENCE_CHARS`) so a local 8k-context model is never silently truncated.
 
 There is no cross-encoder and no score threshold (§17.1). `Result` keeps every stage's ranking (`bm25`, `dense`, `fused`, `ranked`) and the seconds spent on BM25, query embedding and dense search, so evaluation can say *which stage lost the gold page* and *where the time went* (§14).
 
@@ -291,7 +295,9 @@ A question is treated as a follow-up only if there is history **and** it is shor
 | File | Content | Rule |
 |---|---|---|
 | `data/q10.json` | the 10 published sample questions (9 answerable, 1 not) | used to debug after batch runs (sq-07 led to page-title context, sq-03/sq-07 to the magnitude fixes); fixes are general and tested on other pages, but q10 is not an independent benchmark; additively annotated with `gold_facts`, `alt_pages` (e.g. 297 for total assets), `type`, `verified` |
-| `data/dev.json`, `data/val.json` | 70 + 34 items written by hand (statement tables, KPI tiles, narrative, segments, subsidiary, governance, investor relations, glossary, calculations, follow-ups, 19 unanswerable or ambiguous) | gold checked by Claude against the PDF text of the cited page, calculations recomputed; human spot-check pending |
+| `data/dev.json`, `data/val.json` | 70 + 34 items written by hand (statement tables, KPI tiles, narrative, segments, subsidiary, governance, investor relations, glossary, calculations, follow-ups, 19 unanswerable or ambiguous) | gold machine-checked against the PDF text of the cited page (`tcb vset check`), calculations recomputed; reviewed by the author. One page added after review: `n-equity` alt page 256 (the same equity printed as 179.501 tỷ đồng), rescored |
+| `data/test.json` | 22 items written after the last code change, on pages no other set uses, run once (test1) | its three failures led to the fixes in §4.1, §4.4 and §6.1, so after them it is no longer independent |
+| `data/test2.json` | 22 items written after those fixes, on pages no set above uses, frozen before its first run | the independent estimate for the submitted version; disjointness enforced by a test |
 
 Unanswerable topics were chosen only if a full-text search of the report found no mention (Vietcombank, Campuchia, Bitcoin, Momo, Nasdaq, World Cup, 2027, MB Bank, Moody's; enforced by a test). Topics that **are** in the report (dividends, 2029/2030, remuneration, 2026 plan) are not used as "unanswerable". `tcb vset check` asserts every answerable item's gold facts are present, as text, on its gold pages (for calc items: the *inputs* are). The first table items were drafted by a generator from the statements; it and its CSV review loop were removed once the sets were checked, so they cannot be regenerated over by accident.
 
@@ -318,8 +324,9 @@ For each failed item, the first failing stage in this order: `system` (provider/
 | E4 | how many fused blocks go to the LLM (k = 5 … 20) | smallest k within 2 pts of the best recall (run m4 measured the former reranker grid N × k instead; §17.1) |
 | E5 | glossary expansion | keep only if no regression |
 | E6 | narrative chunk size | needs index rebuild; experimental indexes are rejected by `serve` |
+| E8 | KPI label ranking on or off | keep if no gold page leaves the final top 12 |
 
-The runner *suggests* a decision by these rules and never edits `conf.py`. Order of work: experiments on dev+val → freeze → eval on val and q10 → `test.json` written after the last code change and run once (test1). Val was also used to find failures and to choose k, so it is a validation set, not a held-out set; q10 was used to debug too (see §14.1). Neither measures generalisation; the graders' held-out set does.
+The runner *suggests* a decision by these rules and never edits `conf.py`. Order of work: experiments on dev+val → freeze → eval on val and q10 → `test.json` written after the last code change and run once (test1) → general fixes for its three failure modes → `test2.json` written and frozen, run once. Val was also used to find failures and to choose k, so it is a validation set, not a held-out set; q10 was used to debug too (see §14.1). Neither measures generalisation; the graders' held-out set does.
 
 ---
 
@@ -421,7 +428,7 @@ Integer differences now print without a decimal (857, not 857,0).
 
 ## 18. Known gaps and limits
 
-1. dev/val golds were checked by Claude against the PDF text (pdftotext of the cited page; calculations recomputed); a human spot-check is pending.
+1. Gold facts are checked against the PDF text of their page by code; the wording of a gold answer was reviewed by the author, not by a panel of analysts.
 2. 31 low-quality note tables (53 chunks) give no table quantities; a calculation over them is possible only through literals copied from the text. A layout model could recover them (out of scope).
 3. Number grounding exempts integers up to 12 that carry no unit, percent or currency (list counts such as `3 yếu tố`); `5 tỷ đồng` is checked.
 4. Fact-presence scoring cannot judge a purely textual answer without numeric or keyword gold; it relies on `gold_facts` being well chosen.
@@ -431,9 +438,9 @@ Integer differences now print without a decimal (857, not 857,0).
 8. Cost figures use list prices recorded on 10 Oct 2026 and are estimates.
 9. Claims without numbers are not checked for content: a sentence citing a page is only as true as the model makes it (numbers, units, signs, pages and calculations are checked; words are not).
 10. Disagreeing figures: the prompt asks for both figures with their own citations (rule 10 of the plan prompt); no eval item has two different figures for one item and period, so this behaviour is untested.
-11. KPI change directions are drawn as vector triangles and are not extracted (§2); an answer can state a change with the wrong direction (test1 `x-ees`).
-12. When a numbered note heading names a table, the caption of a sub-table under it is dropped from the chunk title, so its rows lose their metric (test1 `x-masan-fee`, a refusal).
-13. Short KPI tiles (a two-word label and a figure) can rank below longer statement rows on related metrics (test1 `x-credcost`: provision expense given for credit cost, cited).
+11. Direction triangles are read only when drawn as a three-corner path next to a figure (§4.1); a direction drawn any other way (an arrow icon, a coloured bar) is still lost.
+12. The KPI label ranking needs the question to name the tile's whole label; a paraphrase (`chi phí rủi ro tín dụng`) relies on BM25 and dense alone.
+13. Rule 7 of the plan prompt (no substitute metric; a total is summed from its components) is a prompt rule, not a code check; evaluation catches a violation only through the gold figure.
 14. The ambiguity dev items (2) are subjective; the LLM may reasonably answer "Lợi nhuận" for the only reported year.
 
 ---

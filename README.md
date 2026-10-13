@@ -39,7 +39,7 @@ Default `pytest` runs unit + integ. Skips are not passes. The hash embedder live
 
 ## Layout
 `src/tcb/`: `pdf` `parse` `nodes` `vi` (ingestion) · `build` `index` (index) · `find` (BM25 + dense → RRF → top 12) · `num` `calc` (quantities, calculator) · `plan` `gen` `llm/` (LLM plan, one repair retry, providers) · `cite` `refuse` (validation, policy) · `chat` `ask` (pipeline) · `api` `ui.html` `cli` `smoke` `doctor` · `ev` `exp` `vset` (evaluation) · `conf` (fixed model and constants) · `models` (Docker download).
-`data/`: `ar.pdf`; `q10.json` (the 10 published questions; used to debug, so not an independent benchmark); `dev.json` / `val.json` (70 / 34 items: development and validation); `test.json` (22 items written after the last code change, on pages no other set uses, run once). Gold facts machine-checked by Claude against the PDF text. `runs/`: summaries, configs, per-item results and traces of the reported runs.
+`data/`: `ar.pdf`; `q10.json` (the 10 published questions; used to debug, so not an independent benchmark); `dev.json` / `val.json` (70 / 34 items: development and validation); `test.json` (22 items written after the last code change, on pages no other set uses, run once as test1; its failures drove three fixes); `test2.json` (22 items written after those fixes, on pages no other set uses, run once). Gold facts machine-checked against the PDF text (`tcb vset check`) and reviewed by the author. `runs/`: summaries, configs, per-item results and traces of the reported runs.
 Dependencies: exact pins in `pyproject.toml`; `requirements.lock` (hash-pinned, py3.12 linux-x86_64, no torch/CUDA) from `./lock.sh`; Docker installs CPU torch first.
 
 ## Run on Colab (development; two notebooks)
@@ -56,7 +56,7 @@ os.environ["GH_TOKEN"] = userdata.get("gh-token")
 !pip install -q -e ".[dev]" && pip uninstall -y -q torchvision torchaudio
 ```
 ```python
-# A2: test, build, validate, zip; then attach idx.zip in the chat with Claude, who commits it
+# A2: test, build, validate, zip; then unzip idx.zip into the repo as idx/ and commit it
 import os; from google.colab import drive, files, userdata
 drive.mount("/content/drive")
 %cd /content/tcb
@@ -100,12 +100,13 @@ os.environ.update(TCB_MODELS_DIR="/content/models", HF_TOKEN=userdata.get("hf_to
 ```
 ```python
 # B4: retrieval experiments (no tokens)
-!tcb exp data/dev.json data/val.json --label m7 2>&1 | tail -40
+!tcb exp data/dev.json data/val.json --label m8 2>&1 | tail -40
 ```
 ```python
 # B5: answer quality, latency, cost (a new --label each run)
-!tcb eval data/dev.json --label dev12
-!tcb eval data/val.json --label val12
-!tcb eval data/q10.json --label q10j
-!tcb eval data/test.json --label test1     # once, on the code that is submitted
+!tcb eval data/dev.json --label dev13
+!tcb eval data/val.json --label val13
+!tcb eval data/q10.json --label q10k
+!tcb eval data/test.json --label test1b    # test1 re-run after its fixes (not independent)
+!tcb eval data/test2.json --label test2    # once, on the code that is submitted
 ```

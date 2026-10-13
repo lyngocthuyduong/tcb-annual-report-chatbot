@@ -146,7 +146,10 @@ def half_nodes(h: Half, section: str, chunk_words: int | None = None, context: s
             unit = next((u for u in tb.units if u), None)
             title, form = tb.title, tb.form_code
             note = tb.note or (fs.get("note") if statement.lower().startswith("thuyết minh") else None)
-            if note: title = note                                    # notes: the numbered heading names the table
+            rows = tb.rows
+            if note:                                                 # notes: the numbered heading names the table,
+                title = note                                         # the line above it names the first sub-table
+                if tb.caption: rows = [parse.Row(tb.caption, None, [None] * len(tb.headers), 0.0, 0.0)] + rows
             near = h.printed_page is not None and fs.get("page") is not None and 0 <= h.printed_page - fs["page"] <= 1
             if not title.strip() and near and fs.get("title"):        # untitled table right after a titled one: its continuation
                 title, form = fs["title"], form or fs.get("form")
@@ -157,8 +160,14 @@ def half_nodes(h: Half, section: str, chunk_words: int | None = None, context: s
             shown = re.sub(r"\s+", " ", shown).strip()
             heads.append(shown.lower())
             head = f"{shown} ({form or 'bảng'})".strip() + (f" — đơn vị: {unit}" if unit else "")
-            for k in range(0, len(tb.rows), conf.TABLE_ROWS_PER_CHUNK):
-                part = tb.rows[k:k + conf.TABLE_ROWS_PER_CHUNK]
+            heading_rows = [i for i, r in enumerate(rows) if r.label and all(c is None for c in r.cells)]
+            for k in range(0, len(rows), conf.TABLE_ROWS_PER_CHUNK):
+                part = rows[k:k + conf.TABLE_ROWS_PER_CHUNK]
+                last = k + len(part) - 1
+                # a chunk that starts inside a sub-table repeats that sub-table's heading row first
+                sub_i = max((i for i in heading_rows if i < k), default=None)
+                if sub_i is not None and not (part[0].label and all(c is None for c in part[0].cells)):
+                    part = [rows[sub_i]] + part
                 lines = []
                 for r in part:
                     cells = "; ".join(f"{tb.headers[i]}: {c}" for i, c in enumerate(r.cells) if c is not None)
@@ -167,7 +176,7 @@ def half_nodes(h: Half, section: str, chunk_words: int | None = None, context: s
                 text = f"{crumb}{head}\n" + "\n".join(lines)
                 nodes.append(Node(_cid(h.pdf_page_index, h.side, tb.table_id, k), text, content_type="table",
                                   bbox=[0, part[0].y, 0, part[-1].y], table_id=tb.table_id,
-                                  row_range=[k, k + len(part) - 1], form_code=tb.form_code, unit_header=unit,
+                                  row_range=[k, last], form_code=tb.form_code, unit_header=unit,
                                   continuation=tb.continuation, quality="high" if tb.reliable else "low",
                                   rows=[{"label": r.label, "note": r.note, "indent": round(r.indent),
                                          "cells": dict(zip(tb.headers, r.cells))} for r in part], **base))

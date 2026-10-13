@@ -10,6 +10,7 @@ dependencies = [
   "transformers==5.19.0",
   "torch==2.14.1",
   "bm25s==0.3.13",
+  "pdfminer.six==20260107",
   "pydantic>=2.9",
   "fastapi==0.143.0",
   "uvicorn==0.54.0",

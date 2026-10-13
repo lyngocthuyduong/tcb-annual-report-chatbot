@@ -15,7 +15,7 @@ INDEX_FORMAT = 1
 TOKENIZER = "tcb-vi-v2"   # v2: canonical decimals drop trailing zeros (16,0 -> 16)
 CHUNK_MAX_WORDS = 220        # narrative chunk budget (syllable-words)
 TABLE_ROWS_PER_CHUNK = 12
-NODE_CONTEXT = "chapter>heading;flow2;fs2"   # [chapter › page title › subtitle]; flow2 = column order + run-on joins; fs2 = note tables keyed by year rows, named by note heading, statement band stripped
+NODE_CONTEXT = "chapter>heading;flow2;fs2;arrows"   # [chapter › page title › subtitle]; flow2 = column order + run-on joins; fs2 = note tables keyed by year rows, named by note heading (+ sub-table caption), band stripped; arrows = drawn ▲/▼ kept as markers
 BM25_K1, BM25_B = 1.5, 0.75  # bm25s defaults, recorded in manifest
 TOP_BM25 = TOP_DENSE = 40
 RRF_K = 60                   # E3b

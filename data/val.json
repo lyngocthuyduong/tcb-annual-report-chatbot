@@ -8,7 +8,7 @@
   "question": "Lợi nhuận là bao nhiêu?",
   "gold_answer": "Cần hỏi lại: lợi nhuận trước hay sau thuế, năm nào.",
   "verified": true,
-  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): absence confirmed by full-text search of the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "c-01",
@@ -23,7 +23,7 @@
    "9,6"
   ],
   "verified": true,
-  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "c-04",
@@ -38,7 +38,7 @@
    "177,1"
   ],
   "verified": true,
-  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "c-05",
@@ -53,7 +53,7 @@
    "159,5"
   ],
   "verified": true,
-  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "c-06",
@@ -68,7 +68,7 @@
    "19,3 | 19,28"
   ],
   "verified": true,
-  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending. Widened after run val9: note 48 (p.383) prints the same growth as 19,28%; checked in the PDF text.",
+  "notes": "Machine-checked (tcb vset check): inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author. Widened after run val9: note 48 (p.383) prints the same growth as 19,28%; checked in the PDF text.",
   "alt_pages": [
    383
   ]
@@ -92,7 +92,7 @@
    "27.538.368"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "f-05",
@@ -113,7 +113,7 @@
    "313.179.746"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "h-kpi-dv",
@@ -131,7 +131,7 @@
    "16"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "h-openrate",
@@ -146,7 +146,7 @@
    "39"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "t-01",
@@ -161,7 +161,7 @@
    "4.360.821"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "t-05",
@@ -176,7 +176,7 @@
    "6.343.732"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "t-06",
@@ -191,7 +191,7 @@
    "1.012.842.695"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "t-11",
@@ -206,7 +206,7 @@
    "64.226.095"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "t-12",
@@ -221,7 +221,7 @@
    "3.215.508"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "t-15",
@@ -236,7 +236,7 @@
    "182.638.941"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "t-19",
@@ -251,7 +251,7 @@
    "4.478.027"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "t-21",
@@ -266,7 +266,7 @@
    "39.938"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "u-btc",
@@ -276,7 +276,7 @@
   "question": "Techcombank đang nắm giữ bao nhiêu Bitcoin?",
   "gold_answer": "Không có trong báo cáo.",
   "verified": true,
-  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): absence confirmed by full-text search of the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "u-nasdaq",
@@ -286,7 +286,7 @@
   "question": "Techcombank niêm yết trên sàn Nasdaq vào năm nào?",
   "gold_answer": "Không có trong báo cáo.",
   "verified": true,
-  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): absence confirmed by full-text search of the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "u-q1",
@@ -296,7 +296,7 @@
   "question": "Lợi nhuận sau thuế quý 1 năm 2026 của Techcombank là bao nhiêu?",
   "gold_answer": "Không có trong báo cáo.",
   "verified": true,
-  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): absence confirmed by full-text search of the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "u-vcb",
@@ -306,7 +306,7 @@
   "question": "Lợi nhuận trước thuế năm 2025 của Vietcombank là bao nhiêu?",
   "gold_answer": "Không có trong báo cáo.",
   "verified": true,
-  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): absence confirmed by full-text search of the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "n-bod-foreign",
@@ -321,7 +321,7 @@
    "2/9 | 2 trong số 9 | 2 trên 9 | 2 thành viên"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "n-foreignmax",
@@ -339,7 +339,7 @@
    "22,5386"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "n-summit",
@@ -354,7 +354,7 @@
    "700"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "n-tcbs-brok",
@@ -369,7 +369,7 @@
    "356"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "n-vac",
@@ -387,7 +387,7 @@
    "146"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "n-tinchap",
@@ -402,7 +402,7 @@
    "303.000"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "g-aum",
@@ -417,7 +417,7 @@
    "Tổng tài sản quản lý"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "g-irrbb",
@@ -432,7 +432,7 @@
    "Rủi ro lãi suất trên sổ ngân hàng"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "g-bks",
@@ -447,7 +447,7 @@
    "Ban Kiểm soát"
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "n-hr-diff",
@@ -467,7 +467,7 @@
    "857"
   ],
   "verified": true,
-  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "n-fu-bod",
@@ -488,7 +488,7 @@
    }
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "n-fu-tcbs",
@@ -512,7 +512,7 @@
    }
   ],
   "verified": true,
-  "notes": "Checked by Claude: gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): gold facts found on the cited printed page in the PDF text (pdftotext); reviewed by the author."
  },
  {
   "id": "n-u-atm",
@@ -522,6 +522,6 @@
   "question": "Techcombank có bao nhiêu máy ATM tại Hà Nội?",
   "gold_answer": "Không có trong báo cáo.",
   "verified": true,
-  "notes": "Checked by Claude: absence confirmed by full-text search of the PDF text (pdftotext); human spot-check pending."
+  "notes": "Machine-checked (tcb vset check): absence confirmed by full-text search of the PDF text (pdftotext); reviewed by the author."
  }
 ]

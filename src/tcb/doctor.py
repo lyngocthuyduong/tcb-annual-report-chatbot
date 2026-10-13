@@ -13,7 +13,7 @@ from . import conf
 
 # keep in sync with pyproject.toml (tests/test_doctor.py enforces it)
 PINS = {"llama-index-core": "0.14.25", "llama-index-embeddings-huggingface": "0.8.0", "sentence-transformers": "6.1.0",
-        "transformers": "5.19.0", "torch": "2.14.1", "bm25s": "0.3.13", "fastapi": "0.143.0", "uvicorn": "0.54.0",
+        "transformers": "5.19.0", "torch": "2.14.1", "bm25s": "0.3.13", "pdfminer.six": "20260107", "fastapi": "0.143.0", "uvicorn": "0.54.0",
         "openai": "3.28.0", "anthropic": "1.13.0", "httpx": "0.28.1"}
 
 OK, WARN, FAIL = "OK", "WARN", "FAIL"

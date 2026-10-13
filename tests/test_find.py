@@ -58,3 +58,15 @@ def test_test_index_is_never_the_submission_index(built):
     from tcb.index import IndexError_, validate
     with pytest.raises(IndexError_) as e: validate(out)                 # production validate must refuse it
     assert e.value.code == "embedding"
+
+
+def test_kpi_label_named_in_the_question_is_a_ranking():
+    nodes = {"k1": {"content_type": "kpi", "text": "[Thành tựu › Báo cáo Kết quả kinh doanh] Chi phí tín dụng | 0,6%"},
+             "k2": {"content_type": "kpi", "text": "[x] Tỷ lệ CASA | 40,4%"},
+             "k3": {"content_type": "kpi", "text": "[x] 18,0 | Triệu khách hàng"},
+             "n1": {"content_type": "narrative", "text": "[x] Chi phí dự phòng rủi ro tín dụng tăng"}}
+    labels = find.kpi_labels(nodes)
+    assert set(labels) == {"k1", "k2"}                                   # a label needs words, not a figure
+    assert find.label_matches("Chi phí tín dụng của Techcombank năm 2025 là bao nhiêu?", labels) == ["k1"]
+    assert find.label_matches("chi phi tin dung nam 2025?", labels) == ["k1"]          # diacritics folded
+    assert find.label_matches("Chi phí dự phòng rủi ro tín dụng?", labels) == []

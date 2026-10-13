@@ -76,6 +76,9 @@ class Group:
         return "\n".join(b.text for b in sorted(self.blocks, key=key))
 
 
+_ARROW = re.compile(r"\s*\([▲▼]\)")                   # direction marker added for a drawn triangle (pdf.add_arrows)
+
+
 def reading_order(items: list, box) -> list:
     """Items (blocks or groups) that span >= 60 % of the total width, or bridge two columns, split the page into bands; inside a band,
     columns (items whose x-ranges overlap) are read left to right, each top to bottom."""
@@ -146,8 +149,8 @@ def groups(blocks: list[Block]) -> list[Group]:
         g = Group(bl, order=min(i for i in idxs) and (min(idxs),) or (0,))
         g.order = (min(idxs),)
         # KPI: short group holding a big numeric block
-        chars = sum(len(b.text) for b in bl)
-        big_num = any((b.bbox[3] - b.bbox[1]) >= 20 and re.search(r"\d", b.text) and len(b.text) <= 12 for b in bl)
+        chars = sum(len(_ARROW.sub("", b.text)) for b in bl)       # the layout decides, not the markers added to it
+        big_num = any((b.bbox[3] - b.bbox[1]) >= 20 and re.search(r"\d", b.text) and len(_ARROW.sub("", b.text)) <= 12 for b in bl)
         if big_num and chars <= 220: g.kind = "kpi"
         out.append(g)
     return reading_order(out, lambda g: g.bbox)
@@ -175,6 +178,8 @@ class Table:
     y_range: tuple[float, float]
     reliable: bool = True       # headers resolved cleanly (dates / short); else narrative view is kept too
     note: str | None = None     # the numbered note heading above the table on this page ("6. TIỀN GỬI TẠI ...")
+    caption: str | None = None  # the line right above it when that is not the heading or the page band
+                                # ("Thu nhập từ hoạt động dịch vụ" under "41. GIAO DỊCH VỚI CÁC BÊN LIÊN QUAN")
 
 
 def _rows(words: list[Word], tol: float = 3.0) -> list[list[Word]]:
@@ -209,6 +214,7 @@ def _split_row(row: list[Word], width: float, x_off: float, note_x: float | None
     return label, note, nums
 
 
+_BAND_TEXT = re.compile(r"\(tiếp theo\)|^tại ngày \d|^cho năm tài chính|HỢP NHẤT$|^Đơn vị|[.:;,]$|^[a-zà-ỹđ]")   # not a caption
 NOTE_HEAD = re.compile(r"^\d{1,2}(?:\.\d{1,2}){0,2}\.\s+[^\W\d_]")
 
 
@@ -404,8 +410,13 @@ def tables(h: Half) -> tuple[list[Table], list[tuple[float, float]]]:
         reliable = all(DATE_RE.search(x) or YEAR_HDR.search(x) for x in headers)   # every column has a period
         yy = (parsed[top if band is None else band][0][0].y0 - 2, parsed[last][0][0].y1 + 2)   # title band is not narrative
         note = next((t for y, t in reversed(heads) if y < parsed[first][0][0].y0), None)
+        note_y = next((y for y, t in reversed(heads) if t == note), None)
+        near = tl and ztop_y - tl[-1][0].y0 <= 45 and (note_y is None or tl[-1][0].y0 > note_y)   # right above the header, under the heading
+        last_line = re.sub(r"\s+", " ", " ".join(w.text for w in tl[-1])).strip() if near else ""
+        caption = last_line if last_line and last_line != note and not _BAND_TEXT.search(last_line) \
+            and not NOTE_HEAD.match(last_line) and len(last_line.split()) <= 15 and not re.search(r"\d{3}", last_line) else None
         out.append(Table(f"{form or 'T'}@{h.printed_page}.{zi}", form, title, "tiếp theo" in title.lower(),
-                         headers, units, rws, yy, reliable, note))
+                         headers, units, rws, yy, reliable, note, caption))
         if reliable: yr.append(yy)
     return out, yr
 

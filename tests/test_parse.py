@@ -40,4 +40,11 @@ def test_kpi_tiles_p5(doc):
 
 
 def test_kpi_tile_p59(doc):
-    assert any(re.search(r"Dư nợ vay \| 328,1 .*26,9% N/N", t) for t in _kpi(doc, 59))
+    assert any(re.search(r"Dư nợ vay \| 328,1 .*26,9% \(▲\) N/N", t) for t in _kpi(doc, 59))
+
+
+def test_drawn_direction_triangles_become_markers(doc):
+    """'▲ 7% so với năm 2023' is a vector triangle, not text; without it the change has no direction."""
+    assert any("Chỉ số Gắn kết Nhân viên | 93% | 7% (▲) so với năm 2023" in t for t in _kpi(doc, 264))
+    assert any("40,4% (▲)" in t for t in _kpi(doc, 53))                # a level marked as rising, not '+40,4%'
+    assert doc["info"]["direction_arrows"] > 50

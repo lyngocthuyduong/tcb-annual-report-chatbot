@@ -193,13 +193,59 @@ def build_page_map(halves: list[Half]) -> dict:
     return info
 
 
+def direction_arrows(pdf: str) -> dict[int, list[tuple[float, float, float, float, str]]]:
+    """Up/down triangles drawn before KPI change figures ('▲ 7% so với năm 2023'). They are vector paths, not text,
+    so pdftotext drops them and a change loses its direction. -> {pdf page: [(x0, top, x1, bottom, 'up'|'down')]},
+    coordinates in pdftotext's top-left system."""
+    from pdfminer.high_level import extract_pages
+    from pdfminer.layout import LTCurve, LTFigure
+
+    def walk(o):
+        for x in o:
+            if isinstance(x, LTFigure): yield from walk(x)
+            elif isinstance(x, LTCurve): yield x
+    out: dict[int, list] = {}
+    for i, page in enumerate(extract_pages(pdf, laparams=None), start=1):
+        for c in walk(page):
+            if not (2.5 <= c.x1 - c.x0 <= 7 and 1.2 <= c.y1 - c.y0 <= 4.5): continue      # glyph-sized
+            pts = {(round(x, 2), round(y, 2)) for x, y in c.pts}
+            if len(pts) != 3: continue                                                  # a triangle
+            ys = sorted(y for _, y in pts)
+            d = "up" if abs(ys[0] - ys[1]) < 0.2 else "down" if abs(ys[1] - ys[2]) < 0.2 else None
+            if d: out.setdefault(i, []).append((c.x0, page.height - c.y1, c.x1, page.height - c.y0, d))
+    return out
+
+
+ARROW_WORD = {"up": "(▲)", "down": "(▼)"}
+# Written after the figure, not as 'tăng X': the triangle marks the direction of change, while the figure beside it is
+# sometimes the change ('▲ 7% so với năm 2023') and sometimes the level ('▲ 40,4%' for the CASA ratio).
+
+
+def add_arrows(words: list[Word], arrows: list[tuple]) -> int:
+    """Turn each triangle that sits just left of a figure on the same line into a marker '(▲)'/'(▼)' placed right
+    after that figure: '93% | 7% (▲) so với năm 2023'."""
+    n = 0
+    for x0, y0, x1, y1, d in arrows:
+        yc = (y0 + y1) / 2
+        nxt = [w for w in words if abs((w.y0 + w.y1) / 2 - yc) < 3 and 0 <= w.x0 - x1 <= 8 and re.match(r"[\d(+-]", w.text)]
+        if not nxt: continue
+        w = min(nxt, key=lambda w: w.x0)
+        words.append(Word(w.x1 + 0.01, w.y0, w.x1 + 0.02, w.y1, ARROW_WORD[d], w.flow, w.block, w.line))
+        n += 1
+    return n
+
+
 def load(pdf: str) -> tuple[list[Half], dict]:
     pages = read_words(run_poppler(pdf))
+    arrows = direction_arrows(pdf)
     halves: list[Half] = []
+    n_arrows = 0
     for i, (w, h, words) in enumerate(pages, start=1):
+        n_arrows += add_arrows(words, arrows.get(i, []))
         halves += split_page(i, w, h, words)
     info = build_page_map(halves)
     info["pdf_pages"] = len(pages)
     info["halves"] = len(halves)
     info["straddle_words"] = sum(h.straddle for h in halves)
+    info["direction_arrows"] = n_arrows
     return halves, info

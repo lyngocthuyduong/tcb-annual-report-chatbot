@@ -15,8 +15,8 @@ An analyst pastes the answer into an email, so they must be able to check it in 
 ## Architecture
 Four layers, each responsible for one part of the check.
 
-1. **Extraction keeps structure.** Each spread is split into printed pages (380 of 393 numbered from their footer, 13 inferred), so `[tr. N]` is the page the analyst sees. Layout, not text order, defines 1,445 typed nodes: KPI tiles reassembled as label, figure, unit and change; statement rows rebuilt from column positions with each column's period and unit; prose read column by column; glossary entries. Each node carries its page title as context (`[… › Khối Ngân hàng Bán lẻ (RBG)] Dư nợ vay | 328,1 | Nghìn tỷ đồng`).
-2. **Retrieval finds evidence.** BM25 over a Vietnamese tokenizer that keeps numbers whole, plus BGE-M3 dense vectors, fused by reciprocal rank; abbreviations are expanded from the report's own glossary; follow-ups are rewritten into standalone questions. The top 12 blocks and the matching table quantities go to the model.
+1. **Extraction keeps structure.** Each spread is split into printed pages (380 of 393 numbered from their footer, 13 inferred), so `[tr. N]` is the page the analyst sees. Layout, not text order, defines 1,445 typed nodes: KPI tiles reassembled as label, figure, unit and change, with the up or down triangle drawn beside a change kept as a marker (`7% (▲)`); statement rows rebuilt from column positions with each column's period and unit; prose read column by column; glossary entries. Each node carries its page title as context (`[… › Khối Ngân hàng Bán lẻ (RBG)] Dư nợ vay | 328,1 | Nghìn tỷ đồng`).
+2. **Retrieval finds evidence.** BM25 over a Vietnamese tokenizer that keeps numbers whole, plus BGE-M3 dense vectors, fused by reciprocal rank; a KPI tile whose label the question names gets a third ranking; abbreviations are expanded from the report's own glossary; follow-ups are rewritten into standalone questions. The top 12 blocks and the matching table quantities go to the model.
 3. **The model chooses and words.** It returns a JSON plan: sentences, the evidence ids behind each, and calculations over table quantities or figures it copies from a block. It never writes a page number and never computes.
 4. **Code checks what can be checked deterministically.**
 
@@ -40,7 +40,7 @@ The layers cover each other's blind spots: extraction makes a figure's unit and 
 Other experiments (tokenizers, fusion parameters, chunk sizes, vector database, sparse retrieval) are in DESIGN §17.
 
 ## Evaluation
-- Results on the submitted version (code at commit `b445d4d`, claude-haiku-5-5, 2 vCPU; artifacts in `runs/`):
+- Results (code at commit `b445d4d`, claude-haiku-5-5, 2 vCPU; artifacts in `runs/`). <!-- to be replaced by dev13, val13, q10k, test2 on the submitted commit -->
 
 | Set | Pass | Fact correct | Page hit | Refusals (unanswerable) |
 |---|---|---|---|---|
@@ -49,22 +49,23 @@ Other experiments (tokenizers, fusion parameters, chunk sizes, vector database, 
 | val | 34/34 | 29/29 | 28/28 | 5/5 |
 | dev | 67/70 | 55/57 | 56/57 | 12/12 |
 
-  No answer on any set cites a page outside its evidence, and no unanswerable question was answered. Every q10 and test answer was also read by Claude against its cited page.
-- Method: deterministic scorers, no LLM judge. A fact counts only with the magnitude the gold prints (`100 tỷ` does not satisfy `100 triệu`); citations must be pages of retrieved evidence; refusals are scored on unanswerable questions; each failure is attributed to its first failing stage from the trace. Gold facts were machine-checked by Claude against the PDF text of their page; the q10 and test answers were also read by me.
+  No answer on any set cites a page outside its evidence, and no unanswerable question was answered. I read every q10 and test answer against its cited page.
+- Method: deterministic scorers, no LLM judge. A fact counts only with the magnitude the gold prints (`100 tỷ` does not satisfy `100 triệu`); citations must be pages of retrieved evidence; refusals are scored on unanswerable questions; each failure is attributed to its first failing stage from the trace. Gold facts are machine-checked against the PDF text of their page (`tcb vset check`, calculations recomputed); I reviewed every item.
 
 | Set | Items | Role |
 |---|---|---|
 | dev | 70 | development and debugging |
 | val | 34 | configuration choices |
 | q10 | 10 | published sample; also used for debugging |
-| test | 22 | written after the last code change, on pages no other set uses, run once |
+| test | 22 | written after the last code change, on pages no other set uses, run once (test1); its failures drove the fixes below, so it no longer counts as independent |
+| test2 | 22 | written after those fixes, on pages no other set uses, frozen before its first run |
 
-- Remaining errors, with impact and next step:
-  - **A two-word KPI tile ranks low** (test `x-credcost` and its follow-up): `Chi phí tín dụng | 0,6%` lost to statement rows on provision expense, and the answer gave the provision expense, correctly cited. The citation shows the analyst which metric was used. Next: boost blocks whose label matches the question's metric name.
-  - **A sub-table caption is lost when a note heading names the table** (test `x-masan-fee`): the rows no longer say they are service income, and the model declined rather than guess. Next: keep both the note heading and the sub-table caption in the chunk title.
-  - **Change direction drawn as a graphic** (test `x-ees`, scored as a pass): the answer says "giảm 7%" where the page draws an up triangle. Next: read the triangles (see below).
-  - On dev: one total given as its two components (`t-18`), one figure answered less precisely than asked (`n-mktcap`), one answered from a page that prints the same equity in another unit (`n-equity`).
-- What the numbers made you change: the reranker removal and k = 12 (E4); page-title context (sq-07); literals for arithmetic on prose figures (val failures); the magnitude, sign and canonical-number checks (reading dev9); one paragraph per answer with each figure stated once (reading q10e).
+- What test1 found and what changed. Reading the answers found three failure modes, one of them in an answer the scorer passed. Each fix is general and tested on other pages.
+  - **A change direction drawn as a graphic** (`x-ees`, scored a pass but wrong): the page draws ▲ before `7%`, the text has no direction, and the answer said "giảm 7%". The triangles are vector paths, so extraction now reads them and writes a marker after the figure (90 triangles on 30 spreads, 63 next to a figure).
+  - **A substitute metric** (`x-credcost` and its follow-up): the short tile `Chi phí tín dụng | 0,6%` ranked below the 12 blocks given to the model, behind statement rows on provision expense, and the answer gave the provision expense, correctly cited. A tile whose label the question names now gets its own ranking (E8), and the prompt forbids answering one metric with another.
+  - **An over-refusal** (`x-masan-fee`): the gold page ranked first, but the note heading had replaced the sub-table caption, so the rows no longer said they were service income and the model declined. The caption is now kept as the table's first row and repeated in later chunks.
+  - On dev: a total given as its two components (`t-18`) and a figure given less precisely than the unit asked (`n-mktcap`) led to two prompt rules (sum the components; give the exact figure in the unit asked). `n-equity` cited p.256, which prints the same equity as 179.501 tỷ đồng: after review I added it as an alternative gold page and rescored.
+- What the numbers made you change: the reranker removal and k = 12 (E4); page-title context (sq-07); literals for arithmetic on prose figures (val failures); the magnitude, sign and canonical-number checks (reading dev9); one paragraph per answer with each figure stated once (reading q10e); direction markers, KPI label ranking and sub-table captions (test1).
 
 ## Cost and latency
 - Ingestion: parse 20.5 s, embedding 82.4 s on a T4, BM25 1.0 s for 1,445 nodes. One-off, no API cost.
@@ -74,7 +75,7 @@ Other experiments (tokenizers, fusion parameters, chunk sizes, vector database, 
 ## What I deliberately did not build
 - **Typed quantities from tables whose headers cannot be resolved** (31 multi-level note tables such as provision matrices and maturity gaps). They stay searchable as evidence text but feed no calculation: I preferred no arithmetic over arithmetic on a mis-labelled column. Next step: header recovery with a layout model.
 - **An entailment check on qualitative wording.** Code verifies every figure, unit, page and calculation; the words around them are bound to cited evidence by the plan and measured in evaluation. Next step: a per-sentence entailment call on the cited block, validated against human labels.
-- **OCR or graphics reading.** An audit of the 428 raster images covering at least 1 % of a half-page found photographs, portraits, logos and backdrops; the text drawn over badges and diagrams is vector text and is extracted. Two kinds of information are carried only by graphics and are not read: the labels of one diagram (p.10) and the up or down triangles drawn before KPI change figures (vector glyphs, about 380 on 54 spreads). The figures themselves are extracted, so an answer can state a change without its direction; the test run shows the model then guesses (see Evaluation). Next step: read those triangles as signs during extraction.
+- **OCR or a vision model.** An audit of the 428 raster images covering at least 1 % of a half-page found photographs, portraits, logos and backdrops; text over badges and diagrams is vector text and is extracted, and the KPI direction triangles are vector paths, read without OCR. Only the labels of one diagram (p.10) are carried by pixels alone and are not read. Next step: OCR for image-only text if a later report needs it.
 - **An LLM judge**, which needs human labels before it can be trusted, and an agent framework, which the single-document, single-pass pipeline does not need.
 - Outside the brief's scope: authentication, multi-user serving and deployment.
 
