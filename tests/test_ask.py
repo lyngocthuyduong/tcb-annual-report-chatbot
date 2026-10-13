@@ -41,7 +41,7 @@ def test_figure_answer_cites_real_printed_page(N):
     h = lambda rq, i: {"status": "answered", "claims": [{
         "text_vi": "Tổng tài sản tại 31/12/2025 là 1.192.344.137 triệu đồng.", "evidence": [eid_of(rq, "1.192.344.137")]}]}
     a, p = run(N, h)
-    assert a.status == "answered" and a.answer.endswith("[tr. 297]") and len(p.calls) == 1
+    assert a.status == "answered" and a.answer.endswith("[tr. 297].") and len(p.calls) == 1
     assert a.citations[0]["page"] == 297 and a.citations[0]["pdf_page"] == 149 and a.provider == "scripted"
     assert a.trace["llm"]["calls"] == 1 and a.trace["citation_leak"] == []
 
@@ -51,7 +51,7 @@ def test_same_figure_from_two_pages_is_stated_once(N):
         {"text_vi": "Tổng tài sản năm 2025 là 1.192 nghìn tỷ đồng, tăng 21,8% so với năm trước.", "evidence": [eid_of(rq, "Tổng tài sản | 1.192")]},
         {"text_vi": "Báo cáo cũng ghi tổng tài sản là 1.192.344.137 triệu đồng.", "evidence": [eid_of(rq, "1.192.344.137")]}]}
     a, _ = run(N, h)
-    assert a.status == "answered" and a.answer.count("\n") == 0 and a.answer.endswith("[tr. 5]")
+    assert a.status == "answered" and a.answer.count("\n") == 0 and a.answer.endswith("[tr. 5].")
     assert a.trace["duplicates_removed"] == ["Báo cáo cũng ghi tổng tài sản là 1.192.344.137 triệu đồng."]
 
 
@@ -60,7 +60,7 @@ def test_kpi_and_glossary_pages(N):
         {"text_vi": "Tỷ lệ CASA là 40,4%.", "evidence": [eid_of(rq, "Tỷ lệ CASA | 40,4%")]},
         {"text_vi": "CASA là Tiền gửi không kỳ hạn.", "evidence": [eid_of(rq, "CASA: Tiền gửi")]}]}
     a, _ = run(N, h, "CASA là gì và tỷ lệ bao nhiêu?")
-    assert a.answer.splitlines()[0].endswith("[tr. 5]") and a.answer.splitlines()[1].endswith("[tr. 386]")
+    assert a.answer == "Tỷ lệ CASA là 40,4% [tr. 5]. CASA là Tiền gửi không kỳ hạn [tr. 386]."   # one paragraph, cite before the stop
 
 
 def test_calculation_is_deterministic_and_cited(N):
@@ -70,7 +70,7 @@ def test_calculation_is_deterministic_and_cited(N):
                                   "inputs": [qid_of(rq, "TỔNG TÀI SẢN", "31/12/2025"), qid_of(rq, "TỔNG TÀI SẢN", "31/12/2024")]}],
                 "claims": [{"text_vi": "Tổng tài sản tăng {C1} so với cuối năm 2024.", "evidence": [eid_of(rq, "TỔNG TÀI SẢN")], "calc_refs": ["C1"]}]}
     a, _ = run(N, h, "Tổng tài sản tăng bao nhiêu phần trăm?")
-    assert a.status == "answered" and "tăng 21,8% so với" in a.answer and a.answer.endswith("[tr. 297]")
+    assert a.status == "answered" and "tăng 21,8% so với" in a.answer and a.answer.endswith("[tr. 297].")
     assert a.trace["calcs"]["C1"]["formula"].startswith("(Q") and a.trace["calc_errors"] == []
 
 
@@ -86,7 +86,7 @@ def _lit_plan(rq, n2024="11.848"):
 def test_calculation_on_narrative_numbers_via_literals(N):
     """Numbers that live in text (no table quantity) reach the calculator only if they occur verbatim in the cited block."""
     a, p = run(N, lambda rq, i: _lit_plan(rq), "Nhân sự năm 2025 tăng thêm bao nhiêu người so với năm 2024?", keys=("hr", "b02"))
-    assert a.status == "answered" and "tăng thêm 857 người" in a.answer and a.answer.endswith("[tr. 52]") and len(p.calls) == 1
+    assert a.status == "answered" and "tăng thêm 857 người" in a.answer and a.answer.endswith("[tr. 52].") and len(p.calls) == 1
     assert a.trace["literals"]["L1"]["page"] == 52 and a.trace["calc_errors"] == []
 
 
@@ -172,7 +172,7 @@ def test_followup_is_rewritten_then_answered(N):
         return {"status": "answered", "claims": [{"text_vi": "Tổng tài sản tại 31/12/2024 là 978.798.549 triệu đồng.", "evidence": [eid_of(rq, "978.798.549")]}]}
     a, p = run(N, h, "Còn năm 2024?", PREV)
     assert a.trace["rewrite_mode"] == "llm" and "2024" in a.standalone and a.status == "answered" and len(p.calls) == 2
-    assert a.answer.endswith("[tr. 297]")
+    assert a.answer.endswith("[tr. 297].")
 
 
 def test_unfaithful_rewrite_degrades_to_concat_and_says_so(N):

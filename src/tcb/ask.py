@@ -135,13 +135,13 @@ class Engine:
             lines, cites = [], []
             for cl in kept:
                 pg = cite.pages_of(cl, evs, plan, results, qmap)
-                lines.append(cite.render_claim(cl, results) + cite.marker(pg))
+                lines.append(cite.with_marker(cite.render_claim(cl, results), pg))
                 for e in cl.evidence:
                     ev = next(x for x in evs if x.eid == e)
                     if not any(c["chunk_id"] == ev.chunk_id for c in cites):
                         cites.append({"eid": ev.eid, "page": ev.page, "pdf_page": ev.pdf_page, "section": ev.section,
                                       "chunk_id": ev.chunk_id, "type": ev.content_type, "snippet": cite.snippet(ev.text)})
-            body = "\n".join(("- " + l) if len(lines) > 1 else l for l in lines)
+            body = " ".join(lines)                                   # one paragraph: the claims are written to follow on
             if d.status == "partial" and plan.clarification_vi and not cite.check_text_numbers(plan.clarification_vi, evs, standalone):
                 d.notes.insert(0, plan.clarification_vi.strip())
             ans.status = d.status

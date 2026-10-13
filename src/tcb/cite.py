@@ -220,6 +220,14 @@ def marker(pages: list[int]) -> str:
     return f" [tr. {', '.join(map(str, pages))}]" if pages else ""
 
 
+def with_marker(sentence: str, pages: list[int]) -> str:
+    """Citation inside the sentence, before its full stop, so claims read as one paragraph: '... năm trước [tr. 59].'"""
+    s = sentence.strip()
+    end = s[-1] if s and s[-1] in ".!?…" else "."
+    body = s[:-1].rstrip() if s and s[-1] in ".!?…" else s
+    return body + marker(pages) + end
+
+
 def snippet(text: str, n: int = 240) -> str:
     t = re.sub(r"\s+", " ", text).strip()
     return t if len(t) <= n else t[:n].rstrip() + "…"

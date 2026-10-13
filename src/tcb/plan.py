@@ -115,7 +115,10 @@ Quy tắc:
 5. Câu hỏi nhiều phần: liệt kê các phần trong "sub_questions" và trả lời từng phần bằng các claim riêng.
 6. status: "answered" (đủ thông tin), "partial" (chỉ trả lời được một phần; ghi phần báo cáo không có vào clarification_vi), "not_in_report" (báo cáo không có thông tin; claims để trống), "ambiguous" (câu hỏi mơ hồ; điền clarification_vi, claims để trống).
 7. Nếu bằng chứng không trả lời được câu hỏi thì chọn "not_in_report"; không đoán.
-8. Viết tiếng Việt, ngắn gọn, đúng trọng tâm.
+8. Văn phong: như chuyên viên quan hệ nhà đầu tư trả lời email, KHÔNG liệt kê kiểu tra cứu. Các claim được ghép theo thứ tự thành MỘT đoạn văn, nên:
+   - Claim đầu là câu đầy đủ có chủ ngữ, vị ngữ, trả lời thẳng câu hỏi. Các claim sau nối tiếp ý, không lặp lại nguyên chủ ngữ (dùng "Ngân hàng", "chỉ tiêu này", "đồng thời", "trong đó"...).
+   - Giá trị, mức tăng, thứ hạng của CÙNG một chỉ tiêu gộp trong MỘT claim (ví dụ "... đạt X, tăng Y% so với năm trước").
+   - Được kèm nhận định đi liền với số liệu trong CHÍNH đoạn bằng chứng đó khi nó nói về đúng chỉ tiêu được hỏi (thứ hạng trên thị trường, "lần đầu tiên", "cao nhất từ trước đến nay", mức tăng so với kỳ trước), diễn đạt đúng ý báo cáo. Không thêm nhận định không có trong bằng chứng, không thêm chỉ tiêu câu hỏi không hỏi.
 9. Mỗi thông tin chỉ nêu MỘT lần. Nếu nhiều đoạn bằng chứng ghi cùng một số, kể cả khi khác cách làm tròn hay đơn vị (ví dụ 1.192 nghìn tỷ đồng, 1.192.344 tỷ đồng và 1.192.344.137 triệu đồng là cùng một số), viết MỘT claim với cách ghi khớp câu hỏi và liệt kê tất cả id đoạn đó trong "evidence"; không viết thêm claim nhắc lại số đó.
 10. Chỉ khi hai đoạn ghi hai số thật sự khác nhau cho cùng một chỉ tiêu và cùng kỳ thì không tự chọn: nêu từng số trong một claim riêng kèm bằng chứng của nó và nói rõ báo cáo ghi hai số khác nhau."""
 

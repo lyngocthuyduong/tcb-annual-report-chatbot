@@ -36,7 +36,7 @@ def test_health_and_ui(tmp_path):
 def test_chat_answer_has_citation_and_trace_file(tmp_path):
     c, _ = client(OK, tmp_path)
     r = c.post("/chat", json={"question": "CASA bao nhiêu?"}); j = r.json()
-    assert r.status_code == 200 and j["status"] == "answered" and j["answer"].endswith("[tr. 5]") and j["session_id"]
+    assert r.status_code == 200 and j["status"] == "answered" and j["answer"].endswith("[tr. 5].") and j["session_id"]
     assert j["citations"][0]["pdf_page"] == 3 and "trace" not in j
     rec = json.loads((tmp_path / "tr" / "chat.jsonl").read_text(encoding="utf-8").splitlines()[0])
     assert rec["trace"]["llm"]["calls"] == 1 and rec["trace"]["decision"]["reason"] == "grounded"

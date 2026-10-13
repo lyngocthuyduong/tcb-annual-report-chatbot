@@ -222,7 +222,7 @@ If the reply is not parseable JSON for the schema, or `cite.check` finds problem
 
 After the checks, **one statement per figure**: a claim whose figures were all stated by an earlier claim (the same number from another page, or the same figure at another rounding or unit: `1.192 nghìn tỷ đồng` = `1.192.344 tỷ đồng` within half a unit of the rounded one) is left out, recorded in the trace as `duplicates_removed`. A claim with a new figure, a calculation or no figure is kept. Run `q10e` showed the need: 4 of 10 answers restated a figure from a second page.
 
-A claim failing any check is **dropped**, not patched. Rendering then builds `text + [tr. N]` where N is `printed_page_number` of the cited nodes, merged and sorted; calculator results use the pages of their input quantities. A final `verify_rendered` pass asserts every page in the rendered answer belongs to retrieved evidence (defence in depth; failure → `error` status).
+A claim failing any check is **dropped**, not patched. Rendering then joins the kept claims into one paragraph, each sentence ending `... [tr. N].` where N is `printed_page_number` of the cited nodes, merged and sorted (the prompt asks for a first sentence with its subject and follow-on sentences that do not repeat it, one claim per indicator with its change and the remark the report prints next to it); calculator results use the pages of their input quantities. A final `verify_rendered` pass asserts every page in the rendered answer belongs to retrieved evidence (defence in depth; failure → `error` status).
 
 The answer payload also lists `citations` (eid, page, pdf_page, section, chunk_id, snippet) for the UI to open the source.
 
