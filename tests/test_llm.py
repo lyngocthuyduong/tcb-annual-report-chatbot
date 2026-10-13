@@ -32,7 +32,7 @@ def test_default_is_openai_and_needs_key():
 
 def test_anthropic_needs_key():
     with pytest.raises(ConfigError) as e: llm.get({"PROVIDER": "anthropic"})
-    assert "ANTHROPIC_API_KEY" in str(e.value) and e.value.model == "claude-sonnet-5-5"
+    assert "ANTHROPIC_API_KEY" in str(e.value) and e.value.model == "claude-haiku-5-5"
 
 
 def test_unknown_provider_and_bad_timeout():
@@ -44,7 +44,7 @@ def test_unknown_provider_and_bad_timeout():
 def test_factory_builds_exactly_one_adapter_each():
     o = llm.get({"PROVIDER": "openai", "OPENAI_API_KEY": "k"}); assert (o.name, o.model) == ("openai", "gpt-4o-mini")
     o = llm.get({"PROVIDER": "OpenAI", "OPENAI_API_KEY": "k", "OPENAI_MODEL": "gpt-x"}); assert o.model == "gpt-x"
-    a = llm.get({"PROVIDER": "anthropic", "ANTHROPIC_API_KEY": "k"}); assert (a.name, a.model) == ("anthropic", "claude-sonnet-5-5")
+    a = llm.get({"PROVIDER": "anthropic", "ANTHROPIC_API_KEY": "k"}); assert (a.name, a.model) == ("anthropic", "claude-haiku-5-5")
     l = llm.get({"PROVIDER": "ollama"}); assert (l.name, l.model) == ("ollama", "qwen2.5:7b")
     assert l.base == "http://host.docker.internal:11434"
 

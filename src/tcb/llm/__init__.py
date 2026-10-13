@@ -9,7 +9,7 @@ from .base import (ConfigError, GenerationError, LLMError, LLMRequest, LLMRespon
 __all__ = ["get", "ConfigError", "GenerationError", "LLMError", "LLMRequest", "LLMResponse", "Provider",
            "ProviderRejected", "ProviderTimeout", "ProviderUnavailable"]
 
-DEFAULTS = {"openai": "gpt-4o-mini", "anthropic": "claude-sonnet-5-5", "ollama": "qwen2.5:7b"}
+DEFAULTS = {"openai": "gpt-4o-mini", "anthropic": "claude-haiku-5-5", "ollama": "qwen2.5:7b"}
 
 
 def get(env=None) -> Provider:
@@ -36,7 +36,7 @@ def get(env=None) -> Provider:
     key = (e.get(key_var) or "").strip()
     if not key:
         raise ConfigError(name, model, f"{key_var} is not set (copy .env.example to .env). "
-                                       "There is no automatic fallback to another provider; set PROVIDER=ollama for offline mode.")
+                                       "There is no automatic fallback to another provider; set PROVIDER=ollama for a local model.")
     if name == "openai":
         from .oai import OpenAIProvider
         return OpenAIProvider(key, model, timeout)

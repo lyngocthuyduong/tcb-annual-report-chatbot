@@ -14,7 +14,7 @@
 | Embedding model | `BAAI/bge-m3`, revision pinned in `conf.EMBED_REV` |
 | Reranker | none (measured and removed, §17.1) |
 | Orchestration | LlamaIndex for ingestion/vector retrieval only. No agent framework |
-| LLM modes | Online default (OpenAI or Anthropic), explicit Offline profile (Ollama `qwen2.5:7b`). **No automatic fallback between providers or modes** |
+| LLM providers | Anthropic (every reported result, `claude-haiku-5-5`), OpenAI, or a local Ollama model on the host, chosen by `PROVIDER`. **No automatic fallback between providers** |
 | Depth tracks | Document Intelligence + Retrieval + Evaluation |
 | Index | Built once, committed as `idx/`, validated fail-closed at start-up. Never rebuilt or downloaded at run time |
 | Time | 4-day sprint; minimal code, no speculative abstractions |
@@ -283,7 +283,7 @@ A question is treated as a follow-up only if there is history **and** it is shor
 ## 13. Packaging and portability
 
 - **Docker (`Dockerfile`, `compose.yaml`):** `docker compose up --build` is the online default. The image installs CPU torch from the PyTorch index first, then `pip install --require-hashes --no-deps -r requirements.lock` (hash-pinned, Python 3.12 linux-x86_64, no torch/CUDA); BGE-M3 is downloaded at build time at pinned revisions into `/models` with a `.rev` marker. `idx/` and `data/` are mounted, not baked, so the index can be replaced without rebuilding the image. Layers are kept lean on purpose: `COPY --chown` instead of `RUN chown -R` and no in-image weight conversion, because each would duplicate 2.3 GB of weights in a new layer (a first Docker build on a 32 GB Codespace ran out of disk exporting layers). The one-off index build runs on Colab (`TCB_DEVICE=cuda` only speeds up embedding; model and revision are the pinned ones), not inside Docker.
-- **Offline mode:** `docker compose --profile offline up --build app-offline` starts Ollama, pulls `qwen2.5:7b` once, and runs the app with `PROVIDER=ollama`. Separate services, no cross-fallback.
+- **Local model:** Ollama runs on the host (`ollama pull qwen2.5:7b`); `PROVIDER=ollama` and the default `OLLAMA_BASE_URL=http://host.docker.internal:11434` reach it from the container (`extra_hosts: host-gateway` in `compose.yaml`). `tcb smoke` runs one fixed question through it and prints `Executed` or `Not Executed` with the reason. A Compose profile that also ran Ollama in a container was removed: it was never run end to end, and in GitHub Codespaces the Compose network could not resolve external hosts. The adapter is covered by tests against a mocked server; no reported number comes from it.
 - **Local runs (no Docker):** `pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cpu && pip install -e ".[dev]"`, `python -m tcb.models download`; `.env` loader (does not override real env vars); `TCB_MODELS_DIR`, `POPPLER_BIN`, `PYTHONUTF8`; `import resource` guarded for Windows; explicit UTF-8 everywhere. `tcb doctor` prints a one-screen diagnosis (python, packages, poppler, PDF hash, models, index, keys, RAM/disk, Docker) with a fix per failure.
 - **Locks:** `lock.sh` produces `requirements.lock` and fails if torch/CUDA leak in.
 
@@ -372,7 +372,7 @@ The runner *suggests* a decision by these rules and never edits `conf.py`. Order
 | Calculator with typed ops | LLM arithmetic / generic `eval` | unit and period errors become explicit failures |
 | Drop invalid claims | auto-correct them | correction by the same LLM re-opens the hallucination path |
 | One repair retry | loop until valid | bounded cost and latency |
-| No automatic provider fallback | silent switch to another LLM | breaks reproducibility and the offline guarantee |
+| No automatic provider fallback | silent switch to another LLM | breaks reproducibility: every answer names the provider and model that produced it |
 | RRF (k=60) | weighted score fusion | no score calibration; RSF kept as an experiment |
 | Custom tokenizer | default `bm25s` | default breaks Vietnamese numbers |
 | Fail-closed index validation | warn and continue | silent degradation is worse than refusing to start |
@@ -468,7 +468,7 @@ Per question: ≤ 1 rewrite call (follow-ups only) + 1–2 generation calls; one
 
 ## 20. Security and privacy
 
-Keys are read from the environment / `.env` (git-ignored; the loader never prints values and never overrides real env vars). In online mode the provider receives the question, the retrieved evidence, the table quantities and, for follow-ups, the last two questions with the first 300 characters of their answers; offline mode sends nothing outside the compose network. The UI renders answers with `textContent` (no HTML injection); citation links open `/pdf#page=<pdf_page>`. No user data is stored except traces under `out/trace/` on the local volume.
+Keys are read from the environment / `.env` (git-ignored; the loader never prints values and never overrides real env vars). In online mode the provider receives the question, the retrieved evidence, the table quantities and, for follow-ups, the last two questions with the first 300 characters of their answers; with `PROVIDER=ollama` nothing leaves the machine. The UI renders answers with `textContent` (no HTML injection); citation links open `/pdf#page=<pdf_page>`. No user data is stored except traces under `out/trace/` on the local volume.
 
 ---
 

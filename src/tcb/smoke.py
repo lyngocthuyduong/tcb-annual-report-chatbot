@@ -1,6 +1,6 @@
-"""Ollama smoke test (offline mode). Runs the REAL local model through the same plan/validation path on a tiny fixed
+"""Ollama smoke test (local model). Runs the REAL local model through the same plan/validation path on a tiny fixed
 evidence set. Prints the standard log line; 'Not Executed' (with the reason) when Ollama is not reachable.
-Only an actual run on a machine with Ollama proves the offline path; mocks do not."""
+Only an actual run on a machine with Ollama proves the local path; mocks do not."""
 from __future__ import annotations
 
 import json

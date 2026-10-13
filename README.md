@@ -15,11 +15,14 @@ printf 'services:\n  app:\n    network_mode: bridge\n    dns: [1.1.1.1]\n' > /tm
 COMPOSE_FILE=compose.yaml:/tmp/bridge.yaml docker compose up -d app      # or: COMPOSE_FILE=... ./smoke.sh
 ```
 
-## Run (local LLM, separate service, never an automatic fallback; not run end to end for the reported results)
+## Run with a local model (Ollama on the host; not used for the reported results)
 ```bash
-docker compose --profile offline up --build app-offline           # local Ollama + qwen2.5:7b (pulled once, ~4.7 GB)
-docker compose --profile offline run --rm app-offline tcb smoke   # logs: "Ollama smoke test: Executed|Not Executed ..."
+ollama pull qwen2.5:7b && OLLAMA_HOST=0.0.0.0 ollama serve       # on the host; containers reach it at host.docker.internal:11434
+# .env: PROVIDER=ollama  LLM_TIMEOUT_S=300
+docker compose up --build
+docker compose run --rm app tcb smoke                             # prints "Ollama smoke test: Executed|Not Executed ..."
 ```
+There is never an automatic fallback from one provider to another.
 
 ## Batch / eval
 ```bash
@@ -39,7 +42,7 @@ docker compose run --rm app tcb ask "Tỷ lệ CASA năm 2025?" --json
 | `pytest -m live_models` | BGE-M3 loads, dim and revision | answer quality |
 | `pytest -m "live_openai or live_ollama"` | one schema-constrained call returns a valid, grounded plan | quality at scale |
 | `pytest -m live` | shipped `idx/` + BGE-M3 + `PROVIDER` answer and refuse | |
-| `./smoke.sh [offline]` | Docker build, `tcb check`, validate, tests, HTTP answer/refusal | quality |
+| `./smoke.sh` | Docker build, `tcb check`, validate, tests, HTTP answer/refusal | quality |
 | `tcb eval` | metrics on verified gold | |
 
 Default `pytest` runs unit + integ. Skips are not passes. The hash embedder lives only in `tests/`; the production validator rejects any index not built with the pinned BGE-M3 revision.

@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 # Clean-environment smoke test: from a fresh checkout to a verified answer. Each stage prints PASS/FAIL; the first FAIL stops
 # the run and the summary lists exactly which stages executed. Nothing is "ready" until its stage printed PASS.
-#   ./smoke.sh            online mode (needs .env with PROVIDER + key)
-#   ./smoke.sh offline    adds the Ollama smoke test (pulls qwen2.5:7b, ~4.7 GB)
+#   ./smoke.sh            needs .env with PROVIDER + key
 #   ./smoke.sh --dry-run  print the stages without running them
 set -uo pipefail
 cd "$(dirname "$0")"
-MODE="${1:-online}"; DRY=0; [ "$MODE" = "--dry-run" ] && { DRY=1; MODE=online; }
+DRY=0; [ "${1:-}" = "--dry-run" ] && DRY=1
 LOG=out/smoke.log; mkdir -p out
 if ! : > "$LOG" 2>/dev/null; then   # Docker creates a missing bind-mount folder as root; the host user then cannot write to it
   echo "out/ is not writable by $(id -un). Fix: sudo chown -R $(id -u):$(id -g) out   then run ./smoke.sh again"; exit 1
@@ -19,7 +18,7 @@ stage() { # name, command...
   if bash -c "$*" >> "$LOG" 2>&1; then echo "PASS  $name"; RESULTS+=("PASS  $name"); return 0
   else echo "FAIL  $name  (see $LOG)"; RESULTS+=("FAIL  $name"); summary; exit 1; fi
 }
-summary() { echo; echo "---- summary ($MODE) ----"; printf '%s\n' "${RESULTS[@]}"; echo "not listed above = NOT executed"; }
+summary() { echo; echo "---- summary ----"; printf '%s\n' "${RESULTS[@]}"; echo "not listed above = NOT executed"; }
 
 stage "0 prerequisites"      'command -v docker && docker compose version && test -f data/ar.pdf && test -f idx/manifest.json'
 stage "1 docker build"       'docker compose build'
@@ -31,7 +30,4 @@ stage "6 e2e answer + citation" "curl -fsS -X POST http://127.0.0.1:8000/chat -H
 stage "7 e2e refusal"        "curl -fsS -X POST http://127.0.0.1:8000/chat -H 'content-type: application/json' -d '{\"question\":\"Techcombank dự báo lợi nhuận trước thuế năm 2027 là bao nhiêu?\"}' | tee out/smoke_refuse.json | grep -q 'not_in_report'"
 stage "8 server down"        'docker compose down'
 stage "9 eval on q10 (quality, informational)" 'docker compose run --rm app tcb eval data/q10.json --out out/runs --label smoke'
-if [ "$MODE" = "offline" ]; then
-  stage "10 ollama smoke"    'docker compose --profile offline run --rm app-offline tcb smoke --out out/smoke.json'
-fi
 summary
