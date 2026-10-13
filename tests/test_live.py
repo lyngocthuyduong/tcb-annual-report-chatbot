@@ -1,7 +1,6 @@
-"""Live tests: real models, real providers, the shipped index. Opt-in: pytest -m live (or live_models, live_anthropic,
-live_openai, live_ollama); excluded from the default run, and a skip is not a pass. The path they cover with Anthropic
-(shipped index, BGE-M3 from the image, claude-haiku-5-5) is exercised end to end by smoke.sh and the eval runs in runs/;
-the OpenAI and Ollama calls have not been made against the real services."""
+"""Live tests: real models, real providers, the shipped index. They need keys or a running service, so they run on
+demand: pytest -m live (or live_models, live_anthropic, live_openai, live_ollama). A test whose service is missing skips.
+The Anthropic path they cover is the one smoke.sh and the eval runs in runs/ exercise end to end."""
 import os
 from pathlib import Path
 
@@ -54,7 +53,7 @@ def test_real_ollama_smoke(tmp_path):
     rc = smoke.run(str(tmp_path / "s.json"))
     j = json.loads((tmp_path / "s.json").read_text(encoding="utf-8"))
     if not j["executed"]:
-        pytest.skip(f"Ollama smoke Not Executed: {j['reason']}")      # a skip, never a pass
+        pytest.skip(f"Ollama could not be reached: {j['reason']}")
     assert rc == 0, f"Ollama ran but quality={j['quality']}"
 
 

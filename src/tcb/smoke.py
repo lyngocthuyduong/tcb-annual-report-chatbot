@@ -1,6 +1,5 @@
-"""Ollama smoke test (local model). Runs the real local model through the same plan/validation path on a tiny fixed
-evidence set. Prints the standard log line; 'Not Executed' (with the reason) when Ollama is not reachable.
-Only an actual run on a machine with Ollama proves the local path; mocks do not."""
+"""Ollama smoke test (local model): one fixed question through the real local model and the same plan and validation
+path, on a two-block evidence set. Prints one line saying how it went, or why it could not reach Ollama."""
 from __future__ import annotations
 
 import json
@@ -37,9 +36,9 @@ def run(out: str = "out/smoke.json", env=None) -> int:
 
 def _report(out, executed, model, dt, quality, reason, g=None) -> int:
     if executed:
-        print(f"Ollama smoke test: Executed. Setup: model={model}, latency={dt:.1f}s, quality={quality}.")
+        print(f"Ollama smoke test ran with {model}: {dt:.1f} s, answer {quality}.")
     else:
-        print(f"Ollama smoke test: Not Executed. Reason: {reason}. Setup: model={model}.")
+        print(f"Ollama smoke test could not run with {model}: {reason}.")
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     Path(out).write_text(json.dumps({"executed": executed, "model": model, "latency_s": dt and round(dt, 2), "quality": quality,
                                      "reason": reason, "plan": g.plan.model_dump() if g else None}, ensure_ascii=False, indent=1), encoding="utf-8")

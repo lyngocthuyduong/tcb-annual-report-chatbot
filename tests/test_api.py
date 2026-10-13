@@ -75,11 +75,11 @@ def test_validation_and_evidence_and_pdf(tmp_path):
     assert c2.get("/pdf").status_code == 404
 
 
-# ---------------- smoke command: both honest branches ----------------
+# ---------------- smoke command: both branches ----------------
 def test_smoke_not_executed_when_ollama_unreachable(tmp_path, capsys):
     rc = smoke.run(str(tmp_path / "s.json"), {"OLLAMA_BASE_URL": "http://127.0.0.1:9", "LLM_TIMEOUT_S": "2"})
     out = capsys.readouterr().out; j = json.loads((tmp_path / "s.json").read_text(encoding="utf-8"))
-    assert rc == 6 and out.startswith("Ollama smoke test: Not Executed. Reason: Ollama unreachable") and j["executed"] is False
+    assert rc == 6 and out.startswith("Ollama smoke test could not run with qwen2.5:7b: Ollama unreachable") and j["executed"] is False
 
 
 def test_smoke_executed_branch_logic_with_stand_in(tmp_path, capsys, monkeypatch):
@@ -87,4 +87,4 @@ def test_smoke_executed_branch_logic_with_stand_in(tmp_path, capsys, monkeypatch
     monkeypatch.setattr(llm, "get", lambda env=None: Scripted(good))
     rc = smoke.run(str(tmp_path / "s.json"))
     out = capsys.readouterr().out
-    assert rc == 0 and out.startswith("Ollama smoke test: Executed. Setup: model=qwen2.5:7b, latency=") and "quality=pass" in out
+    assert rc == 0 and out.startswith("Ollama smoke test ran with qwen2.5:7b:") and "answer pass" in out

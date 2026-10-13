@@ -15,14 +15,14 @@ printf 'services:\n  app:\n    network_mode: bridge\n    dns: [1.1.1.1]\n' > /tm
 COMPOSE_FILE=compose.yaml:/tmp/bridge.yaml docker compose up -d app      # or: COMPOSE_FILE=... ./smoke.sh
 ```
 
-## Run with a local model (Ollama on the host; not used for the reported results)
+## Run with a local model (Ollama on the host)
 ```bash
 ollama pull qwen2.5:7b && OLLAMA_HOST=0.0.0.0 ollama serve       # on the host; containers reach it at host.docker.internal:11434
 # .env: PROVIDER=ollama  LLM_TIMEOUT_S=300
 docker compose up --build
-docker compose run --rm app tcb smoke                             # prints "Ollama smoke test: Executed|Not Executed ..."
+docker compose run --rm app tcb smoke                             # one fixed question through the local model
 ```
-There is never an automatic fallback from one provider to another.
+I planned to report a local run as well. On the machines I had (2 vCPU, no GPU) a 7B model needs minutes per answer at these prompt sizes, so the reported results use claude-haiku-5-5; the Ollama adapter is tested against a mocked server. There is never an automatic fallback from one provider to another.
 
 ## Batch / eval
 ```bash
@@ -45,7 +45,7 @@ docker compose run --rm app tcb ask "Tỷ lệ CASA năm 2025?" --json
 | `./smoke.sh` | Docker build, `tcb check`, validate, tests, HTTP answer/refusal | quality |
 | `tcb eval` | metrics on verified gold | |
 
-Default `pytest` runs unit + integ. Skips are not passes. The hash embedder lives only in `tests/`; the production validator rejects any index not built with the pinned BGE-M3 revision.
+Default `pytest` runs the unit and integration tests; live tests run on demand. The hash embedder lives only in `tests/`; the production validator rejects any index not built with the pinned BGE-M3 revision.
 
 ## Layout
 `src/tcb/`: `pdf` `parse` `nodes` `vi` (ingestion) · `build` `index` (index) · `find` (BM25 + dense → RRF → top 12) · `num` `calc` (quantities, calculator) · `plan` `gen` `llm/` (LLM plan, one repair retry, providers) · `cite` `refuse` (validation, policy) · `chat` `ask` (pipeline) · `api` `ui.html` `cli` `smoke` `doctor` · `ev` `exp` `vset` (evaluation) · `conf` (fixed model and constants) · `models` (Docker download).

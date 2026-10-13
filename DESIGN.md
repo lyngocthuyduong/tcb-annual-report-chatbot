@@ -21,7 +21,7 @@
 
 **Non-goals.** Multi-document support, an LLM judge, OCR of image-only content (inventoried but not read), streaming answers, authentication, multi-process serving, runtime fine-tuning.
 
-**Reporting rules.** A mock pass is never reported as proof that a real model works. The hash embedder exists only in `tests/` and writes to a tmp dir; the production validator rejects any index not built with the pinned BGE-M3 revision. Eval items count only when `verified: true`, which in this repository means machine-checked: every gold fact was found in the PDF text of its page and every calculation recomputed (`tcb vset check`); the items and the q10, test and test2 answers were also reviewed by the author. The item notes say this.
+**Reporting rules.** Results with mocked models are reported as tests of logic, never as results of a real model. The hash embedder exists only in `tests/` and writes to a tmp dir; the production validator rejects any index not built with the pinned BGE-M3 revision. Eval items count only when `verified: true`, which in this repository means machine-checked: every gold fact was found in the PDF text of its page and every calculation recomputed (`tcb vset check`); the items and the q10, test and test2 answers were also reviewed by the author. The item notes say this.
 
 ---
 
@@ -280,7 +280,7 @@ A question is treated as a follow-up only if there is history **and** it contain
 ## 12. Surfaces
 
 - **HTTP (`api.py`, FastAPI):** `GET /health`, `POST /chat {question, session_id?}`, `GET /evidence/{chunk_id}`, `GET /pdf`, `GET /` (single-file UI `ui.html`), `/docs`. Single process, one answer at a time under a lock. Status codes map error kinds (config/timeout/unavailable/rejected). Every answer's full trace is appended to `out/trace/chat.jsonl`; tracing failures never break an answer.
-- **CLI (`tcb`):** `doctor` (diagnose this machine), `models download|convert`, `check` (gate: load BGE-M3, related text closer than unrelated, one query embedding timed, log RSS), `build`, `validate`, `ask`, `chat`, `batch`, `eval` (`--compare`, `--include-unverified`), `exp` (retrieval experiments), `vset check` (gold facts on gold pages), `smoke` (Ollama), `serve`. Exit codes: 2 config, 3 index, 4 error answer, 5 model missing, 6 smoke.
+- **CLI (`tcb`):** `doctor` (diagnose this machine), `models download`, `check` (gate: load BGE-M3, related text closer than unrelated, one query embedding timed, log RSS), `build`, `validate`, `ask`, `chat`, `batch`, `eval` (`--compare`, `--include-unverified`), `exp` (retrieval experiments), `vset check` (gold facts on gold pages), `smoke` (Ollama), `serve`. Exit codes: 2 config, 3 index, 4 error answer, 5 model missing, 6 smoke.
 - **Boot order (`boot.py`):** read config → validate index → load models → serve. A bad index exits 3 before models are touched; a missing key exits 2 before the port opens.
 
 ---
@@ -288,7 +288,7 @@ A question is treated as a follow-up only if there is history **and** it contain
 ## 13. Packaging and portability
 
 - **Docker (`Dockerfile`, `compose.yaml`):** `docker compose up --build` is the online default. The image installs CPU torch from the PyTorch index first, then `pip install --require-hashes --no-deps -r requirements.lock` (hash-pinned, Python 3.12 linux-x86_64, no torch/CUDA); BGE-M3 is downloaded at build time at pinned revisions into `/models` with a `.rev` marker. `idx/` and `data/` are mounted, not baked, so the index can be replaced without rebuilding the image. Layers are kept lean on purpose: `COPY --chown` instead of `RUN chown -R` and no in-image weight conversion, because each would duplicate 2.3 GB of weights in a new layer (a first Docker build on a 32 GB Codespace ran out of disk exporting layers). The one-off index build runs on Colab (`TCB_DEVICE=cuda` only speeds up embedding; model and revision are the pinned ones), not inside Docker.
-- **Local model:** Ollama runs on the host (`ollama pull qwen2.5:7b`); `PROVIDER=ollama` and the default `OLLAMA_BASE_URL=http://host.docker.internal:11434` reach it from the container (`extra_hosts: host-gateway` in `compose.yaml`). `tcb smoke` runs one fixed question through it and prints `Executed` or `Not Executed` with the reason. A Compose profile that also ran Ollama in a container was removed: it was never run end to end, and in GitHub Codespaces the Compose network could not resolve external hosts. The adapter is covered by tests against a mocked server; no reported number comes from it.
+- **Local model:** Ollama runs on the host (`ollama pull qwen2.5:7b`); `PROVIDER=ollama` and the default `OLLAMA_BASE_URL=http://host.docker.internal:11434` reach it from the container (`extra_hosts: host-gateway` in `compose.yaml`). `tcb smoke` sends it one fixed question and reports the latency and whether the answer passed the checks. A local run was planned for the evaluation as well; on the machines available (2 vCPU, no GPU) a 7B model needs minutes per answer at these prompt sizes, so the reported results use claude-haiku-5-5 and the adapter is tested against a mocked server. An earlier Compose profile that ran Ollama in its own container was dropped in favour of the host setup, which needs no extra service.
 - **Local runs (no Docker):** `pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cpu && pip install -e ".[dev]"`, `python -m tcb.models download`; `.env` loader (does not override real env vars); `TCB_MODELS_DIR`, `POPPLER_BIN`, `PYTHONUTF8`; `import resource` guarded for Windows; explicit UTF-8 everywhere. `tcb doctor` prints a one-screen diagnosis (python, packages, poppler, PDF hash, models, index, keys, RAM/disk, Docker) with a fix per failure.
 - **Locks:** `lock.sh` produces `requirements.lock` and fails if torch/CUDA leak in.
 
@@ -345,7 +345,7 @@ The runner *suggests* a decision by these rules and never edits `conf.py`. Order
 | `live_anthropic`, `live_openai`, `live_ollama` | key / running Ollama | one schema-constrained call returns a valid grounded plan | quality at scale |
 | `live` | `idx/` + models + provider | end-to-end answer and refusal | — |
 
-`pytest` default = unit + integ; live tests are excluded (a skip is not a pass). Default run: all unit and integration tests pass; the 5 live tests are deselected (not executed). Tests of note: golden B02/B03 figures; no header text in statement labels; production validator rejects the hash index and chunk-variant indexes; `check` catches a wrong gold fact; independent growth formula equals `calc`.
+`pytest` runs unit and integration tests by default, and all of them pass; the five live tests need keys or running services and run on demand (`pytest -m live_anthropic`, …). Tests of note: golden B02/B03 figures; no header text in statement labels; production validator rejects the hash index and chunk-variant indexes; `check` catches a wrong gold fact; independent growth formula equals `calc`.
 
 ---
 
