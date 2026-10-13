@@ -1,0 +1,114 @@
+{
+ "n": 22,
+ "pass_rate": 0.8636,
+ "retrieval": {
+  "n_with_gold_pages": 18,
+  "recall@40_bm25": 1.0,
+  "recall@40_dense": 1.0,
+  "recall@40_fused": 1.0,
+  "recall@12_final": 0.8889,
+  "recall@3_final": 0.8889,
+  "mrr_final": 0.713
+ },
+ "answers": {
+  "fact_correct": 0.8333,
+  "fact_unscorable": 0,
+  "citation_valid": 1.0,
+  "page_hit": 0.8333,
+  "page_precision": 0.7157
+ },
+ "refusal": {
+  "precision": 0.8,
+  "recall": 1.0,
+  "n_unanswerable": 4,
+  "false_answer_rate": 0.0
+ },
+ "latency_s": {
+  "mean": 2.207,
+  "p50": 1.977,
+  "p95": 3.707
+ },
+ "tokens_in_total": 236243,
+ "tokens_out_total": 4746,
+ "cost_usd_total": 0.026,
+ "cost_usd_per_question": 0.001182,
+ "stage_seconds_p50": {
+  "embed": 0.495,
+  "dense": 0.091,
+  "bm25": 0.001,
+  "llm": 1.345
+ },
+ "llm_calls_mean": 1.18,
+ "attribution": {
+  "retrieval:rank_drop": 2,
+  "pass": 19,
+  "refusal:over_refusal": 1
+ },
+ "by_category": {
+  "brand": {
+   "n": 1,
+   "pass_rate": 1.0
+  },
+  "conversation": {
+   "n": 1,
+   "pass_rate": 0.0
+  },
+  "financial_statements": {
+   "n": 2,
+   "pass_rate": 0.5
+  },
+  "human_capital": {
+   "n": 2,
+   "pass_rate": 1.0
+  },
+  "investor": {
+   "n": 1,
+   "pass_rate": 1.0
+  },
+  "key_figures": {
+   "n": 2,
+   "pass_rate": 0.5
+  },
+  "macro": {
+   "n": 1,
+   "pass_rate": 1.0
+  },
+  "retail": {
+   "n": 2,
+   "pass_rate": 1.0
+  },
+  "subsidiary": {
+   "n": 3,
+   "pass_rate": 1.0
+  },
+  "sustainability": {
+   "n": 3,
+   "pass_rate": 1.0
+  },
+  "unanswerable": {
+   "n": 4,
+   "pass_rate": 1.0
+  }
+ },
+ "by_type": {
+  "calc": {
+   "n": 2,
+   "pass_rate": 0.5
+  },
+  "followup": {
+   "n": 1,
+   "pass_rate": 0.0
+  },
+  "refusal": {
+   "n": 4,
+   "pass_rate": 1.0
+  },
+  "single": {
+   "n": 15,
+   "pass_rate": 0.9333
+  }
+ },
+ "items_run": 22,
+ "items_unverified_excluded": 0,
+ "submission_grade": true
+}

@@ -33,7 +33,7 @@ Facts measured on the real PDF:
 - Printed page numbers are read from footers on 380 halves; 13 divider/blank halves are inferred from neighbours (node-level: 1,439 nodes footer-sourced, 6 inferred).
 - Content kinds: narrative prose, **KPI tiles** (big number + caption), **financial-statement tables** (forms B01–B05 and notes), and a **glossary** (163 terms).
 - Vietnamese numbers: `.` is the thousands separator and `,` the decimal (`1.192.344.137`, `14,6%`, negative as `(181.150)`). Units are in headers (`Triệu đồng`, `Nghìn tỷ đồng`). The same quantity appears at different scales: total assets is `1.192 nghìn tỷ đồng` on p.5 and `1.192.344.137 triệu đồng` on p.297.
-- Images: 428 embedded images on 117 pages, counted in `report.json`. A one-off visual audit (13 Oct 2026; image boxes from the PDF, every image covering ≥ 1 % of a half-page) found no chart, table or figure that exists only as an image: 82 are full-page backdrops (73 with the page's real text drawn on top), 159 are logos and icons under 1 % of the page, and the 126 mid-size images with no text over them are portraits, photos, chapter numbers and adverts. Award badges and the six-pillar diagram (p.46) are vector text over an image and are read. One diagram holds labels only as pixels (p.10, the 'Customer Brain' labels). No OCR or vision model is used.
+- Images: 428 embedded images on 117 pages, counted in `report.json`. A visual audit (13 Oct 2026) of every raster image covering at least 1 % of a half-page found photographs, portraits, logos, backdrops and adverts; text over badges and diagrams is vector text and is extracted. Information carried only by graphics, not read: the labels of one diagram (p.10, the "Customer Brain" labels) and the up or down triangles drawn before KPI change figures (vector glyphs of about 4 × 2 pt; a size scan finds about 380 on 54 spreads). The change figures are extracted without their direction; on p.264 the model then wrote "giảm 7%" for an up triangle (run test1). No OCR or vision model is used.
 
 Failure modes that a naive "split text, embed, ask GPT" pipeline hits on this document, and where this design answers each:
 
@@ -319,7 +319,7 @@ For each failed item, the first failing stage in this order: `system` (provider/
 | E5 | glossary expansion | keep only if no regression |
 | E6 | narrative chunk size | needs index rebuild; experimental indexes are rejected by `serve` |
 
-The runner *suggests* a decision by these rules and never edits `conf.py`. Order of work: experiments on dev+val → freeze → eval on val → q10 once, human-scored. Val was also used to find failures and to choose k, so it is a validation set, not a held-out set; q10 was used to debug too (see §14.1). Neither measures generalisation; the graders' held-out set does.
+The runner *suggests* a decision by these rules and never edits `conf.py`. Order of work: experiments on dev+val → freeze → eval on val and q10 → `test.json` written after the last code change and run once (test1). Val was also used to find failures and to choose k, so it is a validation set, not a held-out set; q10 was used to debug too (see §14.1). Neither measures generalisation; the graders' held-out set does.
 
 ---
 
@@ -423,19 +423,22 @@ Integer differences now print without a decimal (857, not 857,0).
 
 1. dev/val golds were checked by Claude against the PDF text (pdftotext of the cited page; calculations recomputed); a human spot-check is pending.
 2. 31 low-quality note tables (53 chunks) give no table quantities; a calculation over them is possible only through literals copied from the text. A layout model could recover them (out of scope).
-3. Number grounding ignores integers ≤ 12.
+3. Number grounding exempts integers up to 12 that carry no unit, percent or currency (list counts such as `3 yếu tố`); `5 tỷ đồng` is checked.
 4. Fact-presence scoring cannot judge a purely textual answer without numeric or keyword gold; it relies on `gold_facts` being well chosen.
-5. Rounded vs exact figures: the report states some values twice at different precision (p.5 vs p.297/300); gold facts use `a | b` alternatives and `alt_pages`; this is manual per item.
+5. Rounded vs exact figures: the scorer accepts the gold figure stated more precisely or in another unit (§14.2). The report states some values twice at different precision (p.5 vs p.297/300); gold facts use `a | b` alternatives and `alt_pages`; this is manual per item.
 6. Table rows that wrap a label across a page break may be split.
 7. Single-process server; one answer at a time.
 8. Cost figures use list prices recorded on 10 Oct 2026 and are estimates.
 9. Claims without numbers are not checked for content: a sentence citing a page is only as true as the model makes it (numbers, units, signs, pages and calculations are checked; words are not).
 10. Disagreeing figures: the prompt asks for both figures with their own citations (rule 10 of the plan prompt); no eval item has two different figures for one item and period, so this behaviour is untested.
-11. The ambiguity dev items (2) are subjective; the LLM may reasonably answer "Lợi nhuận" for the only reported year.
+11. KPI change directions are drawn as vector triangles and are not extracted (§2); an answer can state a change with the wrong direction (test1 `x-ees`).
+12. When a numbered note heading names a table, the caption of a sub-table under it is dropped from the chunk title, so its rows lose their metric (test1 `x-masan-fee`, a refusal).
+13. Short KPI tiles (a two-word label and a figure) can rank below longer statement rows on related metrics (test1 `x-credcost`: provision expense given for credit cost, cited).
+14. The ambiguity dev items (2) are subjective; the LLM may reasonably answer "Lợi nhuận" for the only reported year.
 
 ---
 
-## 19. Cost and latency model (to be measured, not asserted)
+## 19. Cost and latency model (measured values: SUBMISSION and `runs/`)
 
 Per question: ≤ 1 rewrite call (follow-ups only) + 1–2 generation calls; one query embedding with BGE-M3 on CPU (`query_embed_s` in `tcb check`; `seconds.embed` in every trace) + dense search (≈ 0.05 s) + BM25 (< 1 ms). The former rerank of 30 passages took ≈ 60 s on 2 Colab cores. `tcb eval` reports p50/p95 latency and the median seconds per stage (`embed`, `dense`, `bm25`, `llm`), tokens, and a cost estimate when the model has a list price in `conf.PRICES` (otherwise null, never 0).
 
