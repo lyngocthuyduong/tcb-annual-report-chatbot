@@ -267,7 +267,9 @@ def widen_gold(item: Item, nodes: dict) -> Item:
 def _commit() -> str | None:
     """The code that produced the numbers (None outside a git checkout, e.g. inside the Docker image)."""
     try:
-        return subprocess.run(["git", "describe", "--always", "--dirty"], capture_output=True, text=True, timeout=5).stdout.strip() or None
+        head = subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, timeout=5).stdout.strip()
+        dirty = subprocess.run(["git", "diff", "--quiet", "HEAD", "--", "src"], capture_output=True, timeout=5).returncode == 1
+        return (head + ("-dirty" if dirty else "")) or None              # '-dirty': uncommitted changes to the code itself
     except (OSError, subprocess.SubprocessError):
         return None
 
