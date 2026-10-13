@@ -446,7 +446,17 @@ The answers also cite every page that repeats a figure (page precision 0.72 to 0
 
 **Run b5af804 (after the review fixes):** dev14 66/70, val14 32/34, q10 10/10 in three samples (q10l, q10m, q10n), test2 21/22 and 22/22 in two more samples (test2b, test2c); summaries in `runs/history/`. Reading the misses: citing only the blocks that print the most figures dropped pages the model had listed first (dev `n-nps`, val `n-tinchap`, test2 `y-community`: correct figure, page outside the gold list), so the first listed block is kept as well; the year rule took the year of the comparison figure that follows (`n-cir-diff`), so a following year now counts only with no figure in between; the model summed statement rows where the report prints the total and then chained a unit conversion onto the sum (`n-fu-eq`), so the prompt says to use a printed total and `sum` takes `to`; a conversion was shown as `27.538.000,000 triệu đồng` (`f-04`). Each change was replayed on the saved plans of these runs and has a test. `n-mktcap` (247,3 nghìn tỷ for a question in tỷ) and `f-04` (gold page ranked outside the 12 blocks) remain.
 
-**Final runs (commit `9891cdc`, code as `23d9b9f`):** dev15 68/70, val15 31/34, q10 10/10 in three runs (q10o, q10p, q10q), test2 21/22 in two runs (test2d, test2e). The `to` added to `sum` and `diff` rejected count units (`lượt theo dõi`, `người`): test2 `y-followers` in both runs and val `n-hr-diff` were refused. Fixed afterwards (`to` rescales money only and is otherwise ignored, test `test_to_on_a_count_sum_is_ignored`); replaying the saved plans gives 264.000 and 857 and changes no other saved calculation. Other misses: dev `n-mktcap` (rounded to nghìn tỷ), dev `t-18` (the two components of a total, not the total), val `f-04` (statement page outside the 12 blocks), val `a-year` (answered an ambiguous question instead of asking).
+**Final runs (commit `9891cdc`, code as `23d9b9f`):** dev15 68/70, val15 31/34, q10 10/10 in three runs (q10o, q10p, q10q), test2 21/22 in two runs (test2d, test2e). The `to` added to `sum` and `diff` rejected count units (`lượt theo dõi`, `người`): test2 `y-followers` in both runs and val `n-hr-diff` were refused. Fixed afterwards (`to` rescales money only and is otherwise ignored, test `test_to_on_a_count_sum_is_ignored`); replaying the saved plans gives 264.000 and 857 and changes no other saved calculation. Every miss of the final dev and val runs:
+
+| Set | Item | Question | Answer given | Cause | Status |
+|---|---|---|---|---|---|
+| dev | `n-mktcap` | Market capitalisation at 31/12/2025, in tỷ đồng | "247,3 nghìn tỷ đồng" [tr. 38] | right figure and page, rounded; the page prints 247.310 tỷ and the prompt rule on the asked unit did not hold | misses in every run; a code check for the asked unit is the next step |
+| dev | `t-18` | Fixed assets at 31/12/2025 | the two components, 6.343.732 and 5.779.202 triệu đồng [tr. 297] | the total 12.122.934 was not stated | varies between runs (earlier runs summed them) |
+| val | `n-hr-diff` | Headcount increase 2025 over 2024 | refused | the calculator bug above | fixed; the replayed calculation gives 857 |
+| val | `f-04` | Follow-up "Còn năm 2024 thì sao?" (profit before tax) | "27.538 tỷ đồng, tương đương 27.538.000 triệu đồng" [tr. 257] | right value, rounded; the statement page (p.300, 27.538.368 triệu) ranked outside the 12 blocks | misses in every run |
+| val | `a-year` | "Lợi nhuận là bao nhiêu?" (ambiguous) | profit before and after tax for 2025 [tr. 5] | answered instead of asking which profit and year | varies between runs |
+
+None of them cites a page outside its evidence or states a figure the report does not print.
 
 ---
 

@@ -66,12 +66,12 @@ Other experiments (tokenizers, fusion parameters, chunk sizes, vector database, 
 
 | Set | Pass | Fact correct | Page hit (declared pages only) | Unanswerable refused |
 |---|---|---|---|---|
-| **test2 (independent)** | **21/22** in each of two runs (first run, at `5c5f329`: 22/22) | 17/18 | 17/18 (17/18) | 4/4 |
+| **test2 (independent)** | **22/22** on its first run (`5c5f329`, `runs/test2r`); 21/22 in two later runs at `9891cdc`, the one miss a calculator bug fixed since (below) | 18/18; later 17/18 | 18/18 (18/18); later 17/18 | 4/4 |
 | q10 | 10/10 in each of three runs | 9/9 | 9/9 (8/9) | 1/1 |
 | val | 31/34 | 26/28 | 26/28 (26/28) | 5/5 |
 | dev | 68/70 | 55/57 | 57/57 (55/57) | 12/12 |
 
-  No answer on any set cites a page outside its evidence, and no unanswerable question was answered. The test2 miss in both runs (`y-followers`, a sum of two follower counts) and one val miss (`n-hr-diff`, a difference of headcounts) came from one cause: the unit-rescaling step added to `sum` and `diff` refused count units such as `lượt theo dõi`. It is fixed after these runs; replaying the saved plans through the fixed calculator gives 264.000 and 857, and changes no other saved calculation.
+  No answer on any set cites a page outside its evidence, and no unanswerable question was answered. The test2 miss in both runs (`y-followers`, a sum of two follower counts) and one val miss (`n-hr-diff`, a difference of headcounts) came from one cause: the unit-rescaling step added to `sum` and `diff` refused count units such as `lượt theo dõi`. It is fixed after these runs; replaying the saved plans through the fixed calculator gives 264.000 and 857, and changes no other saved calculation. Every dev and val miss is listed with its question, answer and cause in DESIGN §17.3.
 - **One scorer change, made after test2 and applied to every run.** The one test2 failure was a correct answer: "hơn 1 triệu thẻ" for the gold `1.000.000`. The scorer now reads a word scale as an exact conversion (`1 triệu` = `1.000.000`, never `600.000`) and a gold count ending in three zeros as rounded to the thousand (`hơn 303.000` is met by `303.446`). `tcb eval --rescore` re-scores the saved answers without calling the model; it changed two items, both to pass (test2 `y-visaeco`, val `n-tinchap`), and nothing else.
 - What the numbers made you change:
   - E4 set the evidence count (k = 12) and the reranker was removed (above).
