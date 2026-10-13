@@ -144,11 +144,18 @@ def test_sum_rescaled_in_the_same_step():
     a, b = Q("A", 618911535), Q("B", 215330128)
     r = calc.run("sum", [a, b], "nghìn tỷ đồng")
     assert r.text == "834,242 nghìn tỷ đồng" and r.inputs == ("A", "B")
-    with pytest.raises(calc.UnitMismatch):
-        calc.run("sum", [a, b], "%")
+    assert calc.run("sum", [a, b], "%").text == "834.241.663 triệu đồng"     # not a money unit: 'to' ignored
 
 
 def test_rescaled_amount_has_no_trailing_zero_decimals():
     """val14 f-04 showed '27.538.000,000 triệu đồng'."""
     assert calc.convert(Q("A", 27538, scale=10**9), "triệu đồng").text == "27.538.000 triệu đồng"
     assert calc.convert(Q("A", 53391125), "nghìn tỷ đồng").text == "53,391 nghìn tỷ đồng"
+
+
+@pytest.mark.parametrize("to", ["người", "lượt theo dõi", "%", ""])
+def test_to_on_a_count_sum_is_ignored(to):
+    """test2d y-followers: 'to': 'lượt theo dõi' on a sum of two counts must not refuse the sum."""
+    a, b = Q("A", 147000, "count", 1), Q("B", 117000, "count", 1)
+    assert calc.run("sum", [a, b], to or None).value == 264000
+    assert calc.run("diff", [Q("A", 12705, "count", 1), Q("B", 11848, "count", 1)], to or None).value == 857

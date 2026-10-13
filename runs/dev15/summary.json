@@ -1,0 +1,130 @@
+{
+ "n": 70,
+ "pass_rate": 0.9714,
+ "retrieval": {
+  "n_with_gold_pages": 57,
+  "recall@40_bm25": 1.0,
+  "recall@40_dense": 0.8947,
+  "recall@40_fused": 1.0,
+  "recall@12_final": 1.0,
+  "recall@3_final": 0.8772,
+  "mrr_final": 0.7466
+ },
+ "answers": {
+  "fact_correct": 0.9649,
+  "fact_unscorable": 0,
+  "citation_valid": 1.0,
+  "page_hit": 1.0,
+  "page_hit_declared": 0.9649,
+  "page_precision": 0.9211
+ },
+ "refusal": {
+  "precision": 1.0,
+  "recall": 1.0,
+  "n_unanswerable": 12,
+  "false_answer_rate": 0.0
+ },
+ "latency_s": {
+  "mean": 2.425,
+  "p50": 2.212,
+  "p95": 4.178
+ },
+ "tokens_in_total": 812817,
+ "tokens_out_total": 15968,
+ "cost_usd_total": 0.08927,
+ "cost_usd_per_question": 0.001275,
+ "stage_seconds_p50": {
+  "embed": 0.51,
+  "dense": 0.092,
+  "bm25": 0.001,
+  "llm": 1.537
+ },
+ "llm_calls_mean": 1.14,
+ "attribution": {
+  "pass": 68,
+  "generation:wrong_or_missing_fact": 2
+ },
+ "by_category": {
+  "ambiguous": {
+   "n": 1,
+   "pass_rate": 1.0
+  },
+  "conversation": {
+   "n": 6,
+   "pass_rate": 1.0
+  },
+  "customer": {
+   "n": 3,
+   "pass_rate": 1.0
+  },
+  "digital": {
+   "n": 1,
+   "pass_rate": 1.0
+  },
+  "financial_review": {
+   "n": 5,
+   "pass_rate": 1.0
+  },
+  "financial_statements": {
+   "n": 24,
+   "pass_rate": 0.9583
+  },
+  "glossary": {
+   "n": 4,
+   "pass_rate": 1.0
+  },
+  "governance": {
+   "n": 2,
+   "pass_rate": 1.0
+  },
+  "human_capital": {
+   "n": 2,
+   "pass_rate": 1.0
+  },
+  "investor": {
+   "n": 2,
+   "pass_rate": 0.5
+  },
+  "key_figures": {
+   "n": 4,
+   "pass_rate": 1.0
+  },
+  "network": {
+   "n": 1,
+   "pass_rate": 1.0
+  },
+  "retail": {
+   "n": 2,
+   "pass_rate": 1.0
+  },
+  "subsidiary": {
+   "n": 1,
+   "pass_rate": 1.0
+  },
+  "unanswerable": {
+   "n": 12,
+   "pass_rate": 1.0
+  }
+ },
+ "by_type": {
+  "calc": {
+   "n": 11,
+   "pass_rate": 1.0
+  },
+  "followup": {
+   "n": 6,
+   "pass_rate": 1.0
+  },
+  "refusal": {
+   "n": 13,
+   "pass_rate": 1.0
+  },
+  "single": {
+   "n": 40,
+   "pass_rate": 0.95
+  }
+ },
+ "items_run": 70,
+ "items_unverified_excluded": 0,
+ "submission_grade": true
+}

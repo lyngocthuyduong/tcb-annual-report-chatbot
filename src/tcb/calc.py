@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal, DivisionByZero, InvalidOperation, localcontext
 
-from .num import Quantity, fmt, scale_for, unit_vi
+from .num import NumError, Quantity, fmt, scale_for, unit_vi
 
 
 class CalcError(ValueError):
@@ -162,14 +162,16 @@ def run(op: str, qs: list[Quantity], to: str | None = None) -> CalcResult:
         raise InvalidInput(f"unknown op {op!r}")
     if op != "sum" and len(qs) != arity[op]:
         raise InvalidInput(f"{op} needs {arity[op]} inputs, got {len(qs)}")
-    if op in ("sum", "diff") and to:                         # result rescaled in the same step, never by a second calculation
+    if op in ("sum", "diff") and to:
+        # a money result may be rescaled in the same step ('nghìn tỷ đồng'); for anything else ('người', 'lượt theo dõi')
+        # 'to' only names the unit the result already has and is ignored
         r = sum_(qs) if op == "sum" else run("diff", qs)
         try:
             dim, sc = scale_for(to)
-        except ValueError as e:
-            raise InvalidInput(str(e))
-        if dim != r.dim or dim not in ("VND", "USD"):
-            raise UnitMismatch(f"không đổi {r.dim} -> {dim}")
+        except (ValueError, NumError):
+            return r
+        if r.dim not in ("VND", "USD") or dim != r.dim or sc == r.scale:
+            return r
         return CalcResult(r.op, r.value * r.scale / sc, dim, sc, 3, r.inputs, f"({r.formula}) -> {to}")
     if op == "sum": return sum_(qs)
     if op == "convert":

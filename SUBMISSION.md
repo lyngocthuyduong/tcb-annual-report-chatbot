@@ -52,7 +52,7 @@ Other experiments (tokenizers, fusion parameters, chunk sizes, vector database, 
   - Pages: citations must be pages of retrieved evidence. Page hit counts the declared gold pages and any page that prints all the gold figures (`widen_gold`), since the analyst can check the figure there; hits on declared pages alone are reported too.
   - Refusals are scored on unanswerable questions, and each failure is attributed to its first failing stage from the trace.
   - Gold facts are machine-checked against the PDF text of their page (`tcb vset check`, calculations recomputed), and I reviewed every item and read every q10, test and test2 answer against its cited page; the notes saved inside `runs/test1` predate that review.
-  - Each run is one sample at the provider's default sampling.
+  - Each run is one sample at the provider's default sampling; q10 and test2 were run several times to show the spread.
 
 | Set | Items | Role |
 |---|---|---|
@@ -62,27 +62,26 @@ Other experiments (tokenizers, fusion parameters, chunk sizes, vector database, 
 | test | 22 | written after the last code change, on pages no other set uses, run once (test1); its failures drove the fixes below, so it no longer counts as independent |
 | test2 | 22 | written after those fixes, on pages no other set uses, frozen before its first run |
 
-- Results on the 10 published questions: 10/10 (9/9 facts, 9/9 pages, the one unanswerable question refused). All sets, code at commit `5c5f329`, claude-haiku-5-5, 2 vCPU (`runs/test2`, rescored `runs/test2r`; the others in `runs/history/`, rescored copies end in `r`):
+- Results on the 10 published questions: 10/10 in each of three runs (9/9 facts, 9/9 pages, the unanswerable one refused). All sets at commit `9891cdc`, claude-haiku-5-5, 2 vCPU (`runs/dev15`, `val15`, `q10o` to `q10q`, `test2d`, `test2e`; earlier runs in `runs/history/`):
 
 | Set | Pass | Fact correct | Page hit (declared pages only) | Unanswerable refused |
 |---|---|---|---|---|
-| **test2 (independent)** | **22/22** (21/22 as first scored) | 18/18 | 18/18 (18/18) | 4/4 |
-| q10 | 10/10 | 9/9 | 9/9 (8/9) | 1/1 |
-| test, after its fixes (not independent) | 22/22 (19/22 before) | 18/18 | 18/18 (18/18) | 4/4 |
-| val | 33/34 (32/34 as first scored) | 27/28 | 27/28 (27/28) | 5/5 |
-| dev | 68/70 | 55/57 | 56/57 (53/57) | 12/12 |
+| **test2 (independent)** | **21/22** in each of two runs (first run, at `5c5f329`: 22/22) | 17/18 | 17/18 (17/18) | 4/4 |
+| q10 | 10/10 in each of three runs | 9/9 | 9/9 (8/9) | 1/1 |
+| val | 31/34 | 26/28 | 26/28 (26/28) | 5/5 |
+| dev | 68/70 | 55/57 | 57/57 (55/57) | 12/12 |
 
-  No answer on any set cites a page outside its evidence, and no unanswerable question was answered. The checks and the citation display were tightened after these runs (DESIGN §8: sign both ways, year and currency of copied figures, restated amounts, cited blocks); the numbers above are for `5c5f329`.
+  No answer on any set cites a page outside its evidence, and no unanswerable question was answered. The test2 miss in both runs (`y-followers`, a sum of two follower counts) and one val miss (`n-hr-diff`, a difference of headcounts) came from one cause: the unit-rescaling step added to `sum` and `diff` refused count units such as `lượt theo dõi`. It is fixed after these runs; replaying the saved plans through the fixed calculator gives 264.000 and 857, and changes no other saved calculation.
 - **One scorer change, made after test2 and applied to every run.** The one test2 failure was a correct answer: "hơn 1 triệu thẻ" for the gold `1.000.000`. The scorer now reads a word scale as an exact conversion (`1 triệu` = `1.000.000`, never `600.000`) and a gold count ending in three zeros as rounded to the thousand (`hơn 303.000` is met by `303.446`). `tcb eval --rescore` re-scores the saved answers without calling the model; it changed two items, both to pass (test2 `y-visaeco`, val `n-tinchap`), and nothing else.
 - What the numbers made you change:
   - E4 set the evidence count (k = 12) and the reranker was removed (above).
   - Reading every answer, not only the scores, found the costly errors. On test1 an answer the scorer passed said "giảm 7%" where the page draws an up triangle: the direction exists only as a vector path, so extraction now reads those paths into markers (63 in the index). The same run gave provision expense for a question on credit cost (hence the KPI label ranking) and refused one note-table question because the note heading had replaced the sub-table caption (now kept as the table's first row).
-  - On the final runs, an answer put `834.241.663 triệu đồng` next to `tương đương 776,5 nghìn tỷ đồng`: two different figures, both printed in the report, so every number check passed. Restated amounts are now compared after calculation.
+  - On the runs at `5c5f329`, an answer put `834.241.663 triệu đồng` next to `tương đương 776,5 nghìn tỷ đồng`: two different figures, both printed in the report, so every number check passed. Restated amounts are now compared after calculation.
   - Gold changes after review are few and named in the item notes: two dev items gained an alternative page that prints the same figure (`n-equity`, `h-kpi-pbt`), and the scorer change above.
 
 ## Cost and latency
 - Ingestion: parse 48.2 s, embedding 79.4 s on a Colab T4 GPU, BM25 1.2 s for 1,445 nodes (`idx/report.json`). One-off, no API cost.
-- Per query (2 vCPU, no GPU; claude-haiku-5-5 at $0.10 / $0.50 per million input / output tokens): p50 2.2 to 2.5 s and p95 2.8 to 4.6 s across the five runs (9.4 s on test1b, two slow model calls); about $0.001 per question (8k to 12k input and 180 to 250 output tokens, 1.0 to 1.2 model calls including follow-up rewrites and repairs). Median stage times (dev13): query embedding 0.51 s, dense search 0.08 s, BM25 under 0.01 s, model 1.72 s. BGE-M3 loads once at start.
+- Per query (2 vCPU, no GPU; claude-haiku-5-5 at $0.10 / $0.50 per million input / output tokens): p50 1.9 to 2.3 s and p95 2.4 to 4.2 s across the final runs (6.4 s on one q10 run, one slow model call); about $0.001 per question (about 11.6k input and 230 output tokens on dev, 1.0 to 1.15 model calls including follow-up rewrites and repairs). Median stage times (dev15): query embedding 0.51 s, dense search 0.09 s, BM25 under 0.01 s, model 1.54 s. BGE-M3 loads once at start.
 - Models used: BAAI/bge-m3 for embeddings; claude-haiku-5-5 for every reported number. Run artifacts with commit, model and hardware are in `runs/`; earlier runs cited here are in `runs/history/`.
 
 ## What I deliberately did not build
