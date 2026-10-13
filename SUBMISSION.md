@@ -44,7 +44,7 @@
 - What the numbers made you change: E4 and latency removed the reranker and set the evidence count to 20 on the final index (fused recall 0.859 at 10, 0.906 at 15, 0.929 at 20); E2 kept the Vietnamese tokenizer; E3b kept RRF k = 60; the three val failures led to literals in the calculator and quantity selection by question relevance; the batch refusal of sq-07 (RBG loan balance, p.59) led to page-title context in every node, a general fix tested on other pages (RBG, TCBS, TCC, board, cash-flow continuation, glossary).
 
 ## Cost and latency
-- Ingestion (Colab, 2 vCPU + T4 for embedding): parse 19.8 s, embed 85.7 s for 1,463 nodes, BM25 0.7 s (`idx/report.json`, previous build). One-off, no API cost. <!-- update from the final idx/report.json -->
+- Ingestion (Colab, 2 vCPU + T4 for embedding): parse 20.5 s, embed 82.4 s for 1,445 nodes, BM25 1.0 s (`idx/report.json`). One-off, no API cost.
 - Per query: <!-- fill from summary.json of the final val/q10 run: p50, p95, stage_seconds_p50, tokens, cost_usd_per_question; state CPU and model -->
 - Models used: embedding BAAI/bge-m3; generation claude-haiku-5-5 (development), gpt-4o-mini, claude-sonnet-5-5 or Ollama `qwen2.5:7b` selectable; each run's `config.json` records the model that produced its numbers.
 
