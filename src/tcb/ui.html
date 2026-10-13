@@ -10,7 +10,6 @@ main{max-width:860px;margin:16px auto;padding:20px;background:var(--card);border
 header{display:flex;align-items:center;gap:14px;padding-bottom:16px;border-bottom:1px solid var(--line)}
 .logo{width:48px;height:48px;border-radius:10px;background:var(--acc);display:grid;place-items:center;flex:none}
 h1{font-size:19px;margin:0}.sub{color:var(--mut);font-size:14px}
-.tag{margin-left:auto;font-size:12px;font-weight:600;background:var(--line);padding:3px 10px;border-radius:99px}
 .lbl{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);margin:18px 0 8px}
 #log{flex:1;display:flex;flex-direction:column;gap:14px}
 .q{align-self:flex-end;max-width:80%;white-space:pre-wrap}
@@ -26,7 +25,6 @@ h1{font-size:19px;margin:0}.sub{color:var(--mut);font-size:14px}
 .ok{margin-left:auto;font-size:12.5px;font-weight:600;color:var(--ok);background:var(--okbg);padding:2px 9px;border-radius:99px;white-space:nowrap}
 .btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .btn{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:14px;font-weight:600;color:var(--fg);background:none;border:1px solid var(--line);border-radius:99px;padding:6px 14px;cursor:pointer}
-.meta{color:var(--mut);font-size:12px;margin-top:10px}
 .foot{position:sticky;bottom:0;background:var(--card);padding-bottom:2px}
 form{display:flex;gap:10px}
 .row svg{flex:none}
@@ -38,7 +36,6 @@ input{flex:1;min-width:0;padding:11px 18px;border:1px solid var(--line);border-r
 <header>
  <div class="logo" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10 12 4l9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 21h18"/></svg></div>
  <div><h1>Techcombank Annual Report Chatbot</h1><div class="sub">Techcombank · Báo cáo thường niên 2025</div></div>
- <span class="tag">Demo</span>
 </header>
 <div class="lbl">Hội thoại</div>
 <div id="log"></div>
@@ -70,11 +67,11 @@ function card(j){const c=el('div','a');const [h,k]=HEAD[j.status]||HEAD.error;co
   c.appendChild(src)}
  if(j.answer){const bs=el('div','btns');bs.appendChild(btn('Sao chép câu trả lời','M4 16V6a2 2 0 0 1 2-2h10',b=>copy(j.answer,b)));
   if(ps.length)bs.appendChild(btn('Sao chép kèm nguồn','M4 16V6a2 2 0 0 1 2-2h10',b=>copy(j.answer+'\n\nNguồn: '+DOC+', trang in '+ps.join(', ')+'.',b)));c.appendChild(bs)}
- if(j.provider)c.appendChild(el('div','meta',j.provider+' / '+j.model+(j.secs?' · '+j.secs+' s':'')));return c}
+ return c}
 document.getElementById('f').onsubmit=async e=>{e.preventDefault();const text=q.value.trim();if(!text)return;
- log.appendChild(el('div','q',text)).scrollIntoView();q.value='';s.disabled=true;const w=log.appendChild(el('div','a','Đang tra cứu báo cáo…'));const t0=performance.now();
+ log.appendChild(el('div','q',text)).scrollIntoView();q.value='';s.disabled=true;const w=log.appendChild(el('div','a','Đang tra cứu báo cáo…'));
  try{const r=await fetch('/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({question:text,session_id:sid})});
-  const j=await r.json();sid=j.session_id||sid;j.secs=((performance.now()-t0)/1000).toFixed(1).replace('.',',');
+  const j=await r.json();sid=j.session_id||sid;
   w.replaceWith(j.status?card(j):el('div','a','Lỗi '+r.status+': '+JSON.stringify(j.detail||j)))}
  catch(err){w.textContent='Không kết nối được máy chủ: '+err}
  document.getElementById('ql').textContent='Câu hỏi tiếp theo';q.placeholder='Ví dụ: Còn năm trước thì sao?';s.disabled=false;q.focus();log.lastChild.scrollIntoView({block:'nearest'})};
