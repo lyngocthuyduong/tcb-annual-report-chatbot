@@ -1,6 +1,6 @@
 {
  "index_format_version": 1,
- "built_at": "2026-10-13T04:56:39Z",
+ "built_at": "2026-10-13T07:58:01Z",
  "source": {
   "document_id": "tcb-ar-2025",
   "filename": "ar.pdf",
@@ -21,7 +21,7 @@
   "unit": "half-page",
   "narrative_max_words": 220,
   "table_rows_per_chunk": 12,
-  "context": "chapter>heading",
+  "context": "chapter>heading;flow2",
   "glossary": "one-per-term"
  },
  "bm25": {
@@ -32,9 +32,9 @@
   "b": 0.75
  },
  "counts": {
-  "nodes": 1512,
+  "nodes": 1463,
   "by_type": {
-   "narrative": 1054,
+   "narrative": 1005,
    "kpi": 180,
    "table": 115,
    "glossary": 163
@@ -50,21 +50,21 @@
   "transformers": "5.19.0"
  },
  "files": {
-  "bm25/data.csc.index.npy": "2153d57998dd55a06e2b26d3564108ab8d42282b4c890b38037849d6437482cb",
-  "bm25/ids.json": "e7149c661af8546a5c5e9b4b8fe1497e5cb3d6da9cc46368d1ae5bdc35dec68c",
-  "bm25/indices.csc.index.npy": "ad3df321f1f6fe45663ffaa35267effe2a5c065dabb190ff436a9c14172c968d",
-  "bm25/indptr.csc.index.npy": "79773f6fdbb5054e3ba01d26a34c0f56b68e52264908feffee84c1c581360f0e",
-  "bm25/params.index.json": "24064f3cfb12a25b6e30af64cd77cb44a185ac4817b792dc67a090747a5cdaa6",
-  "bm25/vocab.index.json": "dd17ee313d0e9c8496326f75dda2dd3a9d553742a7e85c77a2b21c7c15035d33",
+  "bm25/data.csc.index.npy": "336a11da4c9060f78232b9757f5022503300e972a00383182b56d405a40d29a9",
+  "bm25/ids.json": "2b2c4e02c492a89fe91e8c33c64da2c7dfc00a01feabc5565e63cb21088218d4",
+  "bm25/indices.csc.index.npy": "ad1f3de322acf411a83044c2abbfe161e955e51c5157f900fa77e6814a8b214d",
+  "bm25/indptr.csc.index.npy": "0d0c2cb8d044a2486d5f58981af5bde6c6a071104d16a317d500ac7aa9639f70",
+  "bm25/params.index.json": "2d29369c608abb2fa2ef07a264743cdc288009b5758a615369b2a8a33df1259b",
+  "bm25/vocab.index.json": "c37a58273537d1d4fb0daa7d5d29d20bc6239d75d4978de2e3b3693c620d092b",
   "gloss.json": "2f5eb083e9c1cb965cd00d5d2775db03d535be461119cf5bd0f03b547bc15ac8",
-  "llamaindex/default__vector_store.json": "1fa78d4f91f83498761d161841d97f7f214fac753ecf01c3861650a1aef9aa43",
-  "llamaindex/docstore.json": "783790a7f92d139ae0b246ba36506c3e50e1808c5f0dfdec98c2a0557a80765d",
+  "llamaindex/default__vector_store.json": "08cdc247d7124e9857e248e42b5d673fa334f7542b45d6b6b9969974b051142b",
+  "llamaindex/docstore.json": "2cdfdf88907c5395e00956ff10ab78420a1ba0aa2f3dafe370ff3fbe1d81a0fa",
   "llamaindex/graph_store.json": "8e0a77744010862225c69da83c585f4f8a42fd551b044ce530dbb1eb6e16742c",
   "llamaindex/image__vector_store.json": "d17ed74c1649a438e518a8dc56a7772913dfe1ea7a7605bce069c63872431455",
-  "llamaindex/index_store.json": "fb33a653ddd1db0b15b42ded35534c9e4dddb59de6b6487d7e9887af33ab0b5c",
-  "nodes.jsonl": "09c104916bd63bfefb5406fef1320e32e2a65e6c254b8de3f137dfd26a4381ed",
+  "llamaindex/index_store.json": "b453932a447701f796c4af6e4be15130765505c0caaff38f3be48efcacd3a869",
+  "nodes.jsonl": "b09a382fd4da9cfead36354d9f77a2531d423b05c353858c1eb0c47dc9399fa1",
   "pages.json": "de8c127e71f13845a0d4302fe3864b748a4759a2b00e9f1b38e34b0d3bde8aa6",
-  "report.json": "3c39867f2872d26fecb3d3a89fe7c1a3b833a2503bd3f614c0bc8f6053332916",
+  "report.json": "8e36faefc754c11730871bee3b043f9bff965b7739cc43f96f212c7a5b073869",
   "tables.jsonl": "617453d2b8f6fa59f1492af38dea0dec1d2ae2f6394c36c92b3722ff6311c22c"
  }
 }

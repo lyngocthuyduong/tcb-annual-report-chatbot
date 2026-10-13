@@ -255,15 +255,15 @@
   ]
  },
  "nodes_by_type": {
-  "narrative": 1054,
+  "narrative": 1005,
   "kpi": 180,
   "table": 115,
   "glossary": 163
  },
  "glossary_terms": 163,
  "seconds": {
-  "ingest": 13.4,
-  "embed": 80.1,
+  "ingest": 19.8,
+  "embed": 85.7,
   "bm25": 0.7
  },
  "hardware": {
