@@ -126,7 +126,8 @@ def sum_(qs: list[Quantity]) -> CalcResult:
     for q in qs: _need(q)
     _same_dim(*qs); _same_period(*qs)
     first = qs[0]
-    return CalcResult("sum", sum((q.base for q in qs), Decimal(0)) / first.scale, first.dim, first.scale, 1,
+    total = sum((q.base for q in qs), Decimal(0)) / first.scale
+    return CalcResult("sum", total, first.dim, first.scale, 0 if total == total.to_integral_value() else 1,
                       tuple(q.qid for q in qs), "+".join(q.qid for q in qs))
 
 
@@ -156,4 +157,8 @@ def run(op: str, qs: list[Quantity], to: str | None = None) -> CalcResult:
     if op == "convert":
         if not to: raise InvalidInput("convert needs 'to'")
         return convert(qs[0], to)
-    return {"growth_pct": growth_pct, "diff": diff, "ratio": ratio, "share_pct": share_pct, "cagr": cagr}[op](*qs)
+    a, b = qs
+    if op in ("growth_pct", "cagr") and a.period.year and b.period.year and a.period.year != b.period.year:
+        later_first = op == "growth_pct"                      # growth_pct(current, previous); cagr(start, end)
+        if (a.period.year > b.period.year) != later_first: a, b = b, a
+    return {"growth_pct": growth_pct, "diff": diff, "ratio": ratio, "share_pct": share_pct, "cagr": cagr}[op](a, b)

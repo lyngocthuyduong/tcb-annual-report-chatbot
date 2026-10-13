@@ -113,3 +113,14 @@ def test_literal_periods_compare_by_year_tables_stay_strict():
     assert calc.diff(a, b).text == "857"
     with pytest.raises(calc.PeriodMismatch):
         calc.diff(Q("a", 1), Q("b", 1, kind="year", year=2024))
+
+
+def test_growth_and_cagr_follow_the_periods_not_the_argument_order():
+    new, old = Q("L2", 824104, scale=10**9, kind="year", year=2025), Q("L1", 683028, scale=10**9, kind="year", year=2024)
+    assert calc.run("growth_pct", [old, new]).text == calc.run("growth_pct", [new, old]).text == "20,7%"
+    start, end = Q("Q1", 100, kind="year", year=2018), Q("Q2", 200, kind="year", year=2025)
+    assert calc.run("cagr", [end, start]).value == calc.run("cagr", [start, end]).value
+
+
+def test_integer_sum_prints_without_decimal():
+    assert calc.run("sum", [Q("Q1", 6343732), Q("Q2", 5779202)]).text == "12.122.934 triệu đồng"

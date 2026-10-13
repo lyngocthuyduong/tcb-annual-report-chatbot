@@ -110,13 +110,9 @@ def evidence_from(nodes: list[dict]) -> list[Ev]:
 
 
 def num_tokens(text: str) -> set[str]:
-    """Numbers in canonical form, '%' dropped: '14,6%' -> '14.6', '1.192.344.137' -> '1192344137'."""
-    out = set()
-    for m in _NUM.finditer(vi.nfc(text)):
-        t = m.group(0)
-        out.add(vi.canon_num(t).rstrip("%"))
-        out.add(t)
-    return out
+    """Numbers in canonical form only, '%' dropped: '14,6%' -> '14.6', '1.192.344.137' -> '1192344137'. Raw forms are
+    not kept: the raw '179.501' (one hundred seventy-nine thousand) equals the canonical form of '179,501' (179.5)."""
+    return {vi.canon_num(m.group(0)).rstrip("%") for m in _NUM.finditer(vi.nfc(text))}
 
 
 def _trivial(t: str) -> bool:
@@ -194,7 +190,7 @@ def check(plan, evs: list[Ev], quantities: dict[str, Quantity], question: str = 
         ok_nums = num_tokens(cited_text) | q_nums
         body = _PLACEHOLDER.sub(" ", cl.text_vi)
         bad = sorted({t for m in _NUM.finditer(vi.nfc(body)) for t in [m.group(0)]
-                      if not _trivial(t) and t not in ok_nums and vi.canon_num(t).rstrip("%") not in ok_nums})
+                      if not _trivial(t) and vi.canon_num(t).rstrip("%") not in ok_nums})
         if bad:
             ps.append("numbers not found in the cited evidence: " + ", ".join(bad[:6]))
         ps += magnitude_problems(body, cited_text)
@@ -212,8 +208,27 @@ def pages_of(claim, evs: list[Ev], plan, results: dict[str, CalcResult], quantit
     return sorted(pg)
 
 
+_UNITS = r"(?:nghìn tỷ đồng|tỷ đồng|triệu đồng|nghìn đồng|đồng|triệu USD|USD|điểm phần trăm|người)"
+
+
 def render_claim(claim, results: dict[str, CalcResult]) -> str:
-    return _PLACEHOLDER.sub(lambda m: results[m.group(1)].text if m.group(1) in results else m.group(0), claim.text_vi).strip()
+    """Put calculator results into the sentence. The result text carries its own sign and unit, so the words the model
+    wrote around the placeholder are made consistent with it: 'giảm {C1}' with -39,3% -> 'giảm 39,3%', 'tăng {C1}' with a
+    negative result -> 'giảm ...', '{C1}%' -> one '%', '{C1} triệu đồng' -> one unit."""
+    def put(m):
+        r = results.get(m.group(2))
+        if r is None: return m.group(0)
+        verb, txt = m.group(1) or "", r.text
+        if txt.startswith("-") and verb:
+            txt = txt[1:]
+            if verb.strip().lower() == "tăng": verb = verb.replace("tăng", "giảm").replace("Tăng", "Giảm")
+        elif verb.strip().lower() == "giảm" and r.value > 0 and r.op in ("growth_pct", "diff", "cagr"):
+            verb = verb.replace("giảm", "tăng").replace("Giảm", "Tăng")
+        return verb + txt
+    s = re.sub(r"((?:tăng|giảm|Tăng|Giảm)\s+(?:thêm\s+|khoảng\s+)?)?\{(C\d+)\}", put, claim.text_vi)
+    s = re.sub(r"%\s*%", "%", s)
+    s = re.sub(rf"({_UNITS})(\s+\1)+", r"\1", s)
+    return s.strip()
 
 
 def marker(pages: list[int]) -> str:
@@ -248,4 +263,4 @@ def check_text_numbers(text: str, evs: list[Ev], question: str = "") -> list[str
     """Numbers in free text (e.g. the 'missing part' note of a partial answer) not present in ANY evidence."""
     ok = num_tokens(" ".join(e.text for e in evs)) | num_tokens(question)
     return sorted({m.group(0) for m in _NUM.finditer(vi.nfc(text))
-                   if not _trivial(m.group(0)) and m.group(0) not in ok and vi.canon_num(m.group(0)).rstrip("%") not in ok})
+                   if not _trivial(m.group(0)) and vi.canon_num(m.group(0)).rstrip("%") not in ok})

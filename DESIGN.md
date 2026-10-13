@@ -216,7 +216,7 @@ If the reply is not parseable JSON for the schema, or `cite.check` finds problem
 1. Every `evidence` id exists among the retrieved blocks and has a printed page.
 2. Every `{C#}`/`calc_refs` id exists among the plan's calculations; calculation inputs exist among the extracted quantities.
 3. The text contains **no** page reference (`tr. 5`, `trang 5` …) — pages are never LLM output.
-4. **Every number in the claim text must appear in the cited evidence** (or in the raw cells of quantities used by the claim's calculations, or in the question), compared in canonical form so `14,6%` ≡ `14.6`. Integers ≤ 12 are exempt (list counts, months), a documented gap.
+4. **Every number in the claim text must appear in the cited evidence** (or in the raw cells of quantities used by the claim's calculations, or in the question), compared in canonical form only, so `14,6%` ≡ `14.6`. Raw forms are not compared: the raw `179.501` (thousands) is the canonical form of `179,501` (179.5), and comparing both let a claim `179,501 nghìn tỷ` pass against evidence `179.501 tỷ` (found in run dev9, fixed and tested). Integers ≤ 12 are exempt (list counts, months), a documented gap.
 5. **Magnitude.** A number printed with a magnitude in the cited evidence (`1.192 | Nghìn tỷ đồng`, `18 triệu`, `40,4%`, or the unit of a table column, `31/12/2025 Triệu đồng: 1.192.344.137`) must carry the same magnitude in the claim. `1.192 tỷ đồng` or a bare `1.192` fails although every digit matches: that is the silent factor-of-1,000 error.
 6. At least one evidence id or calculation per claim.
 

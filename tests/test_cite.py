@@ -144,3 +144,30 @@ def test_magnitude_must_match_the_evidence(text, eid, ok):
 ])
 def test_duplicate_claims(texts, dups):
     assert cite.duplicate_claims(texts) == dups
+
+
+def test_decimal_comma_never_matches_thousands_dot():
+    """'179,501' is 179.5; the evidence '179.501' is one hundred seventy-nine thousand. They must not match."""
+    evs = cite.evidence_from([node("t", "Tổng vốn chủ sở hữu (tỷ đồng) 2025 179.501", 256)])
+    ck = cite.check(plan(claims=[{"text_vi": "Vốn chủ sở hữu là 179,501 nghìn tỷ đồng.", "evidence": ["E1"]}]), evs, {}, "")
+    assert not ck.ok and any("179,501" in p for p in ck.flat)
+    assert cite.check(plan(claims=[{"text_vi": "Vốn chủ sở hữu là 179.501 tỷ đồng.", "evidence": ["E1"]}]), evs, {}, "").ok
+
+
+@pytest.mark.parametrize("text,value,shown", [
+    ("Thu nhập giảm {C1} so với năm trước.", "-39.28", "Thu nhập giảm 39,3% so với năm trước."),
+    ("Thu nhập tăng {C1} so với năm trước.", "-39.28", "Thu nhập giảm 39,3% so với năm trước."),
+    ("Vốn tăng {C1}% trong năm.", "21.33", "Vốn tăng 21,3% trong năm."),
+    ("Thu nhập giảm {C1}.", "13.19", "Thu nhập tăng 13,2%."),
+])
+def test_calculator_result_reads_correctly_in_the_sentence(text, value, shown):
+    from tcb.calc import CalcResult
+    r = CalcResult("growth_pct", D(value), "%", 1, 1, ("Q1", "Q2"), "")
+    assert cite.render_claim(P.Claim.model_validate({"text_vi": text, "evidence": ["E1"]}), {"C1": r}) == shown
+
+
+def test_unit_written_after_a_result_is_not_doubled():
+    from tcb.calc import CalcResult
+    r = CalcResult("sum", D(12122934), "VND", 10**6, 0, ("Q1", "Q2"), "")
+    cl = P.Claim.model_validate({"text_vi": "Tổng cộng {C1} triệu đồng.", "evidence": ["E1"]})
+    assert cite.render_claim(cl, {"C1": r}) == "Tổng cộng 12.122.934 triệu đồng."

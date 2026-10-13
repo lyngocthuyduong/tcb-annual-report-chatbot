@@ -65,10 +65,13 @@
    300
   ],
   "gold_facts": [
-   "19,3"
+   "19,3 | 19,28"
   ],
   "verified": true,
-  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending."
+  "notes": "Checked by Claude: inputs found and result recomputed; gold facts found on the cited printed page in the PDF text (pdftotext); human spot-check pending. Widened after run val9: note 48 (p.383) prints the same growth as 19,28%; checked in the PDF text.",
+  "alt_pages": [
+   383
+  ]
  },
  {
   "id": "f-04",
