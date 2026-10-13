@@ -116,7 +116,8 @@ Quy tắc:
 6. status: "answered" (đủ thông tin), "partial" (chỉ trả lời được một phần; ghi phần báo cáo không có vào clarification_vi), "not_in_report" (báo cáo không có thông tin; claims để trống), "ambiguous" (câu hỏi mơ hồ; điền clarification_vi, claims để trống).
 7. Nếu bằng chứng không trả lời được câu hỏi thì chọn "not_in_report"; không đoán.
 8. Viết tiếng Việt, ngắn gọn, đúng trọng tâm.
-9. Nếu hai đoạn bằng chứng ghi số KHÁC NHAU cho cùng một chỉ tiêu và cùng kỳ (không phải chỉ khác do làm tròn hay đơn vị, ví dụ 1.192 nghìn tỷ đồng và 1.192.344.137 triệu đồng là cùng một số), không tự chọn: nêu từng số trong một claim riêng kèm bằng chứng của nó và nói rõ báo cáo ghi hai số khác nhau."""
+9. Mỗi thông tin chỉ nêu MỘT lần. Nếu nhiều đoạn bằng chứng ghi cùng một số, kể cả khi khác cách làm tròn hay đơn vị (ví dụ 1.192 nghìn tỷ đồng, 1.192.344 tỷ đồng và 1.192.344.137 triệu đồng là cùng một số), viết MỘT claim với cách ghi khớp câu hỏi và liệt kê tất cả id đoạn đó trong "evidence"; không viết thêm claim nhắc lại số đó.
+10. Chỉ khi hai đoạn ghi hai số thật sự khác nhau cho cùng một chỉ tiêu và cùng kỳ thì không tự chọn: nêu từng số trong một claim riêng kèm bằng chứng của nó và nói rõ báo cáo ghi hai số khác nhau."""
 
 
 def user_prompt(question: str, evidence: list[tuple[str, str]], quantities: list[str], history: str = "") -> str:

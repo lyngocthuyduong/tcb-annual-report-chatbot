@@ -220,6 +220,8 @@ If the reply is not parseable JSON for the schema, or `cite.check` finds problem
 5. **Magnitude.** A number printed with a magnitude in the cited evidence (`1.192 | Nghìn tỷ đồng`, `18 triệu`, `40,4%`, or the unit of a table column, `31/12/2025 Triệu đồng: 1.192.344.137`) must carry the same magnitude in the claim. `1.192 tỷ đồng` or a bare `1.192` fails although every digit matches: that is the silent factor-of-1,000 error.
 6. At least one evidence id or calculation per claim.
 
+After the checks, **one statement per figure**: a claim whose figures were all stated by an earlier claim (the same number from another page, or the same figure at another rounding or unit: `1.192 nghìn tỷ đồng` = `1.192.344 tỷ đồng` within half a unit of the rounded one) is left out, recorded in the trace as `duplicates_removed`. A claim with a new figure, a calculation or no figure is kept. Run `q10e` showed the need: 4 of 10 answers restated a figure from a second page.
+
 A claim failing any check is **dropped**, not patched. Rendering then builds `text + [tr. N]` where N is `printed_page_number` of the cited nodes, merged and sorted; calculator results use the pages of their input quantities. A final `verify_rendered` pass asserts every page in the rendered answer belongs to retrieved evidence (defence in depth; failure → `error` status).
 
 The answer payload also lists `citations` (eid, page, pdf_page, section, chunk_id, snippet) for the UI to open the source.
@@ -427,7 +429,7 @@ Integer differences now print without a decimal (857, not 857,0).
 6. Table rows that wrap a label across a page break may be split.
 7. Single-process server; one answer at a time.
 8. Cost figures use list prices recorded on 10 Oct 2026 and are estimates.
-9. Disagreeing figures: the prompt asks for both figures with their own citations (rule 9 of the plan prompt); no eval item has two different figures for one item and period, so this behaviour is untested.
+9. Disagreeing figures: the prompt asks for both figures with their own citations (rule 10 of the plan prompt); no eval item has two different figures for one item and period, so this behaviour is untested.
 10. The ambiguity dev items (2) are subjective; the LLM may reasonably answer "Lợi nhuận" for the only reported year.
 
 ---

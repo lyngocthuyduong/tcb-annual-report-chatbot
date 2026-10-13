@@ -124,6 +124,12 @@ class Engine:
             tr["calc_errors"] = used_err
             d = refuse.decide(plan.status, len(plan.claims), len(kept), used_err, plan.clarification_vi, bool(g.problems))
             tr["decision"] = {"status": d.status, "reason": d.reason}
+            # ---- one statement per figure: a claim that only repeats figures already stated (same number from another
+            # page, or another rounding / unit of it) is left out; claims with calculations are always kept
+            dups = cite.duplicate_claims([cite.render_claim(cl, {}) if not (set(cite._PLACEHOLDER.findall(cl.text_vi)) | set(cl.calc_refs))
+                                          else "" for cl in kept])
+            tr["duplicates_removed"] = [kept[i].text_vi for i in sorted(dups)]
+            kept = [cl for i, cl in enumerate(kept) if i not in dups]
 
             # ---- render
             lines, cites = [], []

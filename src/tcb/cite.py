@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from decimal import Decimal
 
 from . import vi
 from .calc import CalcResult
@@ -30,6 +31,40 @@ def _scale_at(text: str, start: int, end: int) -> str | None:
     if m: return _norm_scale(m.group(1))
     m = _SCALE_BEFORE.search(text[max(0, start - 40):start])
     return _norm_scale(m.group(1)) if m else None
+
+
+_MULT = {"nghìn tỷ": 10**12, "tỷ": 10**9, "triệu": 10**6, "nghìn": 10**3, None: 1}
+
+
+def figures(text: str) -> list[tuple[str, Decimal, Decimal]]:
+    """Figures a claim states, as (kind, value, rounding half-unit) in base units: '1.192 nghìn tỷ' and '1.192.344 tỷ'
+    both land near 1.192e15, '53,4 nghìn tỷ' carries a half-unit of 0.05e12. Years and small integers are left out."""
+    text = vi.nfc(text)
+    out = []
+    for m in _NUM.finditer(text):
+        t = m.group(0)
+        if _trivial(t) or _YEAR.match(t): continue
+        c = vi.canon_num(t).rstrip("%")
+        try: v = Decimal(c)
+        except Exception: continue
+        s = _scale_at(text, m.start(), m.end())
+        kind, mult = ("%", 1) if s == "%" else ("n", _MULT.get(s, 1))
+        dec = len(c.split(".")[1]) if "." in c else 0
+        out.append((kind, v * mult, Decimal(mult) / (2 * 10 ** dec)))
+    return out
+
+
+def duplicate_claims(texts: list[str]) -> set[int]:
+    """Indices of claims that only restate figures already given by an earlier claim (the same number from another
+    page, or the same figure at another rounding or unit). A claim with any new figure, or none at all, is kept."""
+    seen: list[tuple[str, Decimal, Decimal]] = []
+    dup = set()
+    for i, t in enumerate(texts):
+        fs = figures(t)
+        same = lambda f: any(f[0] == g[0] and abs(f[1] - g[1]) <= max(f[2], g[2]) for g in seen)
+        if fs and all(same(f) for f in fs): dup.add(i)
+        else: seen += fs
+    return dup
 
 
 def magnitude_problems(claim_text: str, cited_text: str) -> list[str]:

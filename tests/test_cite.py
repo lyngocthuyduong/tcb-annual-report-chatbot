@@ -131,3 +131,16 @@ MAG = cite.evidence_from([node("k", "Tổng tài sản | 1.192 | Nghìn tỷ đ�
 def test_magnitude_must_match_the_evidence(text, eid, ok):
     ck = cite.check(plan(claims=[{"text_vi": text, "evidence": [eid]}]), MAG, {}, "")
     assert ck.ok == ok, ck.flat
+
+
+@pytest.mark.parametrize("texts,dups", [
+    (["Có 302 chi nhánh.", "Hiện diện tại 29 trên 34 tỉnh.", "Mạng lưới gồm 302 chi nhánh tại 29 tỉnh."], {2}),
+    (["Tổng tài sản là 1.192 nghìn tỷ đồng, tăng 21,8%.", "Tổng tài sản năm 2025 là 1.192.344 tỷ đồng."], {1}),   # rounding
+    (["Tổng thu nhập hoạt động là 53,4 nghìn tỷ đồng.", "Theo bảng là 53.391 tỷ đồng.", "CAGR 2018–2025 là 16,5%."], {1}),
+    (["CASA đạt 40,4%.", "CASA đạt 40,4% nhờ số dư CASA tăng 17%."], set()),                # adds a new figure: kept
+    (["Lợi nhuận 32,5 nghìn tỷ đồng.", "Báo cáo khác ghi 31,9 nghìn tỷ đồng."], set()),     # a real disagreement: kept
+    (["CASA là 40,4%.", "RBG là Khối Ngân hàng Bán lẻ."], set()),                          # no figures: kept
+    (["Tỷ lệ 40%.", "Tăng 40 điểm."], set()),                                              # % and a count differ
+])
+def test_duplicate_claims(texts, dups):
+    assert cite.duplicate_claims(texts) == dups
