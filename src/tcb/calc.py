@@ -47,9 +47,15 @@ def _same_kind(*qs: Quantity) -> None:
         raise PeriodMismatch("kỳ không xác định hoặc khác loại: " + ", ".join(f"{q.qid}={q.period.kind}" for q in qs))
 
 
+def _day(label: str) -> tuple[int, ...]:
+    return tuple(int(x) for x in label.split("/"))
+
+
 def _same_period(*qs: Quantity) -> None:
+    """Same year; and when every input is a balance at a date, the same date (31/03/2025 and 31/12/2025 differ)."""
     _same_kind(*qs)
-    if len({q.period.year for q in qs}) != 1:
+    if len({q.period.year for q in qs}) != 1 or (
+            all(q.period.kind == "date" for q in qs) and len({_day(q.period.label) for q in qs}) != 1):
         raise PeriodMismatch("khác kỳ: " + ", ".join(f"{q.qid}={q.period.label}" for q in qs))
 
 
@@ -83,9 +89,10 @@ def diff(q_a: Quantity, q_b: Quantity) -> CalcResult:
 
 
 def ratio(q_num: Quantity, q_den: Quantity) -> CalcResult:
-    """num / den as a plain multiple (lần). Same unit dimension; den != 0."""
+    """num / den as a plain multiple (lần). Same unit dimension and period kind (a balance and a yearly flow never mix);
+    the periods may differ (2025 as a multiple of 2024); den != 0."""
     _need(q_num); _need(q_den)
-    _same_dim(q_num, q_den)
+    _same_dim(q_num, q_den); _same_kind(q_num, q_den)
     if q_den.base == 0:
         raise ZeroDenominator(f"{q_den.qid} = 0")
     return CalcResult("ratio", q_num.base / q_den.base, "x", 1, 2, (q_num.qid, q_den.qid), f"{q_num.qid}/{q_den.qid}")

@@ -86,7 +86,8 @@ def _lit_plan(rq, n2024="11.848"):
 def test_calculation_on_narrative_numbers_via_literals(N):
     """Numbers that live in text (no table quantity) reach the calculator only if they occur verbatim in the cited block."""
     a, p = run(N, lambda rq, i: _lit_plan(rq), "Nhân sự năm 2025 tăng thêm bao nhiêu người so với năm 2024?", keys=("hr", "b02"))
-    assert a.status == "answered" and "tăng thêm 857 người" in a.answer and a.answer.endswith("[tr. 52].") and len(p.calls) == 1
+    assert a.status == "answered", a.trace.get("calc_errors")
+    assert "tăng thêm 857 người" in a.answer and a.answer.endswith("[tr. 52].") and len(p.calls) == 1
     assert a.trace["literals"]["L1"]["page"] == 52 and a.trace["calc_errors"] == []
 
 
@@ -175,6 +176,14 @@ def test_followup_is_rewritten_then_answered(N):
     assert a.answer.endswith("[tr. 297].")
 
 
+def test_rewrite_that_brings_in_another_bank_is_rejected(N):
+    def h(rq, i):
+        if i == 0: return {"standalone": "Tổng tài sản của Vietcombank tại 31/12/2024 là bao nhiêu?"}
+        return {"status": "not_in_report", "claims": []}
+    a, _ = run(N, h, "Còn năm 2024?", PREV)
+    assert a.trace["rewrite_mode"] == "concat" and "Vietcombank" not in a.standalone
+
+
 def test_unfaithful_rewrite_degrades_to_concat_and_says_so(N):
     def h(rq, i):
         if i == 0: return {"standalone": "Tổng tài sản là bao nhiêu?"}          # dropped "2024"
@@ -201,3 +210,15 @@ def test_prompt_budget_trims_lowest_ranked_evidence_but_keeps_best(N, monkeypatc
     monkeypatch.setattr(conf, "PROMPT_EVIDENCE_CHARS", 100)
     a, p = run(N, lambda rq, i: {"status": "not_in_report", "claims": []})
     assert len(a.trace["evidence"]) == 1 and a.trace["evidence"][0]["page"] == 297        # best-ranked kept
+
+
+def test_calculation_with_a_missing_input_is_not_computed(N):
+    def h(rq, i):
+        e = eid_of(rq, "12.705 người")
+        return {"status": "answered",
+                "literals": [{"lid": "L1", "evidence": e, "number": "12.705", "unit": "người", "period": "2025"}],
+                "calculations": [{"cid": "C1", "op": "sum", "inputs": ["L1", "L999"]}],
+                "claims": [{"text_vi": "Tổng là {C1} người.", "evidence": [e], "calc_refs": ["C1"]}]}
+    a, _ = run(N, h, "Tổng nhân sự năm 2025?", keys=("hr",))
+    assert a.status != "answered" and "12.705" not in a.answer
+    assert any("L999" in x for x in a.trace["calc_errors"])

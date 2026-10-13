@@ -171,3 +171,34 @@ def test_unit_written_after_a_result_is_not_doubled():
     r = CalcResult("sum", D(12122934), "VND", 10**6, 0, ("Q1", "Q2"), "")
     cl = P.Claim.model_validate({"text_vi": "Tổng cộng {C1} triệu đồng.", "evidence": ["E1"]})
     assert cite.render_claim(cl, {"C1": r}) == "Tổng cộng 12.122.934 triệu đồng."
+
+
+def test_numbers_in_the_question_are_premises_not_evidence():
+    evs = cite.evidence_from([node("a", "Tổng tài sản đạt 100 tỷ đồng năm 2025", 5)])
+    q = "Tổng tài sản năm 2025 là 999 tỷ đồng phải không?"
+    assert not cite.check(plan(claims=[{"text_vi": "Tổng tài sản năm 2025 là 999 tỷ đồng.", "evidence": ["E1"]}]), evs, {}, q).ok
+    assert cite.check(plan(claims=[{"text_vi": "Tổng tài sản năm 2025 là 100 tỷ đồng.", "evidence": ["E1"]}]), evs, {}, q).ok
+
+
+@pytest.mark.parametrize("text,ok", [
+    ("Lợi nhuận là -100 triệu đồng.", False),       # sign not in the evidence
+    ("Lợi nhuận là 100 triệu đồng.", True),
+    ("Chi phí là 5 tỷ đồng.", False),                # small integers with a unit are figures, not list counts
+    ("Có 3 yếu tố chính.", True),
+])
+def test_sign_and_small_figures(text, ok):
+    evs = cite.evidence_from([node("a", "Lợi nhuận đạt 100 triệu đồng năm 2025", 5)])
+    assert cite.check(plan(claims=[{"text_vi": text, "evidence": ["E1"]}]), evs, {}, "").ok == ok
+
+
+@pytest.mark.parametrize("lit,ok", [
+    ({"number": "100", "unit": "triệu đồng", "period": "2025"}, True),
+    ({"number": "100", "unit": "tỷ đồng", "period": "2025"}, False),     # unit not the one printed next to the number
+    ({"number": "100", "unit": "triệu đồng", "period": "2030"}, False),  # year in neither the block nor the question
+    ({"number": "101", "unit": "triệu đồng", "period": "2025"}, False),
+])
+def test_literal_unit_and_period_are_checked_against_the_block(lit, ok):
+    evs = cite.evidence_from([node("a", "Lợi nhuận đạt 100 triệu đồng năm 2025", 5)])
+    pl = plan(literals=[{"lid": "L1", "evidence": "E1", **lit}])
+    got, probs = cite.literal_quantities(pl, evs, "Lợi nhuận?")
+    assert ("L1" in got) == ok, probs

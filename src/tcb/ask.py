@@ -98,7 +98,7 @@ class Engine:
             plan = g.plan
             tr["plan"] = plan.model_dump(); tr["repaired"] = g.repaired
 
-            lits, _ = cite.literal_quantities(plan, evs)
+            lits, _ = cite.literal_quantities(plan, evs, standalone)
             tr["literals"] = {k: {"value": str(v.value), "dim": v.dim, "period": v.period.label, "page": v.page} for k, v in lits.items()}
             qmap = {**qmap, **lits}
             ck = cite.check(plan, evs, qmap, standalone)
@@ -107,8 +107,11 @@ class Engine:
             results: dict[str, calc.CalcResult] = {}
             cerr: dict[str, str] = {}
             for c in plan.calculations:
+                missing = [x for x in c.inputs if x not in qmap]
+                if missing:                                      # never compute on a list that silently lost an input
+                    cerr[c.cid] = f"{c.cid} ({c.op}): unknown or rejected input {', '.join(missing)}"; continue
                 try:
-                    results[c.cid] = calc.run(c.op, [qmap[x] for x in c.inputs if x in qmap], c.to)
+                    results[c.cid] = calc.run(c.op, [qmap[x] for x in c.inputs], c.to)
                 except calc.CalcError as e:
                     cerr[c.cid] = f"{c.cid} ({c.op}): {e}"
             tr["calcs"] = {k: {"op": v.op, "inputs": list(v.inputs), "value": str(v.value), "text": v.text,
@@ -135,7 +138,9 @@ class Engine:
             for cl in kept:
                 pg = cite.pages_of(cl, evs, plan, results, qmap)
                 lines.append(cite.with_marker(cite.render_claim(cl, results), pg))
-                for e in cl.evidence:
+                refs = set(cite._PLACEHOLDER.findall(cl.text_vi)) | set(cl.calc_refs)
+                calc_chunks = {qmap[q].chunk_id for x in plan.calculations if x.cid in refs for q in x.inputs if q in qmap}
+                for e in list(cl.evidence) + [x.eid for x in evs if x.chunk_id in calc_chunks]:   # calculation inputs are sources too
                     ev = next(x for x in evs if x.eid == e)
                     if not any(c["chunk_id"] == ev.chunk_id for c in cites):
                         cites.append({"eid": ev.eid, "page": ev.page, "pdf_page": ev.pdf_page, "section": ev.section,

@@ -124,3 +124,16 @@ def test_growth_and_cagr_follow_the_periods_not_the_argument_order():
 
 def test_integer_sum_prints_without_decimal():
     assert calc.run("sum", [Q("Q1", 6343732), Q("Q2", 5779202)]).text == "12.122.934 triệu đồng"
+
+
+def test_share_needs_the_same_date_not_only_the_same_year():
+    a = Quantity("Q1", "x", D(50), "VND", 10**6, Period("date", 2025, "31/03/2025"), "c", 1)
+    b = Quantity("Q2", "x", D(100), "VND", 10**6, Period("date", 2025, "31/12/2025"), "c", 1)
+    with pytest.raises(calc.PeriodMismatch): calc.run("share_pct", [a, b])
+    c = Quantity("Q3", "x", D(100), "VND", 10**6, Period("date", 2025, "31/12/2025"), "c", 1)
+    assert calc.run("share_pct", [a.__class__(**{**a.__dict__, "period": c.period}), c]).text == "50,0%"
+
+
+def test_ratio_does_not_mix_a_balance_with_a_flow():
+    with pytest.raises(calc.PeriodMismatch):
+        calc.run("ratio", [Q("Q1", 10, kind="date"), Q("Q2", 5, kind="year")])

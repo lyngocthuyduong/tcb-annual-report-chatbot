@@ -64,7 +64,7 @@ def cmd_build(a) -> int:
 
 def cmd_validate(a) -> int:
     from .index import validate
-    m = validate(a.dir, check_snapshot=a.snapshot)
+    m = validate(a.dir, check_snapshot=a.snapshot, pdf=conf.PDF_PATH)
     print(f"OK nodes={m['counts']['nodes']} embed={m['embedding']['model']}@{m['embedding']['revision'][:7]}")
     return 0
 

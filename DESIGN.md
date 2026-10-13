@@ -21,7 +21,7 @@
 
 **Non-goals.** Multi-document support, an LLM judge, OCR of image-only content (inventoried but not read), streaming answers, authentication, multi-process serving, runtime fine-tuning.
 
-**Honesty rules baked into the project.** A mock pass is never reported as proof that a real model works. The hash embedder exists only in `tests/` and writes to a tmp dir; the production validator rejects any index not built with the pinned BGE-M3 revision. Eval items count only when a human set `verified: true`. Items I drafted are `verified: false`.
+**Honesty rules baked into the project.** A mock pass is never reported as proof that a real model works. The hash embedder exists only in `tests/` and writes to a tmp dir; the production validator rejects any index not built with the pinned BGE-M3 revision. Eval items count only when `verified: true`, which in this repository means machine-checked: every gold fact was found in the PDF text of its page and every calculation recomputed (by Claude); no item has been reviewed by a person yet. The item notes say this.
 
 ---
 
@@ -41,7 +41,7 @@ Failure modes that a naive "split text, embed, ask GPT" pipeline hits on this do
 |---|---|
 | Wrong page cited (spread vs printed page) | §4.2 page map; citation page comes from node metadata only (§8) |
 | Table values scrambled / columns lost | §4.3 coordinate-based table parser + `quality` flag |
-| `1.192` tokenised as `192`, `14,6%` as `14` and `6` | §4.5 tokenizer `tcb-vi-v1` |
+| `1.192` tokenised as `192`, `14,6%` as `14` and `6` | §4.5 tokenizer `tcb-vi-v2` |
 | LLM does arithmetic wrong | §9 calculator; LLM only picks operation and input ids |
 | LLM invents a number or page | §8 deterministic validation |
 | Confident answer to an unanswerable question | §10 refusal policy, fail closed |
@@ -60,7 +60,7 @@ data/ar.pdf
  -> parse.py    KPI tiles, FS tables, glossary
  -> nodes.py    typed nodes + provenance
  -> LlamaIndex vector index (BGE-M3, 1024-d)
-    + bm25s index (tokenizer tcb-vi-v1)
+    + bm25s index (tokenizer tcb-vi-v2)
  -> idx/ + manifest.json (sha256 of every file)
 ```
 
@@ -139,8 +139,8 @@ Second pass (13 Oct 2026, after reading the notes tables row by row):
 
 *Alternative rejected:* marking every table high and letting the LLM sort out columns — that is exactly how wrong numbers get produced from scrambled headers.
 
-### 4.5 Tokenizer `tcb-vi-v1` (BM25)
-`bm25s`' default tokenizer splits `1.192` into `192`. `vi.tokens` instead keeps dates, form codes (`B03/TCTD-HN`) and numbers whole, emits the canonical form too (`1.192.344.137` → `1192344137`, `14,6%` → `14.6%`), and emits a diacritic-folded copy of every word, so `Tăng trưởng` and `tang truong` both match. Exact BM25 behaviour on numbers is why hybrid retrieval beats dense-only on a report full of figures (hypothesis; measured by E2/E3, **[NOT RUN]**).
+### 4.5 Tokenizer `tcb-vi-v2` (BM25)
+`bm25s`' default tokenizer splits `1.192` into `192`. `vi.tokens` instead keeps dates, form codes (`B03/TCTD-HN`) and numbers whole, emits the canonical form too (`1.192.344.137` → `1192344137`, `14,6%` → `14.6%`), and emits a diacritic-folded copy of every word, so `Tăng trưởng` and `tang truong` both match. v2 differs from v1 only in canonical decimals (`16,0` → `16`). On the final index BM25 alone reaches R@20 0.929 against 0.718 for dense alone (E3, run m7).
 
 ---
 
@@ -161,7 +161,7 @@ The validator and build are tested with a hash embedder in tmp, and the validato
 ## 6. Retrieval (`find.py`)
 
 ### 6.1 Pipeline
-1. **BM25** over `tcb-vi-v1` tokens → top 40 (`TOP_BM25`).
+1. **BM25** over `tcb-vi-v2` tokens → top 40 (`TOP_BM25`).
 2. **Dense** (BGE-M3 via LlamaIndex) → top 40 (`TOP_DENSE`).
 3. **RRF** with k = 60 (`RRF_K`) over the two rankings; the top **12** (`FINAL_EVIDENCE`, E4 run m7) go to the LLM, further limited by a 22,000-character prompt budget (`PROMPT_EVIDENCE_CHARS`) so a local 8k-context model is never silently truncated.
 
@@ -176,7 +176,7 @@ An earlier design retried a query once when the top cross-encoder score fell bel
 ### 6.4 Why this shape
 - BM25 + dense because figures/abbreviations need lexical exactness while paraphrased narrative needs semantics.
 - RRF because it needs no score calibration between BM25 and cosine; k = 60 is the literature default and is only changed if E3b shows ≥ 5 points of R@20 on **every** set.
-- Top 10 fused blocks, no reranker (E4, run m4: dev+val, 85 answerable items): a cross-encoder over 20 to 40 candidates found a gold page for 0.894 of items, the fused top 10 for 0.882, i.e. one item, at about 2 s of CPU per candidate pair on 2 cores (≈ 60 s per question at 30). With 10 candidates and 10 blocks the reranker would only reorder them.
+- No reranker (E4, run m4: dev+val, 85 answerable items): a cross-encoder over 20 to 40 candidates found a gold page for 0.894 of items, the fused top 10 for 0.882, i.e. one item, at about 2 s of CPU per candidate pair on 2 cores (≈ 60 s per question at 30). With 10 candidates and 10 blocks the reranker would only reorder them.
 - Tokenizer stays `vi`: E2 favoured `default` by one item at R@20 (0.894 vs 0.882) while `vi` is ahead at R@5/R@8, so no rebuild.
 - One retrieval path: no HyDE, multi-query or agents; each adds LLM calls and a failure surface.
 
@@ -189,12 +189,12 @@ The LLM returns **one JSON object**:
 
 ```
 status: answered | partial | not_in_report | ambiguous
-sub_questions: [str]
+sub_questions: [str]      # prompt guidance only: the code does not check that every part was answered
 claims: [{text_vi, evidence:[E#], calc_refs:[C#]}]
 calculations: [{cid, op, inputs:[Q#], to?}]     op ∈ growth_pct diff ratio share_pct cagr sum convert
 clarification_vi: str?
 ```
-Evidence blocks are `[E1]…[E8]`; extractable numbers from high-quality tables are offered as `[Q1]…[Qn]` (`label | period | value unit`, capped at 60). Claim text may contain `{C1}` placeholders where a calculator result is inserted. The system prompt (Vietnamese) forbids outside knowledge, requires numbers copied verbatim in Vietnamese format, forbids writing page numbers, forbids doing arithmetic, and tells the model to choose `not_in_report` rather than guess.
+Evidence blocks are `[E1]…[E12]`; extractable numbers from high-quality tables are offered as `[Q1]…[Qn]` (`label | period | value unit`, capped at 60). Claim text may contain `{C1}` placeholders where a calculator result is inserted. The system prompt (Vietnamese) forbids outside knowledge, requires numbers copied verbatim in Vietnamese format, forbids writing page numbers, forbids doing arithmetic, and tells the model to choose `not_in_report` rather than guess.
 
 ### 7.2 Providers (`llm/`)
 | Provider | Structured output | Notes |
@@ -290,7 +290,7 @@ A question is treated as a follow-up only if there is history **and** it is shor
 ### 14.1 Datasets
 | File | Content | Rule |
 |---|---|---|
-| `data/q10.json` | the 10 published sample questions (9 answerable, 1 not) | never used for tuning; additively annotated with `gold_facts`, `alt_pages` (e.g. 297 for total assets), `type`, `verified` |
+| `data/q10.json` | the 10 published sample questions (9 answerable, 1 not) | used to debug after batch runs (sq-07 led to page-title context, sq-03/sq-07 to the magnitude fixes); fixes are general and tested on other pages, but q10 is not an independent benchmark; additively annotated with `gold_facts`, `alt_pages` (e.g. 297 for total assets), `type`, `verified` |
 | `data/dev.json`, `data/val.json` | 70 + 34 items written by hand (statement tables, KPI tiles, narrative, segments, subsidiary, governance, investor relations, glossary, calculations, follow-ups, 19 unanswerable or ambiguous) | gold checked by Claude against the PDF text of the cited page, calculations recomputed; human spot-check pending |
 
 Unanswerable topics were chosen only if a full-text search of the report found no mention (Vietcombank, Campuchia, Bitcoin, Momo, Nasdaq, World Cup, 2027, MB Bank, Moody's; enforced by a test). Topics that **are** in the report (dividends, 2029/2030, remuneration, 2026 plan) are not used as "unanswerable". `tcb vset check` asserts every answerable item's gold facts are present, as text, on its gold pages (for calc items: the *inputs* are). The first table items were drafted by a generator from the statements; it and its CSV review loop were removed once the sets were checked, so they cannot be regenerated over by accident.
@@ -319,7 +319,7 @@ For each failed item, the first failing stage in this order: `system` (provider/
 | E5 | glossary expansion | keep only if no regression |
 | E6 | narrative chunk size | needs index rebuild; experimental indexes are rejected by `serve` |
 
-The runner *suggests* a decision by these rules and never edits `conf.py`. Order of work: experiments on dev+val → freeze → eval on val → q10 once, human-scored. Val was also used to find the three failures fixed in §17.1, so it is no longer a clean held-out set; q10 was never used for a decision.
+The runner *suggests* a decision by these rules and never edits `conf.py`. Order of work: experiments on dev+val → freeze → eval on val → q10 once, human-scored. Val was also used to find failures and to choose k, so it is a validation set, not a held-out set; q10 was used to debug too (see §14.1). Neither measures generalisation; the graders' held-out set does.
 
 ---
 
@@ -333,7 +333,7 @@ The runner *suggests* a decision by these rules and never edits `conf.py`. Order
 | `live_openai`, `live_ollama` | key / running Ollama | one schema-constrained call returns a valid grounded plan | quality at scale |
 | `live` | `idx/` + models + provider | end-to-end answer and refusal | — |
 
-`pytest` default = unit + integ; live tests are excluded (a skip is not a pass). Current default run on `cont`: **220 passed, 5 deselected** (the 5 live tests, not executed). Tests of note: golden B02/B03 figures; no header text in statement labels; production validator rejects the hash index and chunk-variant indexes; `check` catches a wrong gold fact; independent growth formula equals `calc`.
+`pytest` default = unit + integ; live tests are excluded (a skip is not a pass). Default run: all unit and integration tests pass; the 5 live tests are deselected (not executed). Tests of note: golden B02/B03 figures; no header text in statement labels; production validator rejects the hash index and chunk-variant indexes; `check` catches a wrong gold fact; independent growth formula equals `calc`.
 
 ---
 
@@ -429,8 +429,9 @@ Integer differences now print without a decimal (857, not 857,0).
 6. Table rows that wrap a label across a page break may be split.
 7. Single-process server; one answer at a time.
 8. Cost figures use list prices recorded on 10 Oct 2026 and are estimates.
-9. Disagreeing figures: the prompt asks for both figures with their own citations (rule 10 of the plan prompt); no eval item has two different figures for one item and period, so this behaviour is untested.
-10. The ambiguity dev items (2) are subjective; the LLM may reasonably answer "Lợi nhuận" for the only reported year.
+9. Claims without numbers are not checked for content: a sentence citing a page is only as true as the model makes it (numbers, units, signs, pages and calculations are checked; words are not).
+10. Disagreeing figures: the prompt asks for both figures with their own citations (rule 10 of the plan prompt); no eval item has two different figures for one item and period, so this behaviour is untested.
+11. The ambiguity dev items (2) are subjective; the LLM may reasonably answer "Lợi nhuận" for the only reported year.
 
 ---
 
@@ -442,7 +443,7 @@ Per question: ≤ 1 rewrite call (follow-ups only) + 1–2 generation calls; one
 
 ## 20. Security and privacy
 
-Keys are read from the environment / `.env` (git-ignored; the loader never prints values and never overrides real env vars). Only the user question and retrieved evidence leave the process in online mode; offline mode sends nothing outside the compose network. The UI renders answers with `textContent` (no HTML injection); citation links open `/pdf#page=<pdf_page>`. No user data is stored except traces under `out/trace/` on the local volume.
+Keys are read from the environment / `.env` (git-ignored; the loader never prints values and never overrides real env vars). In online mode the provider receives the question, the retrieved evidence, the table quantities and, for follow-ups, the last two questions with the first 300 characters of their answers; offline mode sends nothing outside the compose network. The UI renders answers with `textContent` (no HTML injection); citation links open `/pdf#page=<pdf_page>`. No user data is stored except traces under `out/trace/` on the local volume.
 
 ---
 

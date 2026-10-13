@@ -122,3 +122,11 @@ def test_load_and_retrieve(built, embedder):
     assert any(n["printed_page_number"] == 5 for n in top)       # BM25 finds the KPI page
     dense = ix.vector.as_retriever(similarity_top_k=5).retrieve("Tổng tài sản 1.192 nghìn tỷ đồng")
     assert dense and dense[0].node.node_id in ix.nodes
+
+
+def test_a_different_pdf_is_refused(tmp_path, built):
+    other = tmp_path / "other.pdf"; other.write_bytes(b"%PDF-1.4 not the report")
+    with pytest.raises(IndexError_) as e:
+        index.validate(built[0], pdf=other, **EMB)
+    assert e.value.code == "pdf"
+    assert index.validate(built[0], pdf=PDF, **EMB)["counts"]["nodes"] > 0

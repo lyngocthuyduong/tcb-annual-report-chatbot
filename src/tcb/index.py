@@ -23,7 +23,9 @@ REQUIRED = ("index_format_version", "source", "embedding", "bm25", "counts", "fi
 
 
 def validate(index_dir: str | Path, embed_model: str = conf.EMBED_MODEL, embed_rev: str = conf.EMBED_REV,
-             check_snapshot: bool = False, strict_chunking: bool = True) -> dict:
+             check_snapshot: bool = False, strict_chunking: bool = True, pdf: str | Path | None = None) -> dict:
+    """Fail closed on any mismatch. `pdf`: the report the server will open for citations; when it exists it must be
+    the one the index was built from (a citation would otherwise open the wrong page)."""
     d = Path(index_dir)
     mf = d / "manifest.json"
     if not d.is_dir() or not mf.exists():
@@ -34,6 +36,11 @@ def validate(index_dir: str | Path, embed_model: str = conf.EMBED_MODEL, embed_r
         raise IndexError_("corrupt", f"manifest.json unreadable: {e}")
     for k in REQUIRED:
         if k not in m: raise IndexError_("corrupt", f"manifest missing key '{k}'")
+    if pdf is not None and Path(pdf).exists():
+        import hashlib
+        h = hashlib.sha256(Path(pdf).read_bytes()).hexdigest()
+        if h != m["source"].get("sha256"):
+            raise IndexError_("pdf", f"{pdf} sha256 {h[:12]} != index source {str(m['source'].get('sha256'))[:12]}")
     if m["index_format_version"] != conf.INDEX_FORMAT:
         raise IndexError_("format", f"index format {m['index_format_version']} != code {conf.INDEX_FORMAT}")
     e = m["embedding"]

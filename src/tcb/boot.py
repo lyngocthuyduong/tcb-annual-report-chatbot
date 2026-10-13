@@ -14,7 +14,7 @@ def load_retriever(index_dir=None, embedder=None, lenient: bool = False) -> find
     d = Path(index_dir or conf.settings().index_dir)
     if embedder is None:
         from .build import real_embedder
-        validate(d, strict_chunking=not lenient)       # fail closed first (exit 3), cheap: hashes only, no models
+        validate(d, strict_chunking=not lenient, pdf=conf.PDF_PATH)   # fail closed first (exit 3): hashes only, no models
         embedder = real_embedder()                     # ModelMissing (exit 5) if /models is absent
         ix = Index.load(d, embedder, check_snapshot=True, strict_chunking=not lenient)
     else:

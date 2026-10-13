@@ -6,7 +6,7 @@ import json
 import re
 from dataclasses import dataclass, field
 
-from . import cite
+from . import cite, conf
 from .llm import LLMRequest, LLMResponse, Provider
 
 MAX_TURNS = 4
@@ -32,9 +32,18 @@ def history_text(turns: list[Turn], n: int = 2) -> str:
     return "\n".join(f"Người dùng: {t.standalone}\nTrợ lý: {t.answer[:300]}" for t in turns[-n:])
 
 
+def new_names(standalone: str, q: str, turns: list[Turn]) -> list[str]:
+    """Names (words with a capital letter, after the first word) in the rewrite that occur neither in the question nor in
+    the conversation: a rewrite that turns 'Còn năm 2024?' into a question about another bank is not faithful."""
+    ctx = (conf.DOC_SUBJECT + "\n" + q + "\n" + "\n".join(f"{t.question} {t.standalone} {t.answer}" for t in turns)).lower()
+    words = re.findall(r"[^\W\d_][\w&/-]*", standalone)[1:]
+    return [w for w in words if any(c.isupper() for c in w) and w.lower() not in ctx]
+
+
 def rewrite(prov: Provider, q: str, turns: list[Turn], max_tokens: int = 300) -> tuple[str, str, LLMResponse | None]:
     """-> (standalone, mode, response). mode: none | llm | concat.  Provider errors propagate (no silent fallback);
-    an unusable/unfaithful rewrite degrades to a deterministic concat and says so in the trace."""
+    an unusable/unfaithful rewrite (drops a number of the question, or brings in a name from nowhere) degrades to a
+    deterministic concat and says so in the trace. This guards numbers and names only, not the metric."""
     if not is_followup(q, turns):
         return q, "none", None
     r = prov.generate(LLMRequest(SYS, f"Hội thoại trước:\n{history_text(turns)}\n\nCÂU HỎI CUỐI: {q}", SCHEMA, max_tokens))
@@ -42,7 +51,7 @@ def rewrite(prov: Provider, q: str, turns: list[Turn], max_tokens: int = 300) ->
         s = str(json.loads(r.text).get("standalone", "")).strip()
     except (ValueError, AttributeError):
         s = ""
-    if s and cite.num_tokens(q) <= cite.num_tokens(s):
+    if s and cite.num_tokens(q) <= cite.num_tokens(s) and not new_names(s, q, turns):
         return s, "llm", r
     return f"{turns[-1].standalone} — {q}", "concat", r
 

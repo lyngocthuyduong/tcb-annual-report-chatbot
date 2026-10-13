@@ -6,7 +6,9 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import platform
 import statistics
+import subprocess
 import time
 from pathlib import Path
 from typing import Callable, Literal
@@ -54,6 +56,16 @@ def _fold(s: str) -> str:
     return " ".join(vi.fold(vi.nfc(s).lower()).split())
 
 
+def _scales(text: str) -> dict[str, set[str]]:
+    """canonical number -> magnitudes printed right after it in `text` ('nghìn tỷ', 'triệu', '%' ...)."""
+    out: dict[str, set[str]] = {}
+    t = vi.nfc(text)
+    for m in cite._NUM.finditer(t):
+        s = cite._scale_at(t, m.start(), m.end())
+        out.setdefault(vi.canon_num(m.group(0)).rstrip("%"), set()).update({s} if s else set())
+    return out
+
+
 def facts_ok(item: Item, answer: str) -> tuple[bool | None, str]:
     """-> (ok | None if not machine-scorable, method)."""
     facts = item.gold_facts
@@ -68,11 +80,12 @@ def facts_ok(item: Item, answer: str) -> tuple[bool | None, str]:
         ok = all(t in an or vi.canon_num(t).rstrip("%") in an for t in {vi.canon_num(x).rstrip("%") for x in gn})
         return ok, method
     an, af = cite.num_tokens(answer), _fold(answer)
+    a_sc, g_sc = _scales(answer), _scales(item.gold_answer)
 
     def has(f: str) -> bool:
         fn = {t for t in cite.num_tokens(f) if not cite._trivial(t)}
-        if fn:
-            return all(t in an or vi.canon_num(t).rstrip("%") in an for t in fn)
+        if fn:   # the digits must be there, and with the gold's magnitude when the gold prints one (100 tỷ is not 100 triệu)
+            return all(t in an and (not g_sc.get(t) or g_sc[t] & a_sc.get(t, set())) for t in fn)
         return _fold(f) in af
     return all(any(has(alt.strip()) for alt in f.split(" | ")) for f in facts), method
 
@@ -214,12 +227,16 @@ def summarize(rows: list[dict]) -> dict:
 def widen_gold(item: Item, nodes: dict) -> Item:
     """The report repeats many figures (p.5 KPI tile, p.52 review, p.297 statement). A citation is correct if the analyst
     can read the figure on the cited page, so every page with one node holding ALL numeric gold facts counts as gold too.
-    Only for items whose facts are all numbers (a word-only fact could match unrelated text)."""
+    Only for items whose facts are all numbers (a word-only fact could match unrelated text) and include at least one
+    distinctive number (a decimal or 4+ digits)."""
     if not item.answerable or not item.gold_facts:
         return item
     alts = [[{t for t in cite.num_tokens(a) if not cite._trivial(t)} for a in f.split(" | ")] for f in item.gold_facts]
     if any(not all(alt) for alt in alts):
         return item
+    distinctive = lambda t: "." in t or len(t) >= 4                     # '21.8', '1192'; not '100' or '302'
+    if not any(distinctive(t) for alt in alts for a in alt for t in a):
+        return item                                                   # a short integer recurs on unrelated pages
     pages = set()
     for n in nodes.values():
         toks = cite.num_tokens(n["text"])
@@ -227,6 +244,14 @@ def widen_gold(item: Item, nodes: dict) -> Item:
             pages.add(n["printed_page_number"])
     extra = sorted(pages - set(item.gold_printed_pages) - set(item.alt_pages))
     return item.model_copy(update={"alt_pages": item.alt_pages + extra}) if extra else item
+
+
+def _commit() -> str | None:
+    """The code that produced the numbers (None outside a git checkout, e.g. inside the Docker image)."""
+    try:
+        return subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, timeout=5).stdout.strip() or None
+    except (OSError, subprocess.SubprocessError):
+        return None
 
 
 def run_eval(set_path: str, out_dir: str, engine, label: str = "", include_unverified: bool = False) -> dict:
@@ -252,7 +277,9 @@ def run_eval(set_path: str, out_dir: str, engine, label: str = "", include_unver
            "index_embedding": m["embedding"], "index_built_at": m["built_at"], "index_nodes": m["counts"]["nodes"],
            "final_evidence": engine.rt.k, "device": os.getenv("TCB_DEVICE", "cpu"), "rrf_k": engine.rt.rrf_k,
            "top_bm25": engine.rt.top_bm25, "top_dense": engine.rt.top_dense, "include_unverified": include_unverified,
-           "submission_grade": m["embedding"]["model"] == conf.EMBED_MODEL,
+           "submission_grade": m["embedding"]["model"] == conf.EMBED_MODEL, "commit": _commit(),
+           "index_manifest_sha256": hashlib.sha256(json.dumps(m, sort_keys=True).encode()).hexdigest(),
+           "hardware": {"cpu": platform.machine(), "cores": os.cpu_count()},
            "seconds": round(time.time() - t0, 1)}
     summary = summarize(counted) if counted else {"n": 0, "note": "no verified items; use include_unverified for a pipeline check"}
     summary["items_run"] = len(rows)

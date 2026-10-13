@@ -7,6 +7,7 @@ from pathlib import Path
 
 # ---- fixed: changing any of these invalidates the shipped index (see manifest) ----
 DOC_ID = "tcb-ar-2025"
+DOC_SUBJECT = "Techcombank"   # the report's own subject: a follow-up rewrite may name it without the user having typed it
 EMBED_MODEL = "BAAI/bge-m3"
 EMBED_REV = "5617a9f61b028005a4858fdac845db406aefb181"   # HF main commit seen 10 Oct 2026; re-verified at download
 EMBED_DIM = 1024
@@ -29,6 +30,7 @@ def _models_dir() -> Path:
 
 MODELS_DIR = _models_dir()
 PDF_SHA256 = "2db3dfe6e7a05f889ec2e93bf16dda4b6a7f3334df440b7cb0761df2e89344d9"   # data/ar.pdf
+PDF_PATH = "data/ar.pdf"   # served at /pdf for citation links; checked against the index manifest at start
 POPPLER_HINT = ("Install poppler and put it on PATH (or set POPPLER_BIN to its bin folder): "
                 "Windows: `conda install -c conda-forge poppler` or https://github.com/oschwartz10612/poppler-windows/releases ; "
                 "macOS: `brew install poppler` ; Ubuntu/Debian: `sudo apt install poppler-utils`")

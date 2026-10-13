@@ -17,7 +17,7 @@ docker compose --profile offline run --rm app-offline tcb smoke   # logs: "Ollam
 
 ## Batch / eval
 ```bash
-docker compose run --rm app tcb batch data/q10.json --out out/runs/q10       # answers + full traces, no human
+docker compose run --rm app tcb batch data/q10.json --out out/runs/q10       # any question file placed in data/; answers + full traces in out/
 docker compose run --rm app tcb eval  data/val.json --label val2             # scores, stage attribution, latency by stage
 docker compose run --rm app tcb eval  --compare out/runs/eval/val1 out/runs/eval/val2
 docker compose run --rm app tcb ask "Tỷ lệ CASA năm 2025?" --json
@@ -105,5 +105,5 @@ Default `pytest` runs unit + integ. Skips are not passes. The hash embedder live
 
 ## Layout
 `src/tcb/`: `pdf` `parse` `nodes` `vi` (ingestion) · `build` `index` (index) · `find` (BM25 + dense → RRF → top 12) · `num` `calc` (quantities, calculator) · `plan` `gen` `llm/` (LLM plan, one repair retry, providers) · `cite` `refuse` (validation, policy) · `chat` `ask` (pipeline) · `api` `ui.html` `cli` `smoke` `doctor` · `ev` `exp` `vset` (evaluation) · `conf` (fixed model and constants) · `models` (Docker download).
-`data/`: `ar.pdf`; `q10.json` (the 10 published questions, never tuned on); `dev.json` / `val.json` (70 / 34 items written by hand, checked against the PDF text by Claude, human spot-check pending).
+`data/`: `ar.pdf`; `q10.json` (the 10 published questions; used to debug, so not an independent benchmark); `dev.json` / `val.json` (70 / 34 items written by hand, checked against the PDF text by Claude, human spot-check pending).
 Dependencies: exact pins in `pyproject.toml`; `requirements.lock` (hash-pinned, py3.12 linux-x86_64, no torch/CUDA) from `./lock.sh`; Docker installs CPU torch first.

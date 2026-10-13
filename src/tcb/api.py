@@ -10,10 +10,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 
-from . import chat
+from . import chat, conf
 
 UI = Path(__file__).with_name("ui.html")
-PDF = Path("data/ar.pdf")
+PDF = Path(conf.PDF_PATH)
 HTTP = {"timeout": 504, "unavailable": 503, "rejected": 502, "config": 500, "generation": 502, "retrieval": 500, "llm": 502}
 
 

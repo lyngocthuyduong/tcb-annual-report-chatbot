@@ -119,6 +119,31 @@ def _trivial(t: str) -> bool:
     return t.isdigit() and int(t) <= 12     # "3 yếu tố", "tháng 12", list counts
 
 
+def _trivial_at(text: str, m) -> bool:
+    """A small integer is exempt only when no magnitude, '%' or currency follows it: '3 yếu tố' yes, '5 tỷ đồng' no."""
+    return _trivial(m.group(0)) and not _scale_at(text, m.start(), m.end()) and \
+        not re.match(r"\s*(?:đồng|USD|VND)", text[m.end():], re.I)
+
+
+_QDATE = re.compile(r"\b\d{1,2}/\d{1,2}/(?:19|20)\d{2}\b|\b(?:19|20)\d{2}\b")
+
+
+def question_numbers(question: str) -> set[str]:
+    """Only the years and dates of a question may appear in a claim without evidence ('Năm 2025, ...'); any other number
+    in the question ('Tài sản 999 tỷ đúng không?') is a premise to check, not evidence."""
+    return {p for m in _QDATE.finditer(vi.nfc(question)) for p in re.split(r"/", m.group(0))}
+
+
+def sign_problems(claim_text: str, cited_text: str) -> list[str]:
+    """A figure written negative ('-100', '(100)') must be printed negative in the evidence."""
+    neg_ev = {vi.canon_num(m.group(1)) for m in re.finditer(r"(?:(?<![\d\w])-\s?|\()(\d+(?:[.,]\d+)*)\)?", vi.nfc(cited_text))}
+    out = []
+    for m in re.finditer(r"(?<![\d\w%])(?:-\s?|\()(\d+(?:[.,]\d+)*)", vi.nfc(claim_text)):
+        if vi.canon_num(m.group(1)) not in neg_ev:
+            out.append(f"{m.group(0).strip()} is negative but the evidence prints it positive")
+    return out
+
+
 @dataclass
 class Check:
     per_claim: dict[int, list[str]] = field(default_factory=dict)
@@ -133,8 +158,13 @@ class Check:
         return not self.plan_level and not self.per_claim
 
 
-def literal_quantities(plan, evs: list[Ev]) -> tuple[dict[str, Quantity], list[str]]:
-    """Quantities declared by the plan from evidence text. Kept only if the number occurs verbatim in the cited block."""
+_SCALE_OF = {10**12: "nghìn tỷ", 10**9: "tỷ", 10**6: "triệu", 10**3: "nghìn", 1: None}
+
+
+def literal_quantities(plan, evs: list[Ev], question: str = "") -> tuple[dict[str, Quantity], list[str]]:
+    """Quantities declared by the plan from evidence text. The model declares number, unit and period; each is checked
+    against the cited block: the number occurs there; its magnitude is the one printed next to it (or, when none is
+    printed next to it, a magnitude word occurs in the block); its year occurs in the block or in the question."""
     from .num import NumError, literal
     by = {e.eid: e for e in evs}
     out, probs = {}, []
@@ -143,24 +173,35 @@ def literal_quantities(plan, evs: list[Ev]) -> tuple[dict[str, Quantity], list[s
         if e is None:
             probs.append(f"{x.lid}: unknown evidence id {x.evidence}"); continue
         n = vi.nfc(x.number).strip()
-        if n not in num_tokens(e.text) and vi.canon_num(n).rstrip("%") not in num_tokens(e.text):
+        text = vi.nfc(e.text)
+        occ = [m for m in _NUM.finditer(text) if vi.canon_num(m.group(0)).rstrip("%") == vi.canon_num(n).rstrip("%")]
+        if not occ:
             probs.append(f"{x.lid}: number {x.number} not found in {x.evidence}"); continue
         try:
-            out[x.lid] = literal(x.lid, n, x.unit, x.period, x.label, e.chunk_id, e.page)
+            q = literal(x.lid, n, x.unit, x.period, x.label, e.chunk_id, e.page)
         except NumError as err:
-            probs.append(f"{x.lid}: {err}")
+            probs.append(f"{x.lid}: {err}"); continue
+        printed = {_scale_at(text, m.start(), m.end()) for m in occ} - {None}
+        want = "%" if q.dim == "%" else _SCALE_OF.get(q.scale)
+        if printed and want not in printed:
+            probs.append(f"{x.lid}: unit '{x.unit}' but {x.evidence} prints {x.number} as '{'/'.join(sorted(printed))}'"); continue
+        if not printed and want and not re.search(rf"(?<![^\W\d_]){re.escape(want)}(?![^\W\d_])", text, re.I):
+            probs.append(f"{x.lid}: unit '{x.unit}' does not occur in {x.evidence}"); continue
+        if q.period.year and str(q.period.year) not in text and str(q.period.year) not in question:
+            probs.append(f"{x.lid}: period {x.period} occurs neither in {x.evidence} nor in the question"); continue
+        out[x.lid] = q
     return out, probs
 
 
 def check(plan, evs: list[Ev], quantities: dict[str, Quantity], question: str = "") -> Check:
     """Deterministic validation of an LLM plan against the retrieved evidence."""
     c = Check()
-    lits, lprobs = literal_quantities(plan, evs)
+    lits, lprobs = literal_quantities(plan, evs, question)
     c.plan_level += lprobs
     quantities = {**quantities, **lits}
     eids = {e.eid: e for e in evs}
     cids = {x.cid for x in plan.calculations}
-    q_nums = num_tokens(question)
+    q_nums = question_numbers(question)
     if plan.status in ("answered", "partial") and not plan.claims:
         c.plan_level.append(f"status={plan.status} but no claims")
     if len(cids) != len(plan.calculations):
@@ -189,11 +230,13 @@ def check(plan, evs: list[Ev], quantities: dict[str, Quantity], question: str = 
                     cited_text += " " + " ".join(quantities[q].raw for q in x.inputs if q in quantities)
         ok_nums = num_tokens(cited_text) | q_nums
         body = _PLACEHOLDER.sub(" ", cl.text_vi)
-        bad = sorted({t for m in _NUM.finditer(vi.nfc(body)) for t in [m.group(0)]
-                      if not _trivial(t) and vi.canon_num(t).rstrip("%") not in ok_nums})
+        nb = vi.nfc(body)
+        bad = sorted({m.group(0) for m in _NUM.finditer(nb)
+                      if not _trivial_at(nb, m) and vi.canon_num(m.group(0)).rstrip("%") not in ok_nums})
         if bad:
             ps.append("numbers not found in the cited evidence: " + ", ".join(bad[:6]))
         ps += magnitude_problems(body, cited_text)
+        ps += sign_problems(body, cited_text)
         if ps: c.per_claim[i] = ps
     return c
 

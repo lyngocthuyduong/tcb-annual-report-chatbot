@@ -167,3 +167,16 @@ def test_gold_widens_to_every_page_printing_the_figures():
     it = ev.widen_gold(item(gold_facts=["1.192 | 1.192.344.137", "21,8"], gold_printed_pages=[5]), nodes)
     assert it.alt_pages == [52]
     assert ev.widen_gold(item(gold_facts=["Tiền gửi không kỳ hạn"]), nodes).alt_pages == []   # word facts: unchanged
+
+
+def test_fact_needs_the_gold_magnitude():
+    it = item(gold_answer="Lợi nhuận 100 triệu đồng.", gold_facts=["100"])
+    assert ev.facts_ok(it, "Lợi nhuận là 100 triệu đồng [tr. 5].")[0] is True
+    assert ev.facts_ok(it, "Lợi nhuận là 100 tỷ đồng [tr. 5].")[0] is False
+
+
+def test_pages_are_not_widened_on_a_short_integer():
+    nodes = {"a": {"text": "Công ty có 100 nhân viên", "printed_page_number": 99},
+             "b": {"text": "Tổng tài sản 1.192 nghìn tỷ đồng", "printed_page_number": 52}}
+    assert ev.widen_gold(item(gold_answer="100 triệu đồng", gold_facts=["100"]), nodes).alt_pages == []
+    assert ev.widen_gold(item(gold_answer="1.192 nghìn tỷ đồng", gold_facts=["1.192"]), nodes).alt_pages == [52]
