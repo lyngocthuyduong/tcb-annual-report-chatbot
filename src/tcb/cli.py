@@ -96,17 +96,34 @@ def cmd_chat(a) -> int:
         if ans.status != "error": s.add(chat.Turn(q, ans.standalone, ans.answer, ans.status))
 
 
+def load_questions(path) -> list[dict]:
+    """Batch input: a JSON list (objects with "question" and optional "id", as in sample_questions.json, or plain
+    strings), a JSON object with a "questions" list, JSON Lines, or a text file with one question per line."""
+    raw = path.read_text(encoding="utf-8-sig").strip()
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        lines = [x.strip() for x in raw.splitlines() if x.strip()]
+        try:
+            data = [json.loads(x) for x in lines]                      # JSON Lines
+        except json.JSONDecodeError:
+            data = lines                                               # plain text
+    if isinstance(data, dict): data = data.get("questions", [])
+    return [{"id": f"q{i}", "question": q} if isinstance(q, str) else {"id": q.get("id", f"q{i}"), **q}
+            for i, q in enumerate(data, 1)]
+
+
 def cmd_batch(a) -> int:
     from pathlib import Path
-    qs = json.loads(Path(a.file).read_text(encoding="utf-8"))
+    qs = load_questions(Path(a.file))
     e, out = _engine(), Path(a.out); out.mkdir(parents=True, exist_ok=True)
     n_err = 0
     with open(out / "answers.jsonl", "w", encoding="utf-8") as f:
         for i, q in enumerate(qs, 1):
             ans = e.ask(q["question"])
             n_err += ans.status == "error"
-            f.write(json.dumps({"id": q.get("id", f"q{i}"), **ans.to_dict(trace=True)}, ensure_ascii=False) + "\n")
-            print(f"{i}/{len(qs)} {q.get('id', '')} {ans.status}", flush=True)
+            f.write(json.dumps({"id": q["id"], **ans.to_dict(trace=True)}, ensure_ascii=False) + "\n")
+            print(f"{i}/{len(qs)} {q['id']} {ans.status}", flush=True)
     return 4 if n_err else 0
 
 

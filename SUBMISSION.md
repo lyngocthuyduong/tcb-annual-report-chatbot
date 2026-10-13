@@ -3,7 +3,7 @@
 ## How to run
 - Clean machine: `cp .env.example .env` (set `PROVIDER` and its key), then `docker compose up --build` → http://127.0.0.1:8000 (web UI, `POST /chat`, `/docs`). Prerequisites: Docker Compose v2, ~6 GB RAM for Docker, internet for the first build.
 - Different key or local model: edit `.env` (`PROVIDER=openai|anthropic|ollama`, `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`, `*_MODEL`). Fully offline: `docker compose --profile offline up --build app-offline` (Ollama + `qwen2.5:7b`). Online and offline are separate services with no automatic fallback.
-- Batch run: `docker compose run --rm app tcb batch questions.json --out out/runs/x`, where `questions.json` is a list of `{"id", "question"}`; writes answers and full traces. Scoring against gold: `tcb eval data/q10.json`.
+- Batch run: `docker compose run --rm app tcb batch questions.json --out out/runs/x`, where the file is `data/sample_questions.json`-shaped (a list of `{"id", "question", ...}`), a list of strings, `{"questions": [...]}`, JSON Lines or plain text with one question per line; questions are answered independently and `answers.jsonl` holds each answer, status, citations and full trace. Scoring against gold: `tcb eval data/q10.json`.
 - Environment variables: `PROVIDER`, `OPENAI_API_KEY`, `OPENAI_MODEL`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_NUM_CTX`, `LLM_TIMEOUT_S`, `LLM_MAX_OUTPUT_TOKENS`, `INDEX_DIR`, `APP_HOST`, `APP_PORT`, `TRACE_DIR`, `LOG_LEVEL` (all in `.env.example`). The embedding model, tokenizer and chunking are fixed in code and recorded in the index manifest.
 - Shipped index: `idx/` in this repository (≈ 41 MB).
 
@@ -24,9 +24,13 @@
 
 **Retrieval.** Follow-ups are rewritten into a standalone question. Abbreviations are expanded with the report's own glossary (`CASA` → `CASA (Tiền gửi không kỳ hạn)`). BM25 top 40 and dense top 40 are fused with reciprocal rank fusion (k = 60); the top 20 blocks go to the LLM with the table quantities whose labels best match the question.
 
-**Generation contract.** The LLM returns only a JSON plan (forced tool call / JSON schema): claims, each naming its evidence ids, and calculations over quantity ids `Q*` (from tables) or literals `L*` (a number copied from an evidence block with its unit and period). The model never writes page numbers and never does arithmetic.
+**Generation contract.** The LLM returns only a JSON plan (forced tool call / JSON schema): claims, each naming its evidence ids, and calculations over quantity ids `Q*` (from tables) or literals `L*` (a number copied from an evidence block with its unit and period). The model never writes page numbers and never does arithmetic. When two blocks give different figures for the same item and period (not a rounding or unit difference), the prompt tells it to report both, each with its own citation, rather than pick one.
 
 **Deterministic checks.** Every number in a claim must occur in its cited evidence; every literal must occur verbatim in the block it names; a number must keep the magnitude its evidence prints (`1.192 nghìn tỷ đồng`, not `1.192 tỷ` or a bare `1.192`); the calculator (Decimal: growth, difference, ratio, share, CAGR, sum, unit conversion) rejects mixed units and periods; failing claims trigger one repair call, then are dropped. Citations are rendered from node metadata and re-checked against the retrieved pages. Answers end as `answered`, `partial`, `not_in_report`, `ambiguous` or `error`; provider errors name the provider and model.
+
+**Where no language model is used.** Page mapping, table structure, number parsing, page citations, arithmetic, number and magnitude verification, and the final answer status are code. The LLM rewrites follow-ups, chooses evidence and words the answer.
+
+**Specific to this document.** The spread split and footer page map, the title font sizes (35 / 27 pt), the statement band and form-code pattern (`B05/TCTD-HN`, the Vietnamese credit-institution forms) and the glossary page marker (`Thuật ngữ`). The rest (Vietnamese number and unit handling, column rebuilding from coordinates, retrieval, the plan contract and checks, the evaluation harness) carries to other Vietnamese reports; each new layout needs its page map and title thresholds checked against a few pages.
 
 ## What I tried that did not work
 - **Cross-encoder reranking** (BGE-reranker-v2-m3, dev+val, 85 answerable items): reranking 20 to 40 fused candidates put a gold page in the final blocks for 0.894 of items, the fused top 10 for 0.882 (one item), at about 2 s of CPU per candidate (≈ 60 s per question for 30). Removed; the Docker image is 2.2 GB smaller.

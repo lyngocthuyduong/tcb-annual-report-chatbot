@@ -426,7 +426,8 @@ Integer differences now print without a decimal (857, not 857,0).
 6. Table rows that wrap a label across a page break may be split.
 7. Single-process server; one answer at a time.
 8. Cost figures use list prices recorded on 10 Oct 2026 and are estimates.
-9. The ambiguity dev items (2) are subjective; the LLM may reasonably answer "Lợi nhuận" for the only reported year.
+9. Disagreeing figures: the prompt asks for both figures with their own citations (rule 9 of the plan prompt); no eval item has two different figures for one item and period, so this behaviour is untested.
+10. The ambiguity dev items (2) are subjective; the LLM may reasonably answer "Lợi nhuận" for the only reported year.
 
 ---
 
