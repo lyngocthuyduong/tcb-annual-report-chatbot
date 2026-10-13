@@ -16,14 +16,15 @@ _PAGE_REF = re.compile(r"\[\s*tr\.?[^\]]*\]|\btrang\s+\d+|\bpage\s+\d+", re.I)
 CITE_RE = re.compile(r"\[tr\. (\d+(?:, \d+)*)\]")
 # magnitude printed right after a number ('1.192 | Nghìn tỷ đồng', '18 triệu', '40,4%') or before it in a table cell
 # ('31/12/2025 Triệu đồng: 1.192.344.137')
-_SCALE_AFTER = re.compile(r"\s*(?:\|\s*)?((?:nghìn|ngàn)[\s|]+tỷ|tỷ|tỉ|triệu|nghìn|ngàn|%|phần trăm)(?![^\W\d_])", re.I)  # KPI tiles split 'Nghìn | tỷ đồng'
+_SCALE_AFTER = re.compile(r"\s*(?:\|\s*)?((?:nghìn|ngàn)[\s|]+tỷ|tỷ|tỉ|triệu|nghìn|ngàn|điểm\s+phần\s+trăm|điểm\s*%|%|phần trăm)(?![^\W\d_])", re.I)  # KPI tiles split 'Nghìn | tỷ đồng'
 _SCALE_BEFORE = re.compile(r"(nghìn tỷ|ngàn tỷ|tỷ|tỉ|triệu|nghìn|ngàn) (?:đồng|USD|VND)\s*:\s*$", re.I)
 _YEAR = re.compile(r"^(19|20)\d{2}$")
 
 
 def _norm_scale(w: str) -> str:
     w = re.sub(r"[\s|]+", " ", w.lower())
-    return {"ngàn tỷ": "nghìn tỷ", "tỉ": "tỷ", "ngàn": "nghìn", "phần trăm": "%"}.get(w, w)
+    # percentage points are printed as '%' in the report ('1,9% (▼) so với 32,7%'): same magnitude as '1,9 điểm phần trăm'
+    return {"ngàn tỷ": "nghìn tỷ", "tỉ": "tỷ", "ngàn": "nghìn", "phần trăm": "%", "điểm phần trăm": "%", "điểm %": "%", "điểm%": "%"}.get(w, w)
 
 
 def _scale_at(text: str, start: int, end: int) -> str | None:
@@ -36,14 +37,15 @@ def _scale_at(text: str, start: int, end: int) -> str | None:
 _MULT = {"nghìn tỷ": 10**12, "tỷ": 10**9, "triệu": 10**6, "nghìn": 10**3, None: 1}
 
 
-def figures(text: str, keep: str | None = None) -> list[tuple[str, Decimal, Decimal]]:
+def figures(text: str, keep: str | None = None, small: bool = False) -> list[tuple[str, Decimal, Decimal]]:
     """Figures a claim states, as (kind, value, rounding half-unit) in base units: '1.192 nghìn tỷ' and '1.192.344 tỷ'
-    both land near 1.192e15, '53,4 nghìn tỷ' carries a half-unit of 0.05e12. Years and small integers are left out."""
+    both land near 1.192e15, '53,4 nghìn tỷ' carries a half-unit of 0.05e12. Years and small integers are left out
+    (small=True keeps a small integer that carries a magnitude: '1 triệu')."""
     text = vi.nfc(text)
     out = []
     for m in _NUM.finditer(text):
         t = m.group(0)
-        if _trivial(t) or _YEAR.match(t): continue
+        if (_trivial_at(text, m) if small else _trivial(t)) or _YEAR.match(t): continue
         c = vi.canon_num(t).rstrip("%")
         if keep is not None and c != keep: continue
         try: v = Decimal(c)
@@ -274,6 +276,8 @@ def render_claim(claim, results: dict[str, CalcResult]) -> str:
     s = re.sub(r"((?:tăng|giảm|Tăng|Giảm)\s+(?:thêm\s+|khoảng\s+)?)?\{(C\d+)\}", put, claim.text_vi)
     s = re.sub(r"%\s*%", "%", s)
     s = re.sub(rf"({_UNITS})(\s+\1)+", r"\1", s)
+    if re.search(r"\b(?:tăng|giảm)\b", s, re.I):          # the drawn-arrow marker is evidence text; once a verb states
+        s = re.sub(r"\s*\([▲▼]\)", "", s)                  # the direction it only repeats it ('tăng 24% (▲)')
     return s.strip()
 
 

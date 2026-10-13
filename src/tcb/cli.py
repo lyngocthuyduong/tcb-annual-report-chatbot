@@ -137,8 +137,19 @@ def cmd_eval(a) -> int:
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(c, ensure_ascii=False, indent=1), encoding="utf-8")
         return 1 if c["regressed"] else 0
+    if a.rescore:                                           # no engine, no model calls: saved answers, current scorer
+        from pathlib import Path
+        nodes = {}
+        for ln in (Path(a.index) / "nodes.jsonl").read_text(encoding="utf-8").splitlines():
+            if ln.strip(): n = json.loads(ln); nodes[n["chunk_id"]] = n
+        rep = ev.rescore(a.rescore, a.out, a.label or Path(a.rescore).name + "r", nodes)
+        print(json.dumps(rep["summary"], ensure_ascii=False, indent=1))
+        fails = ev.failure_lines(rep["rows"])
+        print("\nFAILED ITEMS (from traces):" if fails else "\nno failed items", *fails, sep="\n")
+        print(f"written: {rep['dir']}")
+        return 0
     if not a.set:
-        print("eval needs a dataset (or --compare RUN_A RUN_B)", file=sys.stderr); return 2
+        print("eval needs a dataset (or --compare RUN_A RUN_B, or --rescore RUN)", file=sys.stderr); return 2
     rep = ev.run_eval(a.set, a.out, _engine(), label=a.label, include_unverified=a.include_unverified)
     print(json.dumps(rep["summary"], ensure_ascii=False, indent=1))
     fails = ev.failure_lines(rep["rows"])
@@ -203,6 +214,8 @@ def main(argv=None) -> int:
     bt = sp.add_parser("batch"); bt.add_argument("file"); bt.add_argument("--out", default="out/runs/batch"); bt.set_defaults(f=cmd_batch)
     ev_ = sp.add_parser("eval"); ev_.add_argument("set", nargs="?"); ev_.add_argument("--out", default="out/runs/eval")
     ev_.add_argument("--compare", nargs=2, metavar=("RUN_A", "RUN_B"), help="diff two finished run folders (A=baseline)")
+    ev_.add_argument("--rescore", metavar="RUN", help="score a finished run again with the current scorer (no model calls)")
+    ev_.add_argument("--index", default="idx", help="index whose nodes map chunk ids to pages (for --rescore)")
     ev_.add_argument("--include-unverified", action="store_true")
     ev_.add_argument("--label", default=""); ev_.set_defaults(f=cmd_eval)
     ex = sp.add_parser("exp", help="retrieval experiments (E2,E3,E3b,E4,E5); no LLM, no token cost")

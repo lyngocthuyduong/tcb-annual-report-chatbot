@@ -1,47 +1,46 @@
 {
- "n": 70,
- "pass_rate": 0.9571,
+ "n": 34,
+ "pass_rate": 0.9706,
  "retrieval": {
-  "n_with_gold_pages": 57,
+  "n_with_gold_pages": 28,
   "recall@40_bm25": 1.0,
-  "recall@40_dense": 0.8772,
+  "recall@40_dense": 0.8929,
   "recall@40_fused": 1.0,
-  "recall@12_final": 0.9825,
-  "recall@3_final": 0.8246,
-  "mrr_final": 0.7257
+  "recall@12_final": 0.9643,
+  "recall@3_final": 0.8929,
+  "mrr_final": 0.7882
  },
  "answers": {
-  "fact_correct": 0.9649,
+  "fact_correct": 0.9643,
   "fact_unscorable": 0,
   "citation_valid": 1.0,
-  "page_hit": 0.9825,
+  "page_hit": 0.9643,
   "page_precision": 0.869
  },
  "refusal": {
   "precision": 1.0,
   "recall": 1.0,
-  "n_unanswerable": 12,
+  "n_unanswerable": 5,
   "false_answer_rate": 0.0
  },
  "latency_s": {
-  "mean": 2.15,
-  "p50": 2.089,
-  "p95": 3.176
+  "mean": 2.45,
+  "p50": 2.368,
+  "p95": 3.852
  },
- "tokens_in_total": 768014,
- "tokens_out_total": 16047,
- "cost_usd_total": 0.08483,
- "cost_usd_per_question": 0.001212,
+ "tokens_in_total": 370336,
+ "tokens_out_total": 7263,
+ "cost_usd_total": 0.04066,
+ "cost_usd_per_question": 0.001196,
  "stage_seconds_p50": {
-  "embed": 0.467,
-  "dense": 0.093,
+  "embed": 0.518,
+  "dense": 0.084,
   "bm25": 0.001,
-  "llm": 1.463
+  "llm": 1.74
  },
- "llm_calls_mean": 1.11,
+ "llm_calls_mean": 1.15,
  "attribution": {
-  "pass": 67,
-  "generation:wrong_or_missing_fact": 2,
+  "pass": 33,
   "retrieval:rank_drop": 1
  },
  "by_category": {
@@ -50,46 +49,34 @@
    "pass_rate": 1.0
   },
   "conversation": {
-   "n": 6,
-   "pass_rate": 1.0
-  },
-  "customer": {
-   "n": 3,
-   "pass_rate": 1.0
+   "n": 4,
+   "pass_rate": 0.75
   },
   "digital": {
    "n": 1,
    "pass_rate": 1.0
   },
-  "financial_review": {
-   "n": 5,
-   "pass_rate": 0.8
-  },
   "financial_statements": {
-   "n": 24,
-   "pass_rate": 0.9583
+   "n": 12,
+   "pass_rate": 1.0
   },
   "glossary": {
-   "n": 4,
+   "n": 3,
    "pass_rate": 1.0
   },
   "governance": {
-   "n": 2,
+   "n": 1,
    "pass_rate": 1.0
   },
   "human_capital": {
-   "n": 2,
+   "n": 1,
    "pass_rate": 1.0
   },
   "investor": {
    "n": 2,
-   "pass_rate": 0.5
-  },
-  "key_figures": {
-   "n": 4,
    "pass_rate": 1.0
   },
-  "network": {
+  "key_figures": {
    "n": 1,
    "pass_rate": 1.0
   },
@@ -102,29 +89,29 @@
    "pass_rate": 1.0
   },
   "unanswerable": {
-   "n": 12,
+   "n": 5,
    "pass_rate": 1.0
   }
  },
  "by_type": {
   "calc": {
-   "n": 11,
+   "n": 5,
    "pass_rate": 1.0
   },
   "followup": {
+   "n": 4,
+   "pass_rate": 0.75
+  },
+  "refusal": {
    "n": 6,
    "pass_rate": 1.0
   },
-  "refusal": {
-   "n": 13,
-   "pass_rate": 1.0
-  },
   "single": {
-   "n": 40,
-   "pass_rate": 0.925
+   "n": 19,
+   "pass_rate": 1.0
   }
  },
- "items_run": 70,
+ "items_run": 34,
  "items_unverified_excluded": 0,
  "submission_grade": true
 }

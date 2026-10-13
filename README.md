@@ -20,6 +20,7 @@ docker compose --profile offline run --rm app-offline tcb smoke   # logs: "Ollam
 docker compose run --rm app tcb batch data/q10.json --out out/runs/q10       # any question file placed in data/; answers + full traces in out/
 docker compose run --rm app tcb eval  data/val.json --label val2             # scores, stage attribution, latency by stage
 docker compose run --rm app tcb eval  --compare out/runs/eval/val1 out/runs/eval/val2
+docker compose run --rm app tcb eval  --rescore runs/test2                     # score saved answers again (no model call)
 docker compose run --rm app tcb ask "Tỷ lệ CASA năm 2025?" --json
 ```
 `eval` writes `traces.jsonl`, `results.jsonl` (score + failing stage per item), `summary.json` (pass rate, recall by stage, refusal P/R, p50/p95 latency, median seconds per stage, tokens, cost when the model has a price in `conf.PRICES`) and `config.json`. Only `"verified": true` items count.
@@ -108,5 +109,5 @@ os.environ.update(TCB_MODELS_DIR="/content/models", HF_TOKEN=userdata.get("hf_to
 !tcb eval data/val.json --label val13
 !tcb eval data/q10.json --label q10k
 !tcb eval data/test.json --label test1b    # test1 re-run after its fixes (not independent)
-!tcb eval data/test2.json --label test2    # once, on the code that is submitted
+!tcb eval data/test2.json --label test2    # once
 ```

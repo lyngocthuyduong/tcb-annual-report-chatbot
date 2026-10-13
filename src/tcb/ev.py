@@ -81,13 +81,20 @@ def facts_ok(item: Item, answer: str) -> tuple[bool | None, str]:
         return ok, method
     an, af = cite.num_tokens(answer), _fold(answer)
     a_sc, g_sc = _scales(answer), _scales(item.gold_answer)
-    a_fig = cite.figures(answer)
+    a_fig = cite.figures(answer, small=True)
 
     def same_value(t: str) -> bool:
         """The gold figure stated more precisely or in another unit: '53,4 nghìn tỷ' ≈ '53.391 tỷ' (within half a unit of
-        the gold's last digit). An answer less precise than the gold ('40%' for '40,4%') does not count, and a gold
-        without a magnitude only matches exactly."""
-        g = [f for f in cite.figures(item.gold_answer, keep=t) if f[2] != cite.Decimal("0.5")]
+        the gold's last digit). An answer less precise than the gold ('40%' for '40,4%') does not count. A gold count
+        without a magnitude is rounded at its last non-zero digit when it ends in 3+ zeros ('hơn 303.000' is met by
+        '303.446', '1.000.000' by '1 triệu'); otherwise it only matches exactly."""
+        g = []
+        for f in cite.figures(item.gold_answer, keep=t):
+            if f[2] == cite.Decimal("0.5"):
+                z = len(t) - len(t.rstrip("0")) if t.isdigit() else 0
+                if z < 3: continue
+                f = (f[0], f[1], cite.Decimal(5) * 10 ** (z - 1))
+            g.append(f)
         return any(f[0] == x[0] and abs(f[1] - x[1]) <= f[2] for f in g for x in a_fig)
 
     def has(f: str) -> bool:
@@ -293,6 +300,31 @@ def run_eval(set_path: str, out_dir: str, engine, label: str = "", include_unver
     summary["items_run"] = len(rows)
     summary["items_unverified_excluded"] = len(rows) - len(counted)
     summary["submission_grade"] = cfg["submission_grade"]
+    (out / "results.jsonl").write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n", encoding="utf-8")
+    (out / "config.json").write_text(json.dumps(cfg, ensure_ascii=False, indent=1), encoding="utf-8")
+    (out / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=1), encoding="utf-8")
+    return {"summary": summary, "config": cfg, "rows": rows, "dir": str(out)}
+
+
+def rescore(run_dir: str, out_dir: str, label: str, nodes: dict) -> dict:
+    """Score a finished run again with the current scorer: the saved answers and frozen gold items are reused, no model is
+    called. Used when the scorer changes, so the change is visible run by run (`rescored_from` in config.json)."""
+    src = Path(run_dir)
+    page_of = lambda c: (nodes.get(c) or {}).get("printed_page_number")
+    out = Path(out_dir) / label
+    out.mkdir(parents=True, exist_ok=True)
+    rows, lines = [], []
+    for ln in (src / "traces.jsonl").read_text(encoding="utf-8").splitlines():
+        if not ln.strip(): continue
+        t = json.loads(ln)
+        row = score_item(Item(**t["gold"]), t["answer"], page_of)
+        rows.append(row); lines.append(json.dumps({**t, "score": row}, ensure_ascii=False))
+    cfg = json.loads((src / "config.json").read_text(encoding="utf-8"))
+    cfg.update(label=label, rescored_from=src.name, scorer_commit=_commit())
+    counted = [r for r in rows if r["verified"] or cfg.get("include_unverified")]
+    summary = summarize(counted)
+    summary.update(items_run=len(rows), items_unverified_excluded=len(rows) - len(counted), submission_grade=cfg.get("submission_grade"))
+    (out / "traces.jsonl").write_text("\n".join(lines) + "\n", encoding="utf-8")
     (out / "results.jsonl").write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n", encoding="utf-8")
     (out / "config.json").write_text(json.dumps(cfg, ensure_ascii=False, indent=1), encoding="utf-8")
     (out / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=1), encoding="utf-8")

@@ -1,54 +1,54 @@
 {
- "n": 34,
+ "n": 22,
  "pass_rate": 1.0,
  "retrieval": {
-  "n_with_gold_pages": 28,
+  "n_with_gold_pages": 18,
   "recall@40_bm25": 1.0,
-  "recall@40_dense": 0.8929,
+  "recall@40_dense": 1.0,
   "recall@40_fused": 1.0,
   "recall@12_final": 1.0,
-  "recall@3_final": 0.8929,
-  "mrr_final": 0.8269
+  "recall@3_final": 1.0,
+  "mrr_final": 0.9444
  },
  "answers": {
   "fact_correct": 1.0,
   "fact_unscorable": 0,
   "citation_valid": 1.0,
   "page_hit": 1.0,
-  "page_precision": 0.9226
+  "page_precision": 0.7935
  },
  "refusal": {
   "precision": 1.0,
   "recall": 1.0,
-  "n_unanswerable": 5,
+  "n_unanswerable": 4,
   "false_answer_rate": 0.0
  },
  "latency_s": {
-  "mean": 2.219,
-  "p50": 2.158,
-  "p95": 3.754
+  "mean": 2.316,
+  "p50": 2.204,
+  "p95": 3.585
  },
- "tokens_in_total": 363876,
- "tokens_out_total": 7617,
- "cost_usd_total": 0.0402,
- "cost_usd_per_question": 0.001182,
+ "tokens_in_total": 210570,
+ "tokens_out_total": 4057,
+ "cost_usd_total": 0.02308,
+ "cost_usd_per_question": 0.001049,
  "stage_seconds_p50": {
   "embed": 0.521,
-  "dense": 0.093,
+  "dense": 0.086,
   "bm25": 0.001,
-  "llm": 1.525
+  "llm": 1.5
  },
- "llm_calls_mean": 1.15,
+ "llm_calls_mean": 1.05,
  "attribution": {
-  "pass": 34
+  "pass": 22
  },
  "by_category": {
-  "ambiguous": {
+  "conversation": {
    "n": 1,
    "pass_rate": 1.0
   },
-  "conversation": {
-   "n": 4,
+  "corporate": {
+   "n": 1,
    "pass_rate": 1.0
   },
   "digital": {
@@ -56,23 +56,11 @@
    "pass_rate": 1.0
   },
   "financial_statements": {
-   "n": 12,
-   "pass_rate": 1.0
-  },
-  "glossary": {
-   "n": 3,
-   "pass_rate": 1.0
-  },
-  "governance": {
-   "n": 1,
+   "n": 2,
    "pass_rate": 1.0
   },
   "human_capital": {
-   "n": 1,
-   "pass_rate": 1.0
-  },
-  "investor": {
-   "n": 2,
+   "n": 3,
    "pass_rate": 1.0
   },
   "key_figures": {
@@ -80,37 +68,41 @@
    "pass_rate": 1.0
   },
   "retail": {
-   "n": 2,
+   "n": 4,
    "pass_rate": 1.0
   },
   "subsidiary": {
-   "n": 1,
+   "n": 2,
+   "pass_rate": 1.0
+  },
+  "sustainability": {
+   "n": 3,
    "pass_rate": 1.0
   },
   "unanswerable": {
-   "n": 5,
+   "n": 4,
    "pass_rate": 1.0
   }
  },
  "by_type": {
   "calc": {
-   "n": 5,
+   "n": 3,
    "pass_rate": 1.0
   },
   "followup": {
-   "n": 4,
+   "n": 1,
    "pass_rate": 1.0
   },
   "refusal": {
-   "n": 6,
+   "n": 4,
    "pass_rate": 1.0
   },
   "single": {
-   "n": 19,
+   "n": 14,
    "pass_rate": 1.0
   }
  },
- "items_run": 34,
+ "items_run": 22,
  "items_unverified_excluded": 0,
  "submission_grade": true
 }

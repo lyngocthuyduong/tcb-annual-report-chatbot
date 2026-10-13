@@ -211,3 +211,19 @@ def test_a_parenthetical_is_not_a_negative_sign():
     neg = cite.evidence_from([node("b", "Lãi/(lỗ) | Năm 2025 Triệu đồng: (8); Năm 2024 Triệu đồng: 102", 369)])
     assert cite.check(plan(claims=[{"text_vi": "Lỗ (8) triệu đồng.", "evidence": ["E1"]}]), neg, {}, "").ok
     assert not cite.check(plan(claims=[{"text_vi": "Lỗ (102) triệu đồng.", "evidence": ["E1"]}]), neg, {}, "").ok
+
+
+@pytest.mark.parametrize("text,shown", [
+    ("Số dư tiền gửi tăng 24% (▲) so với năm trước.", "Số dư tiền gửi tăng 24% so với năm trước."),
+    ("CIR giảm 1,9% (▼) so với 32,7%.", "CIR giảm 1,9% so với 32,7%."),
+    ("Tỷ lệ CASA đạt 40,4% (▲).", "Tỷ lệ CASA đạt 40,4% (▲)."),          # no verb: the arrow is the only direction, keep it
+])
+def test_arrow_marker_is_dropped_once_a_verb_states_the_direction(text, shown):
+    assert cite.render_claim(P.Claim.model_validate({"text_vi": text, "evidence": ["E1"]}), {}) == shown
+
+
+def test_percentage_points_match_a_change_printed_as_percent():
+    """n-cir-diff (dev13): the tile prints '1,9% (▼) so với 32,7%'; 'giảm 1,9 điểm phần trăm' is the same figure."""
+    ev = "Tỷ lệ chi phí/thu nhập | 30,8% | 1,9% (▼) so với 32,7% trong năm 2024"
+    assert cite.magnitude_problems("CIR là 30,8%, giảm 1,9 điểm phần trăm so với 32,7%.", ev) == []
+    assert cite.magnitude_problems("CIR giảm 1,9 tỷ đồng.", ev)

@@ -1,7 +1,7 @@
 {
- "label": "dev12",
- "set": "data/dev.json",
- "set_sha256": "096bd49560a56986ccd00d032fbbcd7e3bd18fa3ab5f017035e414517f40bdfc",
+ "label": "test2r",
+ "set": "data/test2.json",
+ "set_sha256": "49c733331c4dc1317d889d113c97546eeafd1839d1945ae78c4f18aefe136b6f",
  "provider": "anthropic",
  "model": "claude-haiku-5-5",
  "index_embedding": {
@@ -11,7 +11,7 @@
   "normalize": true,
   "max_length": 512
  },
- "index_built_at": "2026-10-13T11:18:47Z",
+ "index_built_at": "2026-10-13T14:16:48Z",
  "index_nodes": 1445,
  "final_evidence": 12,
  "device": "cpu",
@@ -20,11 +20,13 @@
  "top_dense": 40,
  "include_unverified": false,
  "submission_grade": true,
- "commit": "b445d4d",
- "index_manifest_sha256": "570de12737f8c9e63144c3207afa7f0f16275e9d7b5ee7529704b30cdefd4af5",
+ "commit": "5c5f329",
+ "index_manifest_sha256": "c0d83538dd26b19a519e5a51a8f35a97c20a87cf4aea4b96014546890e447732",
  "hardware": {
   "cpu": "x86_64",
   "cores": 2
  },
- "seconds": 150.6
+ "seconds": 51.0,
+ "rescored_from": "test2",
+ "scorer_commit": "5c5f329"
 }

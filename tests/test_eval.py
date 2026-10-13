@@ -189,3 +189,27 @@ def test_gold_figure_at_another_rounding_or_unit_counts():
     assert ev.facts_ok(it, "Tổng thu nhập hoạt động đạt 52.391 tỷ đồng [tr. 256].")[0] is False
     assert ev.facts_ok(item(gold_answer="16,0%.", gold_facts=["16"]), "ROE đạt 16 nghìn tỷ.")[0] is False
     assert ev.facts_ok(item(gold_answer="CASA 40,4%.", gold_facts=["40,4"]), "CASA khoảng 40% [tr. 5].")[0] is False
+
+
+def test_rounded_gold_count_is_met_by_the_exact_count_or_a_word_scale():
+    """'Hơn 303.000 khách hàng' is answered by '303.446'; '1.000.000 thẻ' by '1 triệu thẻ'. A count without trailing
+    zeros still needs the exact digits, and the wrong magnitude never counts."""
+    it = item(gold_answer="Hơn 303.000 khách hàng.", gold_facts=["303.000"])
+    assert ev.facts_ok(it, "Sản phẩm thu hút 303.446 khách hàng [tr. 60].")[0] is True
+    assert ev.facts_ok(it, "Sản phẩm thu hút 304.000 khách hàng [tr. 60].")[0] is False
+    it = item(gold_answer="Hơn 1.000.000 thẻ.", gold_facts=["1.000.000"])
+    assert ev.facts_ok(it, "Techcombank đã phát hành hơn 1 triệu thẻ [tr. 246].")[0] is True
+    assert ev.facts_ok(it, "Techcombank đã phát hành hơn 1 tỷ thẻ [tr. 246].")[0] is False
+    assert ev.facts_ok(item(gold_answer="3.500 nhân viên.", gold_facts=["3.500"]), "3.512 nhân viên")[0] is False
+
+
+def test_rescore_reuses_saved_answers(tmp_path):
+    src = tmp_path / "run"; src.mkdir()
+    gold = item(id="v", gold_answer="Hơn 1.000.000 thẻ.", gold_facts=["1.000.000"], gold_printed_pages=[246]).model_dump()
+    ans = {"status": "answered", "answer": "Đã phát hành hơn 1 triệu thẻ [tr. 246].",
+           "trace": {"evidence": [{"page": 246}], "retrieval": {"ranked": [["c1", 0.1]], "bm25": ["c1"], "dense": ["c1"], "fused": ["c1"]}}}
+    (src / "traces.jsonl").write_text(json.dumps({"id": "v", "question": "q", "gold": gold, "answer": ans}, ensure_ascii=False) + "\n", encoding="utf-8")
+    (src / "config.json").write_text(json.dumps({"label": "run", "submission_grade": True}), encoding="utf-8")
+    rep = ev.rescore(str(src), str(tmp_path / "out"), "runr", {"c1": {"printed_page_number": 246}})
+    assert rep["rows"][0]["passed"] and rep["config"]["rescored_from"] == "run"
+    assert (tmp_path / "out" / "runr" / "summary.json").exists()

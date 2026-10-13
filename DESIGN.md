@@ -221,12 +221,12 @@ If the reply is not parseable JSON for the schema, or `cite.check` finds problem
 2. Every `{C#}`/`calc_refs` id exists among the plan's calculations; calculation inputs exist among the extracted quantities.
 3. The text contains **no** page reference (`tr. 5`, `trang 5` …) — pages are never LLM output.
 4. **Every number in the claim text must appear in the cited evidence** (or in the raw cells of quantities used by the claim's calculations, or in the question), compared in canonical form only, so `14,6%` ≡ `14.6`. Raw forms are not compared: the raw `179.501` (thousands) is the canonical form of `179,501` (179.5), and comparing both let a claim `179,501 nghìn tỷ` pass against evidence `179.501 tỷ` (found in run dev9, fixed and tested). Integers ≤ 12 are exempt (list counts, months), a documented gap.
-5. **Magnitude.** A number printed with a magnitude in the cited evidence (`1.192 | Nghìn tỷ đồng`, `18 triệu`, `40,4%`, or the unit of a table column, `31/12/2025 Triệu đồng: 1.192.344.137`) must carry the same magnitude in the claim. `1.192 tỷ đồng` or a bare `1.192` fails although every digit matches: that is the silent factor-of-1,000 error.
+5. **Magnitude.** A number printed with a magnitude in the cited evidence (`1.192 | Nghìn tỷ đồng`, `18 triệu`, `40,4%`, or the unit of a table column, `31/12/2025 Triệu đồng: 1.192.344.137`) must carry the same magnitude in the claim. `1.192 tỷ đồng` or a bare `1.192` fails although every digit matches: that is the silent factor-of-1,000 error. `điểm phần trăm` has the magnitude of `%`, because the report prints percentage-point changes with `%` (`1,9% (▼) so với 32,7%`); before this, a correct `giảm 1,9 điểm phần trăm` was dropped (dev13 `n-cir-diff`).
 6. At least one evidence id or calculation per claim.
 
 **Restated figures.** Run `q10e` showed 4 of 10 answers restating a figure from a second page. The prompt now asks for one claim per figure listing every evidence id (rule 9), and the code flags in the trace (`restated_figures`) any claim whose figures were all stated by an earlier claim (same number, or the same figure at another rounding or unit within half a unit of the rounded one). Removing such claims was tried (runs dev9/val9) and dropped: both claims it removed on dev+val carried a remark the earlier claim did not ("dẫn đầu hệ thống ngân hàng"), while the prompt alone left no restatement in q10.
 
-A claim failing any check is **dropped**, not patched. Rendering then joins the kept claims into one paragraph, each sentence ending `... [tr. N].` where N is `printed_page_number` of the cited nodes, merged and sorted (the prompt asks for a first sentence with its subject and follow-on sentences that do not repeat it, one claim per indicator with its change and the remark the report prints next to it); calculator results use the pages of their input quantities. A final `verify_rendered` pass asserts every page in the rendered answer belongs to retrieved evidence (defence in depth; failure → `error` status).
+A claim failing any check is **dropped**, not patched. A drawn-arrow marker (`(▲)`, §4.1) is removed from a rendered sentence that already has `tăng` or `giảm`, and kept where it is the only sign of direction. Rendering then joins the kept claims into one paragraph, each sentence ending `... [tr. N].` where N is `printed_page_number` of the cited nodes, merged and sorted (the prompt asks for a first sentence with its subject and follow-on sentences that do not repeat it, one claim per indicator with its change and the remark the report prints next to it); calculator results use the pages of their input quantities. A final `verify_rendered` pass asserts every page in the rendered answer belongs to retrieved evidence (defence in depth; failure → `error` status).
 
 The answer payload also lists `citations` (eid, page, pdf_page, section, chunk_id, snippet) for the UI to open the source.
 
@@ -304,7 +304,7 @@ Unanswerable topics were chosen only if a full-text search of the report found n
 Item types: `single`, `multi`, `calc`, `followup`, `refusal`; `expect_status: ambiguous` marks questions whose right behaviour is a clarifying question; these are excluded from refusal precision/recall.
 
 ### 14.2 Scorers (deterministic, no LLM judge)
-- **Fact present:** every `gold_facts` entry must appear in the answer; `a | b` = either alternative; numbers compared in canonical form and with the magnitude the gold prints (`100 tỷ` does not satisfy `100 triệu`). The gold figure stated more precisely or in another unit also counts (`53.391 tỷ` for `53,4 nghìn tỷ`, within half a unit of the gold's last digit); a less precise one does not (`40%` for `40,4%`). Re-scoring runs dev11/val11/q10i with this rule changed two items (sq-06, n-equity), both correct answers stated in another unit.
+- **Fact present:** every `gold_facts` entry must appear in the answer; `a | b` = either alternative; numbers compared in canonical form and with the magnitude the gold prints (`100 tỷ` does not satisfy `100 triệu`). The gold figure stated more precisely or in another unit also counts (`53.391 tỷ` for `53,4 nghìn tỷ`, within half a unit of the gold's last digit); a less precise one does not (`40%` for `40,4%`). Re-scoring runs dev11/val11/q10i with this rule changed two items (sq-06, n-equity), both correct answers stated in another unit. After test2 the rule was extended to round counts without a magnitude: a gold ending in three or more zeros is rounded at its last non-zero digit (`hơn 303.000` is met by `303.446`, `1.000.000` by `1 triệu`); re-scoring the five final runs changed two items to pass (test2 `y-visaeco`, val `n-tinchap`) and nothing else.
 - **Citation valid:** every cited page belongs to the evidence retrieved for that question.
 - **Page hit / precision:** cited pages vs `gold_printed_pages ∪ alt_pages`.
 - **Refusal:** precision and recall over unanswerable items, plus false-answer rate.
@@ -314,7 +314,7 @@ Item types: `single`, `multi`, `calc`, `followup`, `refusal`; `expect_status: am
 For each failed item, the first failing stage in this order: `system` (provider/index error) → `retrieval:recall_miss` (gold page in neither BM25 nor dense top-40) → `retrieval:fusion_drop` → `retrieval:rank_drop` (gold page ranked below the `FINAL_EVIDENCE` blocks given to the LLM) → `citation` (invalid/wrong page) → `calc` → `generation:wrong_or_missing_fact` → `refusal:over_refusal` / `under_refusal`. This is what makes "what did the numbers make you change" answerable.
 
 ### 14.4 Run artifacts
-`tcb eval` writes `traces.jsonl` (full per-question trace), `results.jsonl`, `summary.json` and `config.json` (set sha256, provider, model, index identity, evidence count, RRF k, device, and **`submission_grade`**: true only with the real BGE-M3 index). `tcb eval --compare A B` reports fixed / regressed / verdict-changed items and metric deltas, and warns if the two runs differ in set, provider, model, τ, k or index.
+`tcb eval` writes `traces.jsonl` (full per-question trace), `results.jsonl`, `summary.json` and `config.json` (set sha256, provider, model, index identity, evidence count, RRF k, device, and **`submission_grade`**: true only with the real BGE-M3 index). `tcb eval --compare A B` reports fixed / regressed / verdict-changed items and metric deltas, and warns if the two runs differ in set, provider, model, τ, k or index. `tcb eval --rescore RUN` scores a finished run again with the current scorer, reusing the saved answers and frozen gold items (no model call); the copy records `rescored_from` and the scorer's commit.
 
 ### 14.5 Experiments (`tcb exp`, retrieval only, zero token cost)
 | ID | Question | Decision rule |
@@ -391,7 +391,8 @@ Data: `data/dev.json` + `data/val.json`, 85 answerable items with gold pages, 19
 | BM25 vs dense vs RRF vs RSF (E3) | R@20 | BM25 0.918, dense 0.694, RRF 0.941, RSF 0.929 | keep RRF |
 | RRF k ∈ {10, 30, 60, 100} (E3b) | R@20 per set | no k beats 60 by ≥ 5 pts on both sets | keep k = 60 |
 | Rerank pool N × final k (E4) | recall within the k blocks given to the LLM | N10: 0.882; N20/30/40 with k ≥ 8: 0.894 (one item more). CPU rerank time grows with N (≈ 60 s per question at N = 30 on 2 cores) | pool 30 → 10, all 10 blocks to the LLM |
-| Evidence count k on the rebuilt indexes (E4, no reranker) | recall of the fused top k | m6 (1,463 nodes): k 10: 0.859, 12: 0.894, 15: 0.906, 20: 0.929. m7 (final, 1,445 nodes): 5: 0.777, 8: 0.824, 10: 0.871, 12: 0.929, 15: 0.929, 20: 0.941 | rule: smallest k within 2 pts of the best. It chose 15 (m5), 20 (m6), 12 (m7): one item is 1.2 pts, so the choice moves with single items. Final k = 12 (m7) |
+| Evidence count k on the rebuilt indexes (E4, no reranker) | recall of the fused top k | m6 (1,463 nodes): k 10: 0.859, 12: 0.894, 15: 0.906, 20: 0.929. m7 (1,445 nodes): 5: 0.777, 8: 0.824, 10: 0.871, 12: 0.929, 15: 0.929, 20: 0.941. m8 (final index, KPI label ranking on): 5: 0.788, 8: 0.847, 10: 0.882, 12: 0.929, 15: 0.941, 20: 0.953 | rule: smallest k within 2 pts of the best. It chose 15 (m5), 20 (m6), 12 (m7), 15 (m8): one item is 1.2 pts, so the choice moves with single items. k = 12 was frozen before test2 and kept |
+| KPI label ranking on or off (E8, m8) | gold page in the final 12 | no gain and no loss on dev+val (no question there names a short tile that was ranked out); it is what brought test1 `x-credcost` into the evidence (test1b) | keep |
 | BM25 vs dense vs RRF vs RSF on the final index (E3, m7) | R@20 | BM25 0.929, dense 0.718, RRF 0.941, RSF 0.953 | keep RRF (RSF is one item better, the rule needs 5 pts) |
 | Glossary expansion (E5) | items lost / gained | none lost, none gained | keep (needed for abbreviations such as RBG, CASA) |
 | Weak-retrieval retry τ_low (E7) | F1 of flagging unanswerable by top rerank score | τ = 0.599 (on pool 30) | not enabled: the retry is a second full search and rerank on exactly the weak and unanswerable questions, and no experiment shows it recovers a page |
@@ -423,6 +424,20 @@ All three failures were over-refusals with the gold page already in the top 4. `
 | `sq-07` (q10 batch: RBG loan balance, KPI tile p.59) | the tile `Dư nợ vay \| 328,1` carried only the chapter name; the segment title sits on the facing page p.58 | page-title context in every node (§4.3); a paragraph that glued two tiles together is no longer linked to them |
 
 Integer differences now print without a decimal (857, not 857,0).
+
+---
+
+### 17.3 Final runs (commit `5c5f329`, 13 Oct 2026)
+
+| Run | Pass (first scored) | Failures, first failing stage |
+|---|---|---|
+| test2 | 22/22 (21/22) | none after rescoring; `y-visaeco` was a scorer false negative ("hơn 1 triệu" for `1.000.000`) |
+| test1b | 22/22 | none; the three test1 failure modes are fixed (not independent) |
+| q10k | 10/10 | none |
+| val13 | 33/34 (32/34) | `f-04` retrieval:rank_drop (a follow-up; p.257 gave the same profit rounded to tỷ) |
+| dev13 | 68/70 | `n-mktcap` generation (rounded to nghìn tỷ when tỷ was asked); `n-cir-diff` over-refusal (percentage points, fixed after the run, §8) |
+
+The answers also cite every page that repeats a figure (page precision 0.72 to 0.87) and, on test2, repeated the arrow marker after a verb (`tăng 24% (▲)`). The magnitude change (§8) was replayed on the 143 saved sentences of the five runs: only `n-cir-diff` changes. The marker change touches no figure or page.
 
 ---
 
