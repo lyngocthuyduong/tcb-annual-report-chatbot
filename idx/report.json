@@ -255,16 +255,16 @@
   ]
  },
  "nodes_by_type": {
-  "kpi": 202,
   "narrative": 1054,
-  "table": 107,
+  "kpi": 180,
+  "table": 115,
   "glossary": 163
  },
  "glossary_terms": 163,
  "seconds": {
-  "ingest": 8.6,
-  "embed": 81.5,
-  "bm25": 0.6
+  "ingest": 13.4,
+  "embed": 80.1,
+  "bm25": 0.7
  },
  "hardware": {
   "cpu": "x86_64",

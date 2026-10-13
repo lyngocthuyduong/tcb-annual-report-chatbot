@@ -1,6 +1,6 @@
 {
  "index_format_version": 1,
- "built_at": "2026-10-10T22:00:09Z",
+ "built_at": "2026-10-13T04:56:39Z",
  "source": {
   "document_id": "tcb-ar-2025",
   "filename": "ar.pdf",
@@ -17,29 +17,26 @@
   "normalize": true,
   "max_length": 512
  },
- "reranker_expected": {
-  "model": "BAAI/bge-reranker-v2-m3",
-  "revision": "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e"
- },
  "chunking": {
   "unit": "half-page",
   "narrative_max_words": 220,
   "table_rows_per_chunk": 12,
+  "context": "chapter>heading",
   "glossary": "one-per-term"
  },
  "bm25": {
   "library": "bm25s",
   "version": "0.3.13",
-  "tokenizer": "tcb-vi-v1",
+  "tokenizer": "tcb-vi-v2",
   "k1": 1.5,
   "b": 0.75
  },
  "counts": {
-  "nodes": 1526,
+  "nodes": 1512,
   "by_type": {
-   "kpi": 202,
    "narrative": 1054,
-   "table": 107,
+   "kpi": 180,
+   "table": 115,
    "glossary": 163
   },
   "glossary": 163
@@ -53,21 +50,21 @@
   "transformers": "5.19.0"
  },
  "files": {
-  "bm25/data.csc.index.npy": "15e175ad7ebbc17ff2adcc3fd99cc42aaa094a32b09dfb5ce0aadc2dad2c0491",
-  "bm25/ids.json": "f39cb528758ec38dea90cf268ae541966915dec783475c15fa10276a1484806d",
-  "bm25/indices.csc.index.npy": "c679199708f1290d860204ec70d59de4d243fc610531fe30b64326e1306db459",
-  "bm25/indptr.csc.index.npy": "ab6b0224c2a2f57081e8dfe1ac3f04b164247fb49355c80626f67d3979d839ca",
-  "bm25/params.index.json": "daa32a070ab6050e2f7f07bc96c812343c681ac5f3fa41b71f640e13e5e68a2d",
-  "bm25/vocab.index.json": "9d793a111217dcde8063cf12b79668c5f04bfeb2e99b941f908c70c6980a2e90",
+  "bm25/data.csc.index.npy": "2153d57998dd55a06e2b26d3564108ab8d42282b4c890b38037849d6437482cb",
+  "bm25/ids.json": "e7149c661af8546a5c5e9b4b8fe1497e5cb3d6da9cc46368d1ae5bdc35dec68c",
+  "bm25/indices.csc.index.npy": "ad3df321f1f6fe45663ffaa35267effe2a5c065dabb190ff436a9c14172c968d",
+  "bm25/indptr.csc.index.npy": "79773f6fdbb5054e3ba01d26a34c0f56b68e52264908feffee84c1c581360f0e",
+  "bm25/params.index.json": "24064f3cfb12a25b6e30af64cd77cb44a185ac4817b792dc67a090747a5cdaa6",
+  "bm25/vocab.index.json": "dd17ee313d0e9c8496326f75dda2dd3a9d553742a7e85c77a2b21c7c15035d33",
   "gloss.json": "2f5eb083e9c1cb965cd00d5d2775db03d535be461119cf5bd0f03b547bc15ac8",
-  "llamaindex/default__vector_store.json": "1ccdf1740aa612b26b3f4249bb42d24aeedb5995c1c2cadfa894a2b5934bac55",
-  "llamaindex/docstore.json": "708c50ae22b531e47d458f5c8fd8e44e047883e79bc1f9df44ed451f973ce8c4",
+  "llamaindex/default__vector_store.json": "1fa78d4f91f83498761d161841d97f7f214fac753ecf01c3861650a1aef9aa43",
+  "llamaindex/docstore.json": "783790a7f92d139ae0b246ba36506c3e50e1808c5f0dfdec98c2a0557a80765d",
   "llamaindex/graph_store.json": "8e0a77744010862225c69da83c585f4f8a42fd551b044ce530dbb1eb6e16742c",
   "llamaindex/image__vector_store.json": "d17ed74c1649a438e518a8dc56a7772913dfe1ea7a7605bce069c63872431455",
-  "llamaindex/index_store.json": "0c3ae6f6d57426859d5dabf83bca9cadcc4585c97f526e0448b8935c61eaef7e",
-  "nodes.jsonl": "d6294c133612d0931216177975f57df2fa6cb56b4eb973828d1e5802a7c0652d",
+  "llamaindex/index_store.json": "fb33a653ddd1db0b15b42ded35534c9e4dddb59de6b6487d7e9887af33ab0b5c",
+  "nodes.jsonl": "09c104916bd63bfefb5406fef1320e32e2a65e6c254b8de3f137dfd26a4381ed",
   "pages.json": "de8c127e71f13845a0d4302fe3864b748a4759a2b00e9f1b38e34b0d3bde8aa6",
-  "report.json": "f6e45154e4389425b266a2df6018d4b952eca47aeaf0f1eeac62b7d9f238c099",
-  "tables.jsonl": "4532acd5d3fad5183a80c8c7464953d50acde7534b592fdaa152d3ecaf0ecd1c"
+  "report.json": "3c39867f2872d26fecb3d3a89fe7c1a3b833a2503bd3f614c0bc8f6053332916",
+  "tables.jsonl": "617453d2b8f6fa59f1492af38dea0dec1d2ae2f6394c36c92b3722ff6311c22c"
  }
 }

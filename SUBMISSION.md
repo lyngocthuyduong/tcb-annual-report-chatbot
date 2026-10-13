@@ -42,12 +42,12 @@
 - What the numbers made you change: E4 and latency removed the reranker; E2 kept the Vietnamese tokenizer; E3b kept RRF k = 60; the three val failures led to literals in the calculator and quantity selection by question relevance; the batch refusal of sq-07 (RBG loan balance, p.59) led to page-title context in every node, a general fix tested on other pages (RBG, TCBS, TCC, board, cash-flow continuation, glossary).
 
 ## Cost and latency
-- Ingestion: <!-- fill from idx/report.json after the rebuild: parse s, embed s (device), BM25 s -->
+- Ingestion (Colab, 2 vCPU + T4 for embedding): parse 13.4 s, embed 80.1 s for 1,512 nodes, BM25 0.7 s (`idx/report.json`). One-off, no API cost.
 - Per query: <!-- fill from summary.json of the final val/q10 run: p50, p95, stage_seconds_p50, tokens, cost_usd_per_question; state CPU and model -->
 - Models used: embedding BAAI/bge-m3; generation claude-haiku-5-5 (development), gpt-4o-mini, claude-sonnet-5-5 or Ollama `qwen2.5:7b` selectable; each run's `config.json` records the model that produced its numbers.
 
 ## What I deliberately did not build
-An agent framework (LlamaIndex is used for ingestion and vector retrieval only), an LLM judge, OCR or vision for image-only content (715 images inventoried), automatic provider fallback, runtime index rebuild or model download, authentication, multi-user serving, deployment.
+An agent framework (LlamaIndex is used for ingestion and vector retrieval only), an LLM judge, OCR or vision for image-only content (428 images on 117 pages inventoried), automatic provider fallback, runtime index rebuild or model download, authentication, multi-user serving, deployment.
 
 ## With 10x time and budget
 1. A larger eval set labelled by people with a fresh held-out split, and an LLM judge validated against those labels.
