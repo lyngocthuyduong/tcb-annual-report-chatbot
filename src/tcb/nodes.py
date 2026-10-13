@@ -72,6 +72,24 @@ H1_MIN, H2_MIN = 35.0, 27.0     # word height (pt) of page titles / subtitles in
 
 
 _LOCAL = re.compile(r"^(Điểm nhấn|Trọng tâm)", re.I)
+# Statement page band repeated on every page of the financial statements: form code, "<STATEMENT> (tiếp theo)", period line.
+_BAND_PERIOD = re.compile(r"\s*tại ngày \d{1,2} tháng \d{1,2} năm \d{4} và cho năm tài chính kết thúc cùng ngày\s*")
+_BAND_LINE = re.compile(r"(?:tại ngày \d{1,2} tháng \d{1,2} năm \d{4}(?: và cho năm tài chính kết thúc cùng ngày)?"
+                        r"|cho năm tài chính kết thúc ngày \d{1,2} tháng \d{1,2} năm \d{4})")
+_BAND_CONT = re.compile(r"^((?:THUYẾT MINH )?BÁO CÁO [^()]{3,80}HỢP NHẤT) \(tiếp theo\)$")
+
+
+def _fs_band(h: Half) -> tuple[set[int], str]:
+    """Indices of band blocks on a statements page and the statement name they carry (sentence case)."""
+    drop, name = set(), ""
+    for i, b in enumerate(h.blocks):
+        t = re.sub(r"\s+", " ", b.text).strip()
+        m = _BAND_CONT.match(t)
+        if b.bbox[1] > 0.15 * h.height: continue                       # the band sits at the top of the page
+        if parse.FORM.fullmatch(t) or _BAND_LINE.fullmatch(t) or m:
+            drop.add(i)
+            if m: name = m.group(1).capitalize()
+    return drop, name
 
 
 def headings(h: Half) -> tuple[str, str, str]:
@@ -102,6 +120,9 @@ def half_nodes(h: Half, section: str, chunk_words: int | None = None, context: s
     if not h.blocks: return nodes, gloss
     base = dict(document_id=conf.DOC_ID, pdf_page_index=h.pdf_page_index, side=h.side,
                 printed_page_number=h.printed_page, page_number_source=h.page_source, section=section)
+    band, statement = _fs_band(h) if section == parse.SECTION_FS else (set(), "")
+    if statement and statement.lower() not in context.lower():
+        context = " › ".join(x for x in (statement, context) if x)
     crumb = "[" + " › ".join(x for x in (section, context) if x) + "] " if (section or context) else ""
     ymask: list[tuple[float, float]] = []
 
@@ -116,17 +137,26 @@ def half_nodes(h: Half, section: str, chunk_words: int | None = None, context: s
             return nodes, gloss
 
     # FS tables
+    heads: list[str] = []
     if section == parse.SECTION_FS:
         tbs, ymask = parse.tables(h)
         fs = fs if fs is not None else {}
+        if statement and not statement.lower().startswith("thuyết minh"): fs.pop("note", None)
         for tb in tbs:
             unit = next((u for u in tb.units if u), None)
             title, form = tb.title, tb.form_code
+            note = tb.note or (fs.get("note") if statement.lower().startswith("thuyết minh") else None)
+            if note: title = note                                    # notes: the numbered heading names the table
             near = h.printed_page is not None and fs.get("page") is not None and 0 <= h.printed_page - fs["page"] <= 1
             if not title.strip() and near and fs.get("title"):        # untitled table right after a titled one: its continuation
                 title, form = fs["title"], form or fs.get("form")
             if title.strip(): fs.update(title=title, form=form, page=h.printed_page)
-            head = f"{title} ({form or 'bảng'})" + (f" — đơn vị: {unit}" if unit else "")
+            shown = _BAND_PERIOD.sub(" ", title)
+            if statement:                                            # the statement name is already in the crumb
+                shown = re.sub("^" + re.escape(statement.upper()) + r"(?: \(tiếp theo\))?", " ", shown.strip())
+            shown = re.sub(r"\s+", " ", shown).strip()
+            heads.append(shown.lower())
+            head = f"{shown} ({form or 'bảng'})".strip() + (f" — đơn vị: {unit}" if unit else "")
             for k in range(0, len(tb.rows), conf.TABLE_ROWS_PER_CHUNK):
                 part = tb.rows[k:k + conf.TABLE_ROWS_PER_CHUNK]
                 lines = []
@@ -142,8 +172,11 @@ def half_nodes(h: Half, section: str, chunk_words: int | None = None, context: s
                                   rows=[{"label": r.label, "note": r.note, "indent": round(r.indent),
                                          "cells": dict(zip(tb.headers, r.cells))} for r in part], **base))
 
+        hs = parse.note_heads(h)
+        if hs: fs["note"] = hs[-1][1]                                # a note runs on until the next numbered heading
+
     # narrative + KPI from the rest
-    blocks = [b for b in h.blocks if not any(a <= (b.bbox[1] + b.bbox[3]) / 2 <= z for a, z in ymask)]
+    blocks = [b for i, b in enumerate(h.blocks) if i not in band and not any(a <= (b.bbox[1] + b.bbox[3]) / 2 <= z for a, z in ymask)]
     buf: list[str] = []
     order = 0
 
@@ -158,7 +191,7 @@ def half_nodes(h: Half, section: str, chunk_words: int | None = None, context: s
             else:
                 texts.append(t)
         for t in _pack(texts, chunk_words or conf.CHUNK_MAX_WORDS):
-            if _words(t) >= 3:
+            if _words(t) >= 3 and not (_words(t) <= 15 and any(t.lower().strip() in x for x in heads)):  # a table's own title
                 nodes.append(Node(_cid(h.pdf_page_index, h.side, "n", order), crumb + t, content_type="narrative",
                                   bbox=[0, 0, 0, 0], **base))
                 order += 1

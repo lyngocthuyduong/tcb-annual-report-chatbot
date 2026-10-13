@@ -1,4 +1,4 @@
-"""HTTP API + minimal UI. Single-process, one answer at a time (the cross-encoder is not thread-safe)."""
+"""HTTP API + minimal UI. Single-process, one answer at a time."""
 from __future__ import annotations
 
 import json

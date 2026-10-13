@@ -13,6 +13,46 @@ _NUM = re.compile(r"\d+(?:[.,]\d+)*")
 _PLACEHOLDER = re.compile(r"\{(C\d+)\}")
 _PAGE_REF = re.compile(r"\[\s*tr\.?[^\]]*\]|\btrang\s+\d+|\bpage\s+\d+", re.I)
 CITE_RE = re.compile(r"\[tr\. (\d+(?:, \d+)*)\]")
+# magnitude printed right after a number ('1.192 | Nghìn tỷ đồng', '18 triệu', '40,4%') or before it in a table cell
+# ('31/12/2025 Triệu đồng: 1.192.344.137')
+_SCALE_AFTER = re.compile(r"\s*(?:\|\s*)?(nghìn tỷ|ngàn tỷ|tỷ|tỉ|triệu|nghìn|ngàn|%|phần trăm)(?![^\W\d_])", re.I)
+_SCALE_BEFORE = re.compile(r"(nghìn tỷ|ngàn tỷ|tỷ|tỉ|triệu|nghìn|ngàn) (?:đồng|USD|VND)\s*:\s*$", re.I)
+_YEAR = re.compile(r"^(19|20)\d{2}$")
+
+
+def _norm_scale(w: str) -> str:
+    w = w.lower()
+    return {"ngàn tỷ": "nghìn tỷ", "tỉ": "tỷ", "ngàn": "nghìn", "phần trăm": "%"}.get(w, w)
+
+
+def _scale_at(text: str, start: int, end: int) -> str | None:
+    m = _SCALE_AFTER.match(text, end)
+    if m: return _norm_scale(m.group(1))
+    m = _SCALE_BEFORE.search(text[max(0, start - 40):start])
+    return _norm_scale(m.group(1)) if m else None
+
+
+def magnitude_problems(claim_text: str, cited_text: str) -> list[str]:
+    """A figure copied with the wrong magnitude ('1.192 tỷ' for '1.192 nghìn tỷ') or with its magnitude dropped is
+    wrong by a factor of a thousand while every digit still matches. Flag it when the cited evidence prints the same
+    number with a different magnitude everywhere it occurs."""
+    claim_text, cited_text = vi.nfc(claim_text), vi.nfc(cited_text)
+    occ: dict[str, list[str | None]] = {}
+    for m in _NUM.finditer(cited_text):
+        occ.setdefault(vi.canon_num(m.group(0)).rstrip("%"), []).append(_scale_at(cited_text, m.start(), m.end()))
+    out = []
+    for m in _NUM.finditer(claim_text):
+        t = m.group(0)
+        if _trivial(t) or _YEAR.match(t): continue
+        ev = occ.get(vi.canon_num(t).rstrip("%"))
+        explicit = {s for s in (ev or []) if s}
+        if not explicit: continue
+        cs = _scale_at(claim_text, m.start(), m.end())
+        if cs and cs not in explicit:
+            out.append(f"magnitude of {t} differs from the evidence: '{cs}' vs '{'/'.join(sorted(explicit))}'")
+        elif not cs and None not in ev:
+            out.append(f"magnitude of {t} dropped (the evidence prints '{'/'.join(sorted(explicit))}')")
+    return out
 
 
 @dataclass(frozen=True)
@@ -122,6 +162,7 @@ def check(plan, evs: list[Ev], quantities: dict[str, Quantity], question: str = 
                       if not _trivial(t) and t not in ok_nums and vi.canon_num(t).rstrip("%") not in ok_nums})
         if bad:
             ps.append("numbers not found in the cited evidence: " + ", ".join(bad[:6]))
+        ps += magnitude_problems(body, cited_text)
         if ps: c.per_claim[i] = ps
     return c
 

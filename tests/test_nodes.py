@@ -86,3 +86,34 @@ def test_centred_box_does_not_merge_columns_and_sentences_run_on(doc):
     assert "302 chi nhánh và phòng giao dịch tại 29 trên 34 tỉnh thành" in t
     starts = [n.text.split("] ", 1)[-1][:1] for n in doc["nodes"] if n.content_type == "narrative" and n.section != "Báo cáo tài chính"]
     assert sum(c.islower() for c in starts) <= 10, "continuations are joined to the sentence they finish"
+
+
+def test_page_form_code_is_never_a_column(doc):
+    """The form code printed at the top right of every notes page ('B05/TCTD-HN') sits above the last column; it must not
+    become that column's header, and a year row inside the table ('Bên liên quan | 2025 | 2024') is the real header."""
+    tables = [n for n in doc["nodes"] if n.content_type == "table"]
+    assert not any("TCTD-HN:" in n.text for n in tables)
+    p369 = [n for n in tables if n.printed_page_number == 369]
+    assert p369 and all(n.quality == "high" for n in p369)
+    assert any("Công ty Cổ phần Tập đoàn Masan (i) | Năm 2025 Triệu đồng: 534.314; Năm 2024 Triệu đồng: 710.409" in n.text
+               for n in p369)
+
+
+def test_column_unit_comes_from_the_unit_line_under_the_years(doc):
+    """p.351: a tax-rate sentence ('20% (2024: 20%)') above the table must not make the columns '%'."""
+    p351 = [n for n in doc["nodes"] if n.content_type == "table" and n.printed_page_number == 351]
+    assert p351 and all("Năm 2025 Triệu đồng: 79.856" in n.text or "Số dư đầu năm" not in n.text for n in p351)
+    assert all(n.unit_header == "Triệu đồng" for n in p351)
+
+
+def test_note_tables_are_named_by_their_numbered_heading(doc):
+    def heads(p): return {n.text.split("\n")[0] for n in doc["nodes"] if n.content_type == "table" and n.printed_page_number == p}
+    assert any("6. TIỀN GỬI TẠI NGÂN HÀNG NHÀ NƯỚC VIỆT NAM" in h for h in heads(328))     # second table on the page
+    assert all("41. GIAO DỊCH VỚI CÁC BÊN LIÊN QUAN" in h for h in heads(370))              # carried from an earlier page
+
+
+def test_statement_page_band_is_not_narrative(doc):
+    """'THUYẾT MINH ... (tiếp theo)', the period line and the form code repeat on ~80 pages: furniture, not content."""
+    fs = [n for n in doc["nodes"] if n.section == "Báo cáo tài chính" and n.content_type == "narrative"]
+    assert not any("HỢP NHẤT (tiếp theo)" in n.text or re.search(r"(^|\n|\] )B05/TCTD-HN($|\n)", n.text) for n in fs)
+    assert any(n.text.startswith("[Báo cáo tài chính › Thuyết minh báo cáo tài chính hợp nhất]") for n in fs)

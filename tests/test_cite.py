@@ -109,3 +109,22 @@ def test_bracketed_ids_from_the_model_are_normalised():
                    '"literals":[{"lid":"[L1]","evidence":"[E2]","number":"1","unit":"","period":""}]}')
     assert p.claims[0].evidence == ["E4"] and p.claims[0].calc_refs == ["C1"] and p.calculations[0].cid == "C1"
     assert p.calculations[0].inputs == ["Q33", "Q34"] and p.literals[0].lid == "L1" and p.literals[0].evidence == "E2"
+
+
+MAG = cite.evidence_from([node("k", "Tổng tài sản | 1.192 | Nghìn tỷ đồng | Tăng 21,8% so với | năm trước", 5, "kpi"),
+                          node("t", "TỔNG TÀI SẢN | 31/12/2025 Triệu đồng: 1.192.344.137; 31/12/2024 Triệu đồng: 978.798.549", 297, "table"),
+                          node("n", "Ngân hàng phục vụ hơn 18 triệu khách hàng qua 302 chi nhánh", 4)])
+
+
+@pytest.mark.parametrize("text,eid,ok", [
+    ("Tổng tài sản đạt 1.192 nghìn tỷ đồng, tăng 21,8%.", "E1", True),
+    ("Tổng tài sản đạt 1.192 tỷ đồng.", "E1", False),                      # wrong by a factor of 1,000
+    ("Tổng tài sản đạt 1.192.", "E1", False),                              # magnitude dropped
+    ("Tổng tài sản đạt 1.192.344.137 triệu đồng.", "E2", True),            # table: unit printed in the column header
+    ("Tổng tài sản đạt 1.192.344.137 tỷ đồng.", "E2", False),
+    ("Hơn 18 triệu khách hàng, 302 chi nhánh.", "E3", True),
+    ("Hơn 18 nghìn khách hàng.", "E3", False),
+])
+def test_magnitude_must_match_the_evidence(text, eid, ok):
+    ck = cite.check(plan(claims=[{"text_vi": text, "evidence": [eid]}]), MAG, {}, "")
+    assert ck.ok == ok, ck.flat

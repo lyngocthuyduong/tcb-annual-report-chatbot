@@ -14,7 +14,7 @@ STRICT = re.compile(r"^\(?-?\d{1,3}(?:\.\d{3})+(?:,\d+)?\)?%?$|^\(?-?\d+,\d+\)?%
 PLAIN = re.compile(r"^\(?-?\d+\)?%?$")
 NOTE_REF = re.compile(r"^\d{1,2}(?:\.\d{1,2})?$")
 FORM = re.compile(r"B\d{2}[a-z]?/TCTD-HN")
-UNIT_RE = re.compile(r"(Nghìn tỷ đồng|Triệu đồng|Tỷ đồng|Nghìn đồng|Triệu USD|Triệu|Đồng|%)", re.I)
+UNIT_RE = re.compile(r"(?<!hợp )(?<!Hợp )(Nghìn tỷ đồng|Triệu đồng|Tỷ đồng|Nghìn đồng|Triệu USD|Triệu|Đồng|%)", re.I)
 DATE_RE = re.compile(r"\d{2}/\d{2}/\d{4}")
 YEAR_HDR = re.compile(r"^Năm (19|20)\d{2}\b")
 HDR_FRAG = re.compile(r"(?<!\()Thuyết minh|\b\d{1,2}/\d{1,2}/(?:19|20)\d{2}\b|Năm (?:19|20)\d{2}|Nghìn tỷ đồng|Triệu đồng|Tỷ đồng|Nghìn đồng|Triệu USD", re.I)
@@ -174,6 +174,7 @@ class Table:
     rows: list[Row]
     y_range: tuple[float, float]
     reliable: bool = True       # headers resolved cleanly (dates / short); else narrative view is kept too
+    note: str | None = None     # the numbered note heading above the table on this page ("6. TIỀN GỬI TẠI ...")
 
 
 def _rows(words: list[Word], tol: float = 3.0) -> list[list[Word]]:
@@ -208,6 +209,52 @@ def _split_row(row: list[Word], width: float, x_off: float, note_x: float | None
     return label, note, nums
 
 
+NOTE_HEAD = re.compile(r"^\d{1,2}(?:\.\d{1,2}){0,2}\.\s+[^\W\d_]")
+
+
+def note_heads(h: Half) -> list[tuple[float, str]]:
+    """Numbered note headings on a statements half-page, top to bottom: (y, text)."""
+    out = []
+    for r in _rows(half_words(h)):
+        t = " ".join(w.text for w in r).strip()
+        if NOTE_HEAD.match(t) and len(t) <= 120 and not any(is_num(w.text, True) for w in r[1:]):
+            out.append((r[0].y0, t))
+    return out
+
+
+def _year_row(cells) -> bool:
+    ys = [c for c in cells if c is not None]
+    return len(ys) >= 2 and len(set(ys)) == len(ys) and all(YEAR_ONLY.match(c) for c in ys)
+
+
+def _by_year(rws: list[Row], units: list) -> tuple[list[str], list, list[Row]]:
+    """Rows such as 'Bên liên quan Quan hệ | 2025 | 2024' are the column header of the sub-table below them, and
+    sub-tables on one page may place the same year in different columns. Re-key every row's cells by year."""
+    years: list[str] = []
+    first = next(r.cells for r in rws if _year_row(r.cells))
+    cur = first
+    ycols = [k for k, c in enumerate(first) if c]
+    us = {units[k] for k in ycols if k < len(units) and units[k]}
+    unit = us.pop() if len(us) == 1 else None
+    out: list[Row] = []
+    for r in rws:
+        if _year_row(r.cells):
+            cur = r.cells
+            years += [y for y in r.cells if y and y not in years]
+            continue
+        cols = [i for i, y in enumerate(cur) if y]
+        by: dict[str, str] = {}
+        for i, c in enumerate(r.cells):
+            if c is None: continue
+            j = min(cols, key=lambda k: abs(k - i))
+            by[cur[j]] = c
+        r.cells = by                                                 # temporarily keyed by year
+        out.append(r)
+    for r in out:
+        r.cells = [r.cells.get(y) for y in years]
+    return [f"Năm {y}" for y in years], [unit] * len(years), out
+
+
 def tables(h: Half) -> tuple[list[Table], list[tuple[float, float]]]:
     """Detect table zones in an FS half. Returns tables and their y-ranges (to exclude from narrative)."""
     words = half_words(h)
@@ -231,19 +278,27 @@ def tables(h: Half) -> tuple[list[Table], list[tuple[float, float]]]:
         if i - cur[-1] <= 6: cur.append(i)
         else: zones.append(cur); cur = [i]
     zones.append(cur)
-    out, yr = [], []
+    out, yr, prev_bottom = [], [], -1.0
+    heads = note_heads(h)
     for zi, z in enumerate(zones):
         if len(z) < 3: continue
         first, last = z[0], z[-1]
         # extend upward over header rows (dates / units / "Thuyết minh") up to 8 rows
-        top = first
+        top, captions, band = first, set(), None
         while top > 0 and first - top < 8:
             txt = " ".join(w.text for w in parsed[top - 1][0])
             gapy = parsed[top][0][0].y0 - parsed[top - 1][0][0].y0
             if gapy > 40: break
+            if FORM.search(txt): band = top - 1; break                 # the statement title line: page furniture
+            caption = not parsed[top - 1][3] and max(w.x1 for w in parsed[top - 1][0]) - h.x_off < 0.45 * h.width and \
+                not (DATE_RE.search(txt) or UNIT_RE.search(txt) or "Thuyết minh" in txt)   # nothing above the number columns
+            if caption:                                                # a sub-table title or note heading, not a column header
+                captions.add(top - 1); top -= 1; continue
             if DATE_RE.search(txt) or UNIT_RE.search(txt) or "Thuyết minh" in txt or re.search(r"\b(Năm|Quý|Cuối|Số)\b", txt) or not parsed[top - 1][3]:
                 top -= 1
             else: break
+        while top < first and top in captions: top += 1              # captions above the column header belong to the title
+        inner_caps = [" ".join(w.text for w in parsed[i][0]) for i in range(top, first) if i in captions]
         # column anchors from right edges of numeric words
         xs = sorted(w.x1 - h.x_off for i in z for w in parsed[i][3])
         anchors: list[list[float]] = []
@@ -254,8 +309,8 @@ def tables(h: Half) -> tuple[list[Table], list[tuple[float, float]]]:
         cols = [statistics.median(a) for a in anchors if len(a) >= max(2, len(z) // 8)]
         if not cols: continue
         ncol = len(cols)
-        header_rows = [parsed[i][0] for i in range(top, first)]
-        hdr_words = [w for r in header_rows for w in r]
+        header_rows = [parsed[i][0] for i in range(top, first) if i not in captions]
+        hdr_words = [w for r in header_rows for w in r if not FORM.search(w.text)]
         headers, units = [], []
         for ci, cx in enumerate(cols):
             lo = (cols[ci - 1] + cx) / 2 if ci else cx - 140
@@ -273,11 +328,15 @@ def tables(h: Half) -> tuple[list[Table], list[tuple[float, float]]]:
             r, lab, note, nums = parsed[i]
             if not nums:
                 txt = " ".join(w.text for w in lab).strip()
-                only_year_row = len(rws) == 1 and re.fullmatch(r"(Thuyết minh)?", rws[0].label.strip()) and \
-                    all(c and YEAR_ONLY.match(c) for c in rws[0].cells)
+                only_year_row = bool(rws) and _year_row(rws[-1].cells)
                 if txt and UNIT_ONLY.match(txt) and (not rws or only_year_row):   # "Triệu đồng Triệu đồng" under the column titles
-                    for ci in range(min(ncol, len(UNIT_RE.findall(txt)))):
-                        units[ci] = units[ci] or UNIT_RE.findall(txt)[ci]
+                    found = UNIT_RE.findall(txt)
+                    if only_year_row:                                 # the unit line printed under the year row wins
+                        ycols = [k for k, c in enumerate(rws[-1].cells) if c]
+                        for k, u in zip(ycols, found): units[k] = u
+                    else:
+                        for ci in range(min(ncol, len(found))):
+                            units[ci] = units[ci] or found[ci]
                     continue
                 if txt:
                     stripped = HDR_FRAG.sub(" ", txt)
@@ -316,9 +375,10 @@ def tables(h: Half) -> tuple[list[Table], list[tuple[float, float]]]:
                 label = label.rsplit("như sau:", 1)[1].strip()
             rws.append(Row(label, note.text if note else None, cells,
                            (lab[0].x0 - h.x_off) if lab else 0.0, r[0].y0))
-        if rws and re.fullmatch(r"(Thuyết minh)?", rws[0].label.strip()) and all(c and YEAR_ONLY.match(c) for c in rws[0].cells):
-            yrs = rws.pop(0).cells
-            headers = [f"Năm {y}" for y in yrs]                      # header row mis-read as data: promote it
+        rws = [Row(c, None, [None] * ncol, 0.0, 0.0) for c in inner_caps] + rws   # caption between column header and rows
+        if any(_year_row(r.cells) for r in rws) and not all(DATE_RE.search(x) or YEAR_HDR.search(x) for x in headers):
+            headers, units, rws = _by_year(rws, units)                # column years printed as a row (per sub-table)
+            ncol = len(headers)
         if not rws: continue
         for ci in range(ncol):                                       # carry the column unit into the header text
             if units[ci] and not UNIT_RE.search(headers[ci]): headers[ci] = f"{headers[ci]} {units[ci]}"
@@ -329,21 +389,23 @@ def tables(h: Half) -> tuple[list[Table], list[tuple[float, float]]]:
             us = UNIT_RE.findall(x)
             clean.append(f"{m.group(0)} {us[-1]}".strip() if m and us else m.group(0) if m else x)
         if len(set(clean)) == len(clean): headers = clean
+        for ci in range(min(ncol, len(units))):                      # the unit is the one the column header shows
+            us = UNIT_RE.findall(headers[ci])
+            if us: units[ci] = us[-1]
         # title + form code from the top of the page (above the zone)
         ztop_y = parsed[top][0][0].y0
-        head = [w for w in words if w.y0 < ztop_y - 2]
-        form = None
-        for w in head:
-            m = FORM.search(w.text)
-            if m: form = m.group(0)
+        head = [w for w in words if prev_bottom < w.y0 < ztop_y - 2]   # never the rows of the table above
+        prev_bottom = parsed[last][0][0].y1
+        form = next((m.group(0) for w in words for m in [FORM.search(w.text)] if m), None)   # printed once per page
         tl = _rows([w for w in head if not FORM.search(w.text)])
         title = " ".join(" ".join(w.text for w in r) for r in tl[-4:]).strip() if zi == 0 else \
             " ".join(" ".join(w.text for w in r) for r in tl[-2:]).strip()
         title = re.sub(r"\s+", " ", title)
         reliable = all(DATE_RE.search(x) or YEAR_HDR.search(x) for x in headers)   # every column has a period
-        yy = (parsed[top][0][0].y0 - 2, parsed[last][0][0].y1 + 2)
+        yy = (parsed[top if band is None else band][0][0].y0 - 2, parsed[last][0][0].y1 + 2)   # title band is not narrative
+        note = next((t for y, t in reversed(heads) if y < parsed[first][0][0].y0), None)
         out.append(Table(f"{form or 'T'}@{h.printed_page}.{zi}", form, title, "tiếp theo" in title.lower(),
-                         headers, units, rws, yy, reliable))
+                         headers, units, rws, yy, reliable, note))
         if reliable: yr.append(yy)
     return out, yr
 

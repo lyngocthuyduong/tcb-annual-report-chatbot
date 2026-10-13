@@ -1,39 +1,81 @@
 <!doctype html>
 <html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TCB AR 2025</title>
+<title>Annual Report Chatbot</title>
 <style>
-:root{--bg:#fff;--fg:#1a1a1a;--mut:#666;--line:#ddd;--acc:#c8102e}
-@media(prefers-color-scheme:dark){:root{--bg:#161616;--fg:#eee;--mut:#aaa;--line:#333}}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
-main{max-width:760px;margin:0 auto;padding:16px}
-h1{font-size:18px;margin:0 0 12px}
-#log{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
-.m{padding:10px 12px;border:1px solid var(--line);border-radius:8px;white-space:pre-wrap;word-wrap:break-word}
-.u{align-self:flex-end;background:rgba(200,16,46,.08)}
-.b{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);margin-top:6px}
-.b.error{color:var(--acc)} .cites{font-size:13px;margin-top:6px} .cites a{color:var(--acc)}
-form{display:flex;gap:8px;position:sticky;bottom:0;background:var(--bg);padding:8px 0}
-input{flex:1;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit}
-button{padding:10px 16px;border:0;border-radius:8px;background:var(--acc);color:#fff;font:inherit;cursor:pointer}
-button:disabled{opacity:.5}
+:root{--bg:#f4f4f5;--card:#fff;--fg:#18181b;--mut:#71717a;--line:#e4e4e7;--acc:#c8102e;--ok:#15803d;--okbg:#dcfce7;--warn:#b45309;--warnbg:#fef3c7}
+@media(prefers-color-scheme:dark){:root{--bg:#111113;--card:#1c1c1f;--fg:#f4f4f5;--mut:#a1a1aa;--line:#2e2e33;--acc:#f0475e;--ok:#4ade80;--okbg:#14532d;--warn:#fbbf24;--warnbg:#451a03}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:860px;margin:16px auto;padding:20px;background:var(--card);border:1px solid var(--line);border-radius:16px;min-height:calc(100vh - 32px);display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:14px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.logo{width:48px;height:48px;border-radius:10px;background:var(--acc);display:grid;place-items:center;flex:none}
+h1{font-size:19px;margin:0}.sub{color:var(--mut);font-size:14px}
+.tag{margin-left:auto;font-size:12px;font-weight:600;background:var(--line);padding:3px 10px;border-radius:99px}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);margin:18px 0 8px}
+#log{flex:1;display:flex;flex-direction:column;gap:14px}
+.q{align-self:flex-end;max-width:80%;white-space:pre-wrap}
+.a{border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.head{display:flex;align-items:center;gap:8px;font-weight:600;margin-bottom:8px}
+.head svg{flex:none}
+.txt{white-space:pre-wrap;word-wrap:break-word}
+.num{color:var(--acc);font-weight:600}
+.cite{color:inherit;text-decoration:underline dotted;text-underline-offset:3px}
+.src{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
+.row{display:flex;align-items:center;gap:10px;padding:4px 0}
+.row a{color:inherit;text-decoration:none}.row .t{font-weight:600}.row .m{color:var(--mut);font-size:13.5px}
+.ok{margin-left:auto;font-size:12.5px;font-weight:600;color:var(--ok);background:var(--okbg);padding:2px 9px;border-radius:99px;white-space:nowrap}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.btn{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:14px;font-weight:600;color:var(--fg);background:none;border:1px solid var(--line);border-radius:99px;padding:6px 14px;cursor:pointer}
+.meta{color:var(--mut);font-size:12px;margin-top:10px}
+.foot{position:sticky;bottom:0;background:var(--card);padding-bottom:2px}
+form{display:flex;gap:10px}
+.row svg{flex:none}
+input{flex:1;min-width:0;padding:11px 18px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--fg);font:inherit}
+#s{width:46px;height:46px;border-radius:50%;border:0;background:var(--line);color:var(--fg);cursor:pointer;display:grid;place-items:center;flex:none}
+#s:disabled{opacity:.5;cursor:default}
+@media(max-width:600px){main{margin:0;border-radius:0;border:0;padding:16px}.q{max-width:92%}}
 </style></head><body><main>
-<h1>Báo cáo thường niên 2025 của Techcombank</h1>
+<header>
+ <div class="logo" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10 12 4l9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 21h18"/></svg></div>
+ <div><h1>Techcombank Annual Report Chatbot</h1><div class="sub">Techcombank · Báo cáo thường niên 2025</div></div>
+ <span class="tag">Demo</span>
+</header>
+<div class="lbl">Hội thoại</div>
 <div id="log"></div>
-<form id="f"><input id="q" placeholder="Đặt câu hỏi về báo cáo…" autocomplete="off" maxlength="2000" required><button id="s">Gửi</button></form>
+<div class="foot"><div class="lbl" id="ql">Câu hỏi</div>
+<form id="f"><input id="q" placeholder="Đặt câu hỏi về báo cáo…" autocomplete="off" maxlength="2000" required>
+ <button id="s" aria-label="Gửi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form></div>
 <script>
+const DOC='Báo cáo thường niên Techcombank 2025';
+const HEAD={answered:['Câu trả lời','ok'],partial:['Trả lời một phần','warn'],not_in_report:['Không có trong báo cáo','mut'],ambiguous:['Cần làm rõ câu hỏi','warn'],error:['Lỗi','acc']};
+const ICON={ok:'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',warn:'<circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/>',mut:'<circle cx="12" cy="12" r="9"/><path d="M8 12h8"/>',acc:'<circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/>'};
 let sid=null;const log=document.getElementById('log'),q=document.getElementById('q'),s=document.getElementById('s');
-function add(cls,text){const d=document.createElement('div');d.className='m '+cls;d.textContent=text;log.appendChild(d);d.scrollIntoView();return d}
+const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+const svg=(k)=>{const d=document.createElement('span');d.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--'+k+')" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+ICON[k]+'</svg>';return d.firstChild};
+// answer text: figures highlighted, [tr. N] linked to the PDF page; built with text nodes only (no HTML injection)
+function render(box,text,pages){const re=/(\[tr\. [\d, ]+\])|(\d[\d.,]*\s?(?:%|nghìn tỷ đồng|nghìn tỷ|tỷ đồng|triệu đồng|triệu|tỷ)?)/g;let i=0,m;
+ while((m=re.exec(text))){box.appendChild(document.createTextNode(text.slice(i,m.index)));
+  if(m[1]){const a=el('a','cite',m[1]);const p=+m[1].match(/\d+/)[0];if(pages[p]){a.href='/pdf#page='+pages[p];a.target='_blank'}box.appendChild(a)}
+  else if(/[%ỷu]/.test(m[2])||/[.,]/.test(m[2]))box.appendChild(el('span','num',m[2]));else box.appendChild(document.createTextNode(m[2]));
+  i=re.lastIndex}box.appendChild(document.createTextNode(text.slice(i)))}
+function copy(t,b){navigator.clipboard.writeText(t).then(()=>{const o=b.lastChild.textContent;b.lastChild.textContent='Đã sao chép';setTimeout(()=>b.lastChild.textContent=o,1200)})}
+function btn(label,icon,fn){const b=el('button','btn');b.type='button';b.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="'+icon+'"/></svg>';b.appendChild(el('span',null,label));b.onclick=()=>fn(b);return b}
+function card(j){const c=el('div','a');const [h,k]=HEAD[j.status]||HEAD.error;const hd=el('div','head');hd.appendChild(svg(k));hd.appendChild(el('span',null,h));c.appendChild(hd);
+ const pages={};(j.citations||[]).forEach(x=>{if(x.page!=null)pages[x.page]=pages[x.page]||x.pdf_page});
+ const t=el('div','txt');render(t,j.answer||j.error||'',pages);c.appendChild(t);
+ const ps=Object.keys(pages).map(Number).sort((a,b)=>a-b);
+ if(ps.length){const src=el('div','src');src.appendChild(el('div','t','Bằng chứng nguồn')).style.fontWeight=600;
+  ps.forEach(p=>{const r=el('div','row');r.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M9 15l2 2 4-4"/></svg>';
+   const a=el('a');a.href='/pdf#page='+pages[p];a.target='_blank';a.title=(j.citations.find(x=>x.page==p)||{}).snippet||'';a.appendChild(el('div','m',DOC+' · Trang in '+p));r.appendChild(a);r.appendChild(el('span','ok','Đã đối chiếu'));src.appendChild(r)});
+  c.appendChild(src)}
+ if(j.answer){const bs=el('div','btns');bs.appendChild(btn('Sao chép câu trả lời','M4 16V6a2 2 0 0 1 2-2h10',b=>copy(j.answer,b)));
+  if(ps.length)bs.appendChild(btn('Sao chép kèm nguồn','M4 16V6a2 2 0 0 1 2-2h10',b=>copy(j.answer+'\n\nNguồn: '+DOC+', trang in '+ps.join(', ')+'.',b)));c.appendChild(bs)}
+ if(j.provider)c.appendChild(el('div','meta',j.provider+' / '+j.model+(j.secs?' · '+j.secs+' s':'')));return c}
 document.getElementById('f').onsubmit=async e=>{e.preventDefault();const text=q.value.trim();if(!text)return;
- add('u',text);q.value='';s.disabled=true;const w=add('a','…');
+ log.appendChild(el('div','q',text)).scrollIntoView();q.value='';s.disabled=true;const w=log.appendChild(el('div','a','Đang tra cứu báo cáo…'));const t0=performance.now();
  try{const r=await fetch('/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({question:text,session_id:sid})});
-  const j=await r.json();sid=j.session_id||sid;
-  if(!r.ok&&!j.answer){w.textContent='Lỗi '+r.status+': '+JSON.stringify(j.detail||j);}else{
-   w.textContent=j.answer;
-   const b=document.createElement('div');b.className='b '+(j.status==='error'?'error':'');
-   b.textContent=j.status+' · '+j.provider+'/'+j.model;w.appendChild(b);
-   if(j.citations&&j.citations.length){const c=document.createElement('div');c.className='cites';
-    j.citations.forEach(x=>{const a=document.createElement('a');a.href='/pdf#page='+x.pdf_page;a.target='_blank';a.textContent='tr. '+x.page;a.title=x.snippet;
-     c.appendChild(a);c.appendChild(document.createTextNode('  '))});w.appendChild(c)}}
- }catch(err){w.textContent='Không kết nối được máy chủ: '+err}
- s.disabled=false;q.focus()};
+  const j=await r.json();sid=j.session_id||sid;j.secs=((performance.now()-t0)/1000).toFixed(1).replace('.',',');
+  w.replaceWith(j.status?card(j):el('div','a','Lỗi '+r.status+': '+JSON.stringify(j.detail||j)))}
+ catch(err){w.textContent='Không kết nối được máy chủ: '+err}
+ document.getElementById('ql').textContent='Câu hỏi tiếp theo';q.placeholder='Ví dụ: Còn năm trước thì sao?';s.disabled=false;q.focus();log.lastChild.scrollIntoView({block:'nearest'})};
 </script></main></body></html>

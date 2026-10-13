@@ -14,7 +14,7 @@ INDEX_FORMAT = 1
 TOKENIZER = "tcb-vi-v2"   # v2: canonical decimals drop trailing zeros (16,0 -> 16)
 CHUNK_MAX_WORDS = 220        # narrative chunk budget (syllable-words)
 TABLE_ROWS_PER_CHUNK = 12
-NODE_CONTEXT = "chapter>heading;flow2"   # node text starts with [chapter › page title › subtitle]; flow2 = column order + run-on sentences joined
+NODE_CONTEXT = "chapter>heading;flow2;fs2"   # [chapter › page title › subtitle]; flow2 = column order + run-on joins; fs2 = note tables keyed by year rows, named by note heading, statement band stripped
 BM25_K1, BM25_B = 1.5, 0.75  # bm25s defaults, recorded in manifest
 TOP_BM25 = TOP_DENSE = 40
 RRF_K = 60                   # E3b
@@ -86,7 +86,7 @@ def settings() -> Settings:
         log_level=os.getenv("LOG_LEVEL", "INFO"),
     )
 
-# Top fused blocks given to the LLM (E1..E10). Run m4 (dev+val, 85 answerable): recall 0.882 at 10; a cross-encoder over 20-40
+# Top fused blocks given to the LLM (E1..E20). Run m4 (dev+val, 85 answerable): recall 0.882 at 10; a cross-encoder over 20-40
 # candidates reached 0.894 (one item) at ~2 s per candidate on 2 CPU cores, so there is no reranker (DESIGN 17.1).
 FINAL_EVIDENCE = 20          # E4 run m6 (final index): recall 0.859 at 10, 0.906 at 15, 0.929 at 20 -> smallest k within 2 pts of the best
 # $/1M tokens (in, out) -- public list prices checked 10 Oct 2026; used only for the cost estimate in traces
