@@ -113,7 +113,8 @@ def test_bracketed_ids_from_the_model_are_normalised():
 
 MAG = cite.evidence_from([node("k", "Tổng tài sản | 1.192 | Nghìn tỷ đồng | Tăng 21,8% so với | năm trước", 5, "kpi"),
                           node("t", "TỔNG TÀI SẢN | 31/12/2025 Triệu đồng: 1.192.344.137; 31/12/2024 Triệu đồng: 978.798.549", 297, "table"),
-                          node("n", "Ngân hàng phục vụ hơn 18 triệu khách hàng qua 302 chi nhánh", 4)])
+                          node("n", "Ngân hàng phục vụ hơn 18 triệu khách hàng qua 302 chi nhánh", 4),
+                          node("r", "[Khối Ngân hàng Bán lẻ (RBG)] Dư nợ vay | 328,1 | Nghìn | tỷ đồng | 26,9% N/N", 59, "kpi")])
 
 
 @pytest.mark.parametrize("text,eid,ok", [
@@ -124,6 +125,8 @@ MAG = cite.evidence_from([node("k", "Tổng tài sản | 1.192 | Nghìn tỷ đ�
     ("Tổng tài sản đạt 1.192.344.137 tỷ đồng.", "E2", False),
     ("Hơn 18 triệu khách hàng, 302 chi nhánh.", "E3", True),
     ("Hơn 18 nghìn khách hàng.", "E3", False),
+    ("Dư nợ vay 328,1 nghìn tỷ đồng.", "E4", True),                    # tile split across lines: 'Nghìn | tỷ đồng'
+    ("Dư nợ vay 328,1 tỷ đồng.", "E4", False),
 ])
 def test_magnitude_must_match_the_evidence(text, eid, ok):
     ck = cite.check(plan(claims=[{"text_vi": text, "evidence": [eid]}]), MAG, {}, "")

@@ -15,13 +15,13 @@ _PAGE_REF = re.compile(r"\[\s*tr\.?[^\]]*\]|\btrang\s+\d+|\bpage\s+\d+", re.I)
 CITE_RE = re.compile(r"\[tr\. (\d+(?:, \d+)*)\]")
 # magnitude printed right after a number ('1.192 | Nghìn tỷ đồng', '18 triệu', '40,4%') or before it in a table cell
 # ('31/12/2025 Triệu đồng: 1.192.344.137')
-_SCALE_AFTER = re.compile(r"\s*(?:\|\s*)?(nghìn tỷ|ngàn tỷ|tỷ|tỉ|triệu|nghìn|ngàn|%|phần trăm)(?![^\W\d_])", re.I)
+_SCALE_AFTER = re.compile(r"\s*(?:\|\s*)?((?:nghìn|ngàn)[\s|]+tỷ|tỷ|tỉ|triệu|nghìn|ngàn|%|phần trăm)(?![^\W\d_])", re.I)  # KPI tiles split 'Nghìn | tỷ đồng'
 _SCALE_BEFORE = re.compile(r"(nghìn tỷ|ngàn tỷ|tỷ|tỉ|triệu|nghìn|ngàn) (?:đồng|USD|VND)\s*:\s*$", re.I)
 _YEAR = re.compile(r"^(19|20)\d{2}$")
 
 
 def _norm_scale(w: str) -> str:
-    w = w.lower()
+    w = re.sub(r"[\s|]+", " ", w.lower())
     return {"ngàn tỷ": "nghìn tỷ", "tỉ": "tỷ", "ngàn": "nghìn", "phần trăm": "%"}.get(w, w)
 
 

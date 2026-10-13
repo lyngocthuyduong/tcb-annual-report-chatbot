@@ -7,7 +7,7 @@ def test_models_not_env_configurable(monkeypatch):
     monkeypatch.setenv("EMBED_REV", "deadbeef"); monkeypatch.setenv("RRF_K", "1")
     c = importlib.reload(conf)
     assert (c.EMBED_MODEL, c.FINAL_EVIDENCE, c.EMBED_REV, c.RRF_K) == (
-        "BAAI/bge-m3", 20, "5617a9f61b028005a4858fdac845db406aefb181", 60)
+        "BAAI/bge-m3", 12, "5617a9f61b028005a4858fdac845db406aefb181", 60)
     assert not hasattr(c, "RERANK_MODEL") and not hasattr(c, "TAU_LOW")
 
 
