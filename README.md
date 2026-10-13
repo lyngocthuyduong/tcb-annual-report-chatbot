@@ -25,9 +25,9 @@ docker compose run --rm app tcb ask "Tỷ lệ CASA năm 2025?" --json
 `eval` writes `traces.jsonl`, `results.jsonl` (score + failing stage per item), `summary.json` (pass rate, recall by stage, refusal P/R, p50/p95 latency, median seconds per stage, tokens, cost when the model has a price in `conf.PRICES`) and `config.json`. Only `"verified": true` items count.
 
 ## Run on Colab (development; two notebooks)
-Secrets (key icon, **Notebook access** ON): `gh-token` (Contents read **and write**), `hf_token`, `anthropic_key`.
+Secrets (key icon, **Notebook access** ON): `gh-token` (Contents read), `hf_token`, `anthropic_key`.
 
-**Notebook A: build the index** (runtime T4 GPU; only when ingestion code changes; `tcb serve` refuses an index built by older code)
+**Notebook A: build the index** (runtime T4 GPU; only when ingestion code changes; `tcb serve` refuses an index built by older code). Output: `idx.zip` (downloaded and copied to Drive); it is unzipped into the repo as `idx/` and committed from there.
 ```python
 # A1: then Runtime > Restart session
 !apt-get -qq update && apt-get -qq install -y poppler-utils
@@ -38,18 +38,19 @@ os.environ["GH_TOKEN"] = userdata.get("gh-token")
 !pip install -q -e ".[dev]" && pip uninstall -y -q torchvision torchaudio
 ```
 ```python
-# A2: build, validate, commit
-import os; from google.colab import userdata
+# A2: test, build, validate, zip; then attach idx.zip in the chat with Claude, who commits it
+import os; from google.colab import drive, files, userdata
+drive.mount("/content/drive")
 %cd /content/tcb
-!git pull -q origin cont
+!git pull -q origin cont && git log --oneline -1
 os.environ.update(TCB_MODELS_DIR="/content/models", HF_TOKEN=userdata.get("hf_token"),
                   JAX_PLATFORMS="cpu", XLA_PYTHON_CLIENT_PREALLOCATE="false")
 !python -m tcb.models download 2>&1 | tail -1
-!python -m pytest -q 2>&1 | tail -1                    # unit + integ on the real PDF; must pass before building
-!rm -rf idx.new && TCB_DEVICE=cuda tcb build data/ar.pdf idx.new && tcb validate idx.new --snapshot
-!rm -rf idx && mv idx.new idx && cat idx/report.json
-!git config user.name "Ly Quoc Bien" && git config user.email "bien.anh2603@gmail.com"
-!git add idx && git commit -qm "Rebuild index" && git push -q origin HEAD:cont && git log --oneline -1
+!python -m pytest -q 2>&1 | tail -1                    # must pass before building
+!rm -rf /content/build && mkdir -p /content/build && TCB_DEVICE=cuda tcb build data/ar.pdf /content/build/idx
+!tcb validate /content/build/idx --snapshot && cat /content/build/idx/report.json
+!cd /content/build && zip -rq idx.zip idx && cp idx.zip /content/drive/MyDrive/idx.zip && ls -la idx.zip
+files.download("/content/build/idx.zip")
 ```
 
 **Notebook B: run and measure** (runtime CPU: latency must come from the CPU)
