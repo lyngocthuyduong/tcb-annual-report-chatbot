@@ -149,7 +149,15 @@ def half_nodes(h: Half, section: str, chunk_words: int | None = None, context: s
 
     def flush_buf():
         nonlocal order
-        for t in _pack(buf, chunk_words or conf.CHUNK_MAX_WORDS):
+        texts: list[str] = []
+        open_ = lambda x: re.search(r"[\w,;–-]$", x.rstrip()) is not None      # ends mid-sentence
+        for t in buf:                                     # a sentence that runs on in another column joins its start
+            j = next((k for k in range(len(texts) - 1, -1, -1) if open_(texts[k])), None) if t[:1].islower() else None
+            if j is not None:
+                texts[j] = texts[j].rstrip() + " " + t
+            else:
+                texts.append(t)
+        for t in _pack(texts, chunk_words or conf.CHUNK_MAX_WORDS):
             if _words(t) >= 3:
                 nodes.append(Node(_cid(h.pdf_page_index, h.side, "n", order), crumb + t, content_type="narrative",
                                   bbox=[0, 0, 0, 0], **base))
@@ -164,8 +172,7 @@ def half_nodes(h: Half, section: str, chunk_words: int | None = None, context: s
             if words < 2 and nums >= 3: continue          # chart ticks, page lists of the contents/divider pages: no meaning alone
             if words < 2:                                  # a lone figure ('146%', '4,77/5'): keep it with the page's text
                 buf.append(txt); continue
-            flush_buf()
-            x0, y0, x1, y1 = g.bbox
+            x0, y0, x1, y1 = g.bbox                        # the tile is its own node; the prose around it stays one flow
             nodes.append(Node(_cid(h.pdf_page_index, h.side, "k", round(x0), round(y0)), crumb + " | ".join(
                 s.strip() for s in g.tile.split("\n") if s.strip()), content_type="kpi",
                 bbox=[round(x0 - h.x_off, 1), round(y0, 1), round(x1 - h.x_off, 1), round(y1, 1)], **base))

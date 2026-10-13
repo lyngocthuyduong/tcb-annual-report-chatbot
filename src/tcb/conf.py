@@ -14,7 +14,7 @@ INDEX_FORMAT = 1
 TOKENIZER = "tcb-vi-v2"   # v2: canonical decimals drop trailing zeros (16,0 -> 16)
 CHUNK_MAX_WORDS = 220        # narrative chunk budget (syllable-words)
 TABLE_ROWS_PER_CHUNK = 12
-NODE_CONTEXT = "chapter>heading"   # every node text starts with [chapter › page heading › subheading]
+NODE_CONTEXT = "chapter>heading;flow2"   # node text starts with [chapter › page title › subtitle]; flow2 = column order + run-on sentences joined
 BM25_K1, BM25_B = 1.5, 0.75  # bm25s defaults, recorded in manifest
 TOP_BM25 = TOP_DENSE = 40
 RRF_K = 60                   # E3b
@@ -88,8 +88,8 @@ def settings() -> Settings:
 
 # Top fused blocks given to the LLM (E1..E10). Run m4 (dev+val, 85 answerable): recall 0.882 at 10; a cross-encoder over 20-40
 # candidates reached 0.894 (one item) at ~2 s per candidate on 2 CPU cores, so there is no reranker (DESIGN 17.1).
-FINAL_EVIDENCE = 10
+FINAL_EVIDENCE = 15          # E4 run m5 (no reranker): recall 0.871 at 10, 0.929 at 15 and 20 -> smallest k within 2 pts
 # $/1M tokens (in, out) -- public list prices checked 10 Oct 2026; used only for the cost estimate in traces
 PRICES = {"gpt-4o-mini": (0.15, 0.60), "claude-sonnet-5-5": (2.0, 10.0),
           "claude-haiku-5-5": (0.10, 0.50)}   # Haiku: Anthropic price page, prompts up to 100k tokens (13 Oct 2026)
-PROMPT_EVIDENCE_CHARS = 15000   # budget for evidence text in one prompt (~5k tokens @ ~3 chars/token; keeps local 8k-context models safe)
+PROMPT_EVIDENCE_CHARS = 22000   # budget for evidence text in one prompt (~7k tokens @ ~3 chars/token; Ollama runs with num_ctx 12288)

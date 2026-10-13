@@ -77,11 +77,16 @@ class Group:
 
 
 def reading_order(items: list, box) -> list:
-    """Items (blocks or groups) whose box spans >= 60 % of the total width split the page into bands; inside a band,
+    """Items (blocks or groups) that span >= 60 % of the total width, or bridge two columns, split the page into bands; inside a band,
     columns (items whose x-ranges overlap) are read left to right, each top to bottom."""
     if len(items) < 2: return list(items)
     gx0 = min(box(b)[0] for b in items); gx1 = max(box(b)[2] for b in items)
-    full = sorted((b for b in items if box(b)[2] - box(b)[0] >= 0.6 * (gx1 - gx0)), key=lambda b: box(b)[1])
+    xov = lambda a, b: min(box(a)[2], box(b)[2]) - max(box(a)[0], box(b)[0])
+
+    def bridges(b):            # a centred box over two columns: it overlaps two items that do not overlap each other
+        ov = [box(o) for o in items if o is not b and xov(o, b) > 0]
+        return len(ov) > 1 and min(o[2] for o in ov) <= max(o[0] for o in ov)   # some item ends before another starts
+    full = sorted((b for b in items if box(b)[2] - box(b)[0] >= 0.6 * (gx1 - gx0) or bridges(b)), key=lambda b: box(b)[1])
     rest = [b for b in items if not any(b is f for f in full)]
     bands: list[list] = [[] for _ in range(len(full) + 1)]
     for b in rest:

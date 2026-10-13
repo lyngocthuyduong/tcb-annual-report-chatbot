@@ -70,7 +70,7 @@ question
  -> rewrite (only for follow-ups)
  -> glossary expansion
  -> BM25 top-40  +  dense top-40
- -> RRF (k=60) -> top 10 = evidence blocks E1..E10
+ -> RRF (k=60) -> top 15 = evidence blocks E1..E15
     + quantities Q1..Qn (high-quality tables; the 60 whose labels best match the question)
  -> LLM returns a JSON plan
     (claims -> evidence ids, calculations -> quantity ids or literals L1..Ln
@@ -112,7 +112,7 @@ Each pdf page is split into a left and right `Half` at the gutter; words straddl
 Invariant tested on the real PDF: for every node with printed page p, `pdf_page_index` and `side` equal the formula; only the cover may lack a printed page; every published gold fact (9 answerable q10 items) appears as text on its gold printed page.
 
 ### 4.3 Typed nodes
-`nodes.build_nodes` yields **1,512 nodes**: narrative 1,054 · KPI 180 · table 115 · glossary 163. Prose is read column by column (full-width blocks split a half into bands; inside a band, overlapping x-ranges form a column). KPI tiles are ordered label → figure → unit → change; tiles with fewer than two words are dropped when they hold three or more numbers (chart ticks, contents pages) or merged into the page text otherwise. Table headers are reduced to period + unit when they contain one; a table is `high` quality only if every column has a period. Every node text starts with `[chapter › page title › subtitle]`: titles are read from font height (≥ 35 pt title, 27 to 35 pt subtitle, top 30 % of the half), a title carries over to later pages until the next one, a left-half subtitle (a subsidiary or segment name) replaces the carried one, recurring labels (`Điểm nhấn 2025`, `Trọng tâm năm 2026`) stay local, and statement tables carry their own title (an untitled table on the next page inherits it). A node never spans two printed pages. Each carries `chunk_id` (stable hash), `printed_page_number`, `pdf_page_index`, `side`, `page_number_source`, `section`, `content_type`, `bbox`, and for tables `table_id`, `form_code`, `unit_header`, `rows`, `quality`.
+`nodes.build_nodes` yields **1,463 nodes**: narrative 1,005 · KPI 180 · table 115 · glossary 163. Prose is read column by column (blocks that are full-width, or that bridge two columns like a centred quote box, split a half into bands; inside a band, overlapping x-ranges form a column), and a text that starts in lower case is appended to the nearest earlier text that ends mid-sentence, so a sentence wrapping into the next column or around a KPI tile stays whole. KPI tiles are ordered label → figure → unit → change; tiles with fewer than two words are dropped when they hold three or more numbers (chart ticks, contents pages) or merged into the page text otherwise. Table headers are reduced to period + unit when they contain one; a table is `high` quality only if every column has a period. Every node text starts with `[chapter › page title › subtitle]`: titles are read from font height (≥ 35 pt title, 27 to 35 pt subtitle, top 30 % of the half), a title carries over to later pages until the next one, a left-half subtitle (a subsidiary or segment name) replaces the carried one, recurring labels (`Điểm nhấn 2025`, `Trọng tâm năm 2026`) stay local, and statement tables carry their own title (an untitled table on the next page inherits it). A node never spans two printed pages. Each carries `chunk_id` (stable hash), `printed_page_number`, `pdf_page_index`, `side`, `page_number_source`, `section`, `content_type`, `bbox`, and for tables `table_id`, `form_code`, `unit_header`, `rows`, `quality`.
 
 - **Narrative:** sentence-aware packing to ≤ 220 syllable-words (`CHUNK_MAX_WORDS`; median ≈ 175, max 226 because a single sentence is never cut mid-way unless it alone exceeds the budget). Chunk size is an experiment (E6) but any non-default index is rejected by `serve`/`validate`.
 - **KPI tiles:** grouped by proximity into one node per tile (label + value + caption) so "Tỷ lệ CASA 40,4%" stays one retrievable unit.
@@ -156,7 +156,7 @@ The validator and build are tested with a hash embedder in tmp, and the validato
 ### 6.1 Pipeline
 1. **BM25** over `tcb-vi-v1` tokens → top 40 (`TOP_BM25`).
 2. **Dense** (BGE-M3 via LlamaIndex) → top 40 (`TOP_DENSE`).
-3. **RRF** with k = 60 (`RRF_K`) over the two rankings; the top **10** (`FINAL_EVIDENCE`) go to the LLM, further limited by a 15,000-character prompt budget (`PROMPT_EVIDENCE_CHARS`) so a local 8k-context model is never silently truncated.
+3. **RRF** with k = 60 (`RRF_K`) over the two rankings; the top **15** (`FINAL_EVIDENCE`, E4) go to the LLM, further limited by a 22,000-character prompt budget (`PROMPT_EVIDENCE_CHARS`) so a local 8k-context model is never silently truncated.
 
 There is no cross-encoder and no score threshold (§17.1). `Result` keeps every stage's ranking (`bm25`, `dense`, `fused`, `ranked`) and the seconds spent on BM25, query embedding and dense search, so evaluation can say *which stage lost the gold page* and *where the time went* (§14).
 
@@ -194,7 +194,7 @@ Evidence blocks are `[E1]…[E8]`; extractable numbers from high-quality tables 
 |---|---|---|
 | OpenAI | `response_format: json_schema` | SDK retries off (`max_retries=0`) so retry policy is ours |
 | Anthropic | forced `tool_use` with the schema | |
-| Ollama | `format=<schema>`, `num_ctx` 8192 (`OLLAMA_NUM_CTX`) | default `qwen2.5:7b`; truncation guarded by the evidence budget |
+| Ollama | `format=<schema>`, `num_ctx` 12288 (`OLLAMA_NUM_CTX`) | default `qwen2.5:7b`; truncation guarded by the evidence budget |
 
 Errors are typed: `ConfigError` (exit 2), `ProviderTimeout`, `ProviderUnavailable`, `ProviderRejected`, `GenerationError`; every message names provider and model. An `error` answer is returned to the user as such. **No other provider is ever tried.** Token usage, latency and a list-price cost estimate (`conf.PRICES`) are recorded per call.
 
@@ -379,7 +379,7 @@ Data: `data/dev.json` + `data/val.json`, 85 answerable items with gold pages, 19
 | No cross-encoder at all | follows from E4: with N = k = 10 the reranker no longer selects blocks, it only orders them | recall unchanged by construction (0.882); removes ≈ 20 s per question on 2 CPU cores (val1 with the reranker at N = 10: p50 30.3 s) | **adopted 13 Oct 2026**: model, download, `tcb check` step, E4 grid and E7 removed; Docker image ≈ 2.2 GB smaller. Decided without the planned A/B eval because recall cannot change and the time saving is the whole rerank stage |
 | Vector database (FAISS / Chroma / Qdrant) instead of the LlamaIndex in-memory store | time of one top-40 dense search over 1,526 × 1,024 vectors, query vector given | LlamaIndex simple store 49 ms (median), numpy 0.17 ms, FAISS flat 0.30 ms; BM25 0.14 ms | not adopted: at most 0.05 s saved per question against a rerank of tens of seconds, and a DB server adds a service to Docker |
 | BGE-M3 sparse ("hybrid search" inside the model) instead of BM25 | the premise that keyword search puts the number's block at top 1 | 1 of 85 questions contains a number other than a year or date (the number is the answer, not the query); "2025" occurs in 572 of 1,526 chunks; BM25 R@1 = 0.565 | not adopted for speed: retrieval is already hybrid (BM25 + BGE-M3 dense + RRF), sparse weights come from the same forward pass so they save no time, and they need FlagEmbedding plus a re-index. A quality experiment for later |
-| Larger chunks (400 to 500 words, 50 to 100 words overlap) | current chunk shape | narrative median 176 words (cap 220), table chunks are whole rows with column header and unit repeated on every row, KPI tiles 19 words, glossary 7; 0 chunks cross a printed page | not adopted: 10 blocks of ~450 words is ~2.5× the prompt (slower and dearer LLM call; the 15,000-character evidence budget would keep only ~5 blocks), blocks over ~350 words exceed the reranker's 512 tokens, and overlap across pages breaks one-page citations. Chunk size for quality (E6) not run |
+| Larger chunks (400 to 500 words, 50 to 100 words overlap) | current chunk shape | narrative median 176 words (cap 220), table chunks are whole rows with column header and unit repeated on every row, KPI tiles 19 words, glossary 7; 0 chunks cross a printed page | not adopted: 10 blocks of ~450 words is ~2.5× the prompt (slower and dearer LLM call; the 22,000-character evidence budget would keep only ~8 blocks), blocks over ~350 words exceed the reranker's 512 tokens, and overlap across pages breaks one-page citations. Chunk size for quality (E6) not run |
 | Model warm-up at start | the first question paid the model load | `Retriever.warm()` at start of chat/serve/batch/eval | adopted |
 
 ### 17.2 Answer-level results and the fixes they caused

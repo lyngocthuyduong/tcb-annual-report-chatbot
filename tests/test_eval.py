@@ -158,3 +158,12 @@ def test_cli_compare_exit_code_flags_regressions(tmp_path, capsys):
     _fake_run(tmp_path / "c", [{"id": "1", "passed": True, "verdict": "pass"}])
     assert cli.main(["eval", "--compare", str(a), str(tmp_path / "c"), "--out", str(tmp_path / "o")]) == 0
     assert cli.main(["eval"]) == 2
+
+
+def test_gold_widens_to_every_page_printing_the_figures():
+    nodes = {"a": {"text": "Tổng tài sản | 1.192 | Nghìn tỷ đồng | Tăng 21,8%", "printed_page_number": 5},
+             "b": {"text": "Tổng tài sản đạt | 1.192 | Nghìn tỷ đồng | 21,8% N/N", "printed_page_number": 52},
+             "c": {"text": "Tổng tài sản 1.192 nghìn tỷ", "printed_page_number": 13}}            # one fact only: not gold
+    it = ev.widen_gold(item(gold_facts=["1.192 | 1.192.344.137", "21,8"], gold_printed_pages=[5]), nodes)
+    assert it.alt_pages == [52]
+    assert ev.widen_gold(item(gold_facts=["Tiền gửi không kỳ hạn"]), nodes).alt_pages == []   # word facts: unchanged

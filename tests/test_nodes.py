@@ -77,3 +77,12 @@ def test_statement_rows_and_headers_are_clean(doc):
     hdrs = {h for _, r in rows for h in r["cells"]}
     assert all(re.fullmatch(r"(\d{2}/\d{2}/\d{4}|Năm (19|20)\d{2})( (Triệu đồng|%|Tỷ đồng|Nghìn tỷ đồng|Triệu USD|Đồng))?", h, re.I) for h in hdrs), hdrs
     assert not any(re.search(r"\d{1,3}(\.\d{3}){2,}", lab) for lab in labels)
+
+
+def test_centred_box_does_not_merge_columns_and_sentences_run_on(doc):
+    """p.4: a centred award box over both columns used to bridge them; the sentence '302 chi nhánh và / phòng giao dịch
+    tại 29 trên 34 tỉnh thành' wraps from the left column to the right one and must read as one sentence (sq-01)."""
+    t = " ".join(n.text for n in doc["nodes"] if n.printed_page_number == 4 and n.content_type == "narrative")
+    assert "302 chi nhánh và phòng giao dịch tại 29 trên 34 tỉnh thành" in t
+    starts = [n.text.split("] ", 1)[-1][:1] for n in doc["nodes"] if n.content_type == "narrative" and n.section != "Báo cáo tài chính"]
+    assert sum(c.islower() for c in starts) <= 10, "continuations are joined to the sentence they finish"

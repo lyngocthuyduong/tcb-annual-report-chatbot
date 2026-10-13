@@ -211,10 +211,28 @@ def summarize(rows: list[dict]) -> dict:
 
 
 # ------------------------------------------------------------------ runner
+def widen_gold(item: Item, nodes: dict) -> Item:
+    """The report repeats many figures (p.5 KPI tile, p.52 review, p.297 statement). A citation is correct if the analyst
+    can read the figure on the cited page, so every page with one node holding ALL numeric gold facts counts as gold too.
+    Only for items whose facts are all numbers (a word-only fact could match unrelated text)."""
+    if not item.answerable or not item.gold_facts:
+        return item
+    alts = [[{t for t in cite.num_tokens(a) if not cite._trivial(t)} for a in f.split(" | ")] for f in item.gold_facts]
+    if any(not all(alt) for alt in alts):
+        return item
+    pages = set()
+    for n in nodes.values():
+        toks = cite.num_tokens(n["text"])
+        if all(any(a <= toks for a in alt) for alt in alts):
+            pages.add(n["printed_page_number"])
+    extra = sorted(pages - set(item.gold_printed_pages) - set(item.alt_pages))
+    return item.model_copy(update={"alt_pages": item.alt_pages + extra}) if extra else item
+
+
 def run_eval(set_path: str, out_dir: str, engine, label: str = "", include_unverified: bool = False) -> dict:
     """Run every item through `engine`, write traces/results/summary/config, return the report."""
-    items = load_items(set_path)
     nodes = engine.rt.ix.nodes
+    items = [widen_gold(it, nodes) for it in load_items(set_path)]
     page_of = lambda c: (nodes.get(c) or {}).get("printed_page_number")
     out = Path(out_dir) / (label or time.strftime("%Y%m%d-%H%M%S"))
     out.mkdir(parents=True, exist_ok=True)

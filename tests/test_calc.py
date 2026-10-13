@@ -105,3 +105,11 @@ def test_run_dispatch():
     assert calc.run("ratio", [Q("a", 6), Q("b", 3)]).value == D(2)
     for op, qs in (("growth_pct", [Q("a", 1)]), ("nope", []), ("convert", [Q("a", 1)])):
         with pytest.raises(calc.InvalidInput): calc.run(op, qs)
+
+
+def test_literal_periods_compare_by_year_tables_stay_strict():
+    a = num.Quantity("L1", "nhân sự", D(12705), "count", 1, num.Period("date", 2025, "31/12/2025"), "c", 52)
+    b = num.Quantity("L2", "nhân sự", D(11848), "count", 1, num.Period("year", 2024, "2024"), "c", 52)
+    assert calc.diff(a, b).text == "857"
+    with pytest.raises(calc.PeriodMismatch):
+        calc.diff(Q("a", 1), Q("b", 1, kind="year", year=2024))

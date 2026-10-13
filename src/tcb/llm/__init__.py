@@ -27,7 +27,7 @@ def get(env=None) -> Provider:
     if name == "ollama":
         from .ollama import OllamaProvider
         try:
-            ctx = int(e.get("OLLAMA_NUM_CTX") or 8192)
+            ctx = int(e.get("OLLAMA_NUM_CTX") or 12288)
             if ctx < 2048: raise ValueError
         except ValueError:
             raise ConfigError(name, model, "OLLAMA_NUM_CTX must be an integer >= 2048")

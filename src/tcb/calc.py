@@ -39,8 +39,11 @@ def _same_dim(*qs: Quantity) -> None:
 
 
 def _same_kind(*qs: Quantity) -> None:
+    """Table quantities: a balance at a date and a flow over a year never mix. Literals copied from prose (L*) carry a
+    period written by the model ('2025' or '31/12/2025' for the same year-end headcount), so for them only the year counts."""
     ks = {q.period.kind for q in qs}
-    if len(ks) != 1 or "none" in ks:
+    lit = any(q.qid.startswith("L") for q in qs)
+    if "none" in ks or (len(ks) != 1 and not (lit and ks <= {"date", "year"})):
         raise PeriodMismatch("kỳ không xác định hoặc khác loại: " + ", ".join(f"{q.qid}={q.period.kind}" for q in qs))
 
 
