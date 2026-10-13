@@ -86,8 +86,10 @@ os.environ.update(TCB_MODELS_DIR="/content/models", HF_TOKEN=userdata.get("hf_to
 ```
 ```python
 # B5: answer quality, latency, cost (a new --label each run)
-!tcb eval data/val.json --label val7
-!tcb eval data/q10.json --label q10e
+!tcb eval data/dev.json --label dev12
+!tcb eval data/val.json --label val12
+!tcb eval data/q10.json --label q10j
+!tcb eval data/test.json --label test1     # once, on the code that is submitted
 ```
 
 ## Tests: what each category proves
@@ -105,5 +107,5 @@ Default `pytest` runs unit + integ. Skips are not passes. The hash embedder live
 
 ## Layout
 `src/tcb/`: `pdf` `parse` `nodes` `vi` (ingestion) · `build` `index` (index) · `find` (BM25 + dense → RRF → top 12) · `num` `calc` (quantities, calculator) · `plan` `gen` `llm/` (LLM plan, one repair retry, providers) · `cite` `refuse` (validation, policy) · `chat` `ask` (pipeline) · `api` `ui.html` `cli` `smoke` `doctor` · `ev` `exp` `vset` (evaluation) · `conf` (fixed model and constants) · `models` (Docker download).
-`data/`: `ar.pdf`; `q10.json` (the 10 published questions; used to debug, so not an independent benchmark); `dev.json` / `val.json` (70 / 34 items written by hand, checked against the PDF text by Claude, human spot-check pending).
+`data/`: `ar.pdf`; `q10.json` (the 10 published questions; used to debug, so not an independent benchmark); `dev.json` / `val.json` (70 / 34 items: development and validation); `test.json` (22 items written after the last code change, on pages no other set uses, run once). Gold facts machine-checked by Claude against the PDF text. `runs/`: summaries, configs, per-item results and traces of the reported runs.
 Dependencies: exact pins in `pyproject.toml`; `requirements.lock` (hash-pinned, py3.12 linux-x86_64, no torch/CUDA) from `./lock.sh`; Docker installs CPU torch first.

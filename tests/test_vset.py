@@ -8,7 +8,7 @@ from tcb import ev, vset
 pytestmark = pytest.mark.integ
 
 
-@pytest.mark.parametrize("name", ["dev", "val"])
+@pytest.mark.parametrize("name", ["dev", "val", "test"])
 def test_committed_sets_gold_is_on_gold_pages(doc, name):
     assert vset.check(f"data/{name}.json", doc["nodes"]) == []
 
@@ -16,7 +16,8 @@ def test_committed_sets_gold_is_on_gold_pages(doc, name):
 def test_committed_unanswerable_topics_are_absent(doc):
     from tcb import vi
     text = vi.fold(" ".join(n.text for n in doc["nodes"]).lower())
-    for k in ("vietcombank", "campuchia", "bitcoin", "momo", "nasdaq", "world cup", "2027", "mb bank"):
+    for k in ("vietcombank", "campuchia", "bitcoin", "momo", "nasdaq", "world cup", "2027", "mb bank",
+              "sacombank", "sjc", "sea games", "ethereum"):                # test.json unanswerables too
         assert k not in text, k
     assert "moody" not in text                                    # n-u-moody
 
@@ -26,6 +27,11 @@ def test_shipped_sets_are_checked_and_disjoint():
     assert all(i.verified for i in dev + val) and not ({i.question for i in dev if not i.history} & {i.question for i in val if not i.history})
     q10 = {x["question"] for x in json.loads(open("data/q10.json", encoding="utf-8").read())}
     assert not (q10 & {i.question for i in dev + val}), "the published 10 never appear in dev/val"
+    test = ev.load_items("data/test.json")                         # written after tuning: no question or gold page reused
+    used = {p for i in dev + val for p in i.gold_printed_pages + i.alt_pages}
+    used |= {p for x in json.loads(open("data/q10.json", encoding="utf-8").read()) for p in x["gold_printed_pages"] + x.get("alt_pages", [])}
+    assert not ({i.question for i in test} & ({i.question for i in dev + val} | q10))
+    assert not ({p for i in test for p in i.gold_printed_pages} & used)
 
 
 def test_check_catches_a_wrong_fact(doc, tmp_path):

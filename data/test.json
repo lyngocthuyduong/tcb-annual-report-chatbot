@@ -1,0 +1,324 @@
+[
+ {
+  "id": "x-credcost",
+  "category": "key_figures",
+  "type": "single",
+  "question": "Chi phí tín dụng của Techcombank năm 2025 là bao nhiêu?",
+  "gold_answer": "0,6%.",
+  "gold_printed_pages": [
+   48
+  ],
+  "gold_facts": [
+   "0,6"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person."
+ },
+ {
+  "id": "x-roe",
+  "category": "key_figures",
+  "type": "single",
+  "question": "Tỷ suất sinh lời trên vốn chủ sở hữu (ROE) của Techcombank năm 2025 là bao nhiêu?",
+  "gold_answer": "16,0%, nằm trong nhóm dẫn đầu ngành.",
+  "gold_printed_pages": [
+   48
+  ],
+  "gold_facts": [
+   "16"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person."
+ },
+ {
+  "id": "x-tcc-rev",
+  "category": "subsidiary",
+  "type": "single",
+  "question": "Tổng doanh thu năm 2025 của Techcom Capital (TCC) là bao nhiêu và tăng bao nhiêu so với 2024?",
+  "gold_answer": "326 tỷ đồng, tăng 44% so với 2024.",
+  "gold_printed_pages": [
+   84
+  ],
+  "gold_facts": [
+   "326",
+   "44"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person."
+ },
+ {
+  "id": "x-tcbs-cir",
+  "category": "subsidiary",
+  "type": "single",
+  "question": "Tỷ lệ chi phí trên thu nhập (CIR) của TCBS năm 2025 là bao nhiêu?",
+  "gold_answer": "13,7%.",
+  "gold_printed_pages": [
+   81
+  ],
+  "gold_facts": [
+   "13,7"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person."
+ },
+ {
+  "id": "x-amc",
+  "category": "subsidiary",
+  "type": "single",
+  "question": "Giá trị tài sản TechAMC đang xử lý là bao nhiêu?",
+  "gold_answer": "15.500 tỷ đồng.",
+  "gold_printed_pages": [
+   89
+  ],
+  "gold_facts": [
+   "15.500"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person."
+ },
+ {
+  "id": "x-lounge",
+  "category": "retail",
+  "type": "single",
+  "question": "Phòng chờ Techcombank Private Lounge đã phục vụ bao nhiêu lượt khách?",
+  "gold_answer": "90.600 lượt khách.",
+  "gold_printed_pages": [
+   64
+  ],
+  "gold_facts": [
+   "90.600"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person."
+ },
+ {
+  "id": "x-csat",
+  "category": "retail",
+  "type": "single",
+  "question": "Chỉ số hài lòng khách hàng (CSAT) tổng thể của Khối Ngân hàng Bán lẻ đạt bao nhiêu?",
+  "gold_answer": "89%.",
+  "gold_printed_pages": [
+   64
+  ],
+  "gold_facts": [
+   "89"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person."
+ },
+ {
+  "id": "x-ees",
+  "category": "human_capital",
+  "type": "single",
+  "question": "Chỉ số Gắn kết Nhân viên của Techcombank năm 2025 là bao nhiêu?",
+  "gold_answer": "93%.",
+  "gold_printed_pages": [
+   264
+  ],
+  "gold_facts": [
+   "93"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person."
+ },
+ {
+  "id": "x-training",
+  "category": "human_capital",
+  "type": "single",
+  "question": "Năm 2025, trung bình mỗi nhân viên Techcombank dành bao nhiêu giờ tham gia đào tạo?",
+  "gold_answer": "53,6 giờ.",
+  "gold_printed_pages": [
+   265
+  ],
+  "gold_facts": [
+   "53,6"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person."
+ },
+ {
+  "id": "x-green",
+  "category": "sustainability",
+  "type": "single",
+  "question": "Dư nợ tín dụng xanh của Techcombank đạt bao nhiêu và tăng bao nhiêu so với năm 2024?",
+  "gold_answer": "18,7 nghìn tỷ đồng, tăng 15% so với năm 2024.",
+  "gold_printed_pages": [
+   244
+  ],
+  "gold_facts": [
+   "18,7",
+   "15"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person."
+ },
+ {
+  "id": "x-greenbond",
+  "category": "sustainability",
+  "type": "single",
+  "question": "Techcombank phát hành mới trái phiếu xanh trị giá bao nhiêu?",
+  "gold_answer": "500 tỷ đồng.",
+  "gold_printed_pages": [
+   243
+  ],
+  "gold_facts": [
+   "500"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person."
+ },
+ {
+  "id": "x-marathon",
+  "category": "sustainability",
+  "type": "single",
+  "question": "Giải Marathon Quốc tế Hà Nội Techcombank gây quỹ khoảng bao nhiêu cho mục tiêu thiện nguyện?",
+  "gold_answer": "Khoảng 14 tỷ đồng.",
+  "gold_printed_pages": [
+   269
+  ],
+  "gold_facts": [
+   "14 tỷ"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person."
+ },
+ {
+  "id": "x-brand",
+  "category": "brand",
+  "type": "single",
+  "question": "Mức độ cân nhắc thương hiệu (Brand Consideration) của Techcombank là bao nhiêu?",
+  "gold_answer": "81%, đứng #1.",
+  "gold_printed_pages": [
+   33
+  ],
+  "gold_facts": [
+   "81"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person."
+ },
+ {
+  "id": "x-ir",
+  "category": "investor",
+  "type": "single",
+  "question": "Trong năm 2025, Techcombank đã thực hiện khoảng bao nhiêu cuộc gặp gỡ với chuyên gia phân tích và nhà đầu tư tổ chức?",
+  "gold_answer": "Khoảng 340 cuộc gặp gỡ.",
+  "gold_printed_pages": [
+   39
+  ],
+  "gold_facts": [
+   "340"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person."
+ },
+ {
+  "id": "x-gdp",
+  "category": "macro",
+  "type": "single",
+  "question": "Theo báo cáo, GDP của Việt Nam năm 2025 tăng bao nhiêu?",
+  "gold_answer": "8,02% so với năm trước.",
+  "gold_printed_pages": [
+   47
+  ],
+  "gold_facts": [
+   "8,02"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person."
+ },
+ {
+  "id": "x-ceo-pay",
+  "category": "financial_statements",
+  "type": "calc",
+  "question": "Thù lao của Tổng Giám đốc năm 2025 tăng bao nhiêu phần trăm so với năm 2024?",
+  "gold_answer": "Tăng khoảng 7,4% (27.556 so với 25.662 triệu đồng).",
+  "gold_printed_pages": [
+   370
+  ],
+  "gold_facts": [
+   "7,4"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person."
+ },
+ {
+  "id": "x-masan-fee",
+  "category": "financial_statements",
+  "type": "calc",
+  "question": "Thu nhập từ hoạt động dịch vụ với Công ty Cổ phần Tập đoàn Masan năm 2025 tăng hay giảm bao nhiêu phần trăm so với năm 2024?",
+  "gold_answer": "Giảm khoảng 1,7% (12.613 so với 12.825 triệu đồng).",
+  "gold_printed_pages": [
+   369
+  ],
+  "gold_facts": [
+   "1,7"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person."
+ },
+ {
+  "id": "x-fu-cc",
+  "category": "conversation",
+  "type": "followup",
+  "question": "Còn chi phí tín dụng thì sao?",
+  "gold_answer": "0,6%.",
+  "gold_printed_pages": [
+   48
+  ],
+  "gold_facts": [
+   "0,6"
+  ],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person.",
+  "history": [
+   {
+    "question": "Tỷ suất sinh lời trên vốn chủ sở hữu (ROE) của Techcombank năm 2025 là bao nhiêu?",
+    "answer": "ROE năm 2025 đạt 16,0% [tr. 48]."
+   }
+  ]
+ },
+ {
+  "id": "x-u-sacom",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "Tỷ lệ nợ xấu của Sacombank năm 2025 là bao nhiêu?",
+  "gold_answer": "Không có trong báo cáo.",
+  "gold_printed_pages": [],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person. Topic absent from the full PDF text."
+ },
+ {
+  "id": "x-u-sjc",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "Giá vàng SJC vào ngày 31/12/2025 là bao nhiêu?",
+  "gold_answer": "Không có trong báo cáo.",
+  "gold_printed_pages": [],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person. Topic absent from the full PDF text."
+ },
+ {
+  "id": "x-u-seagames",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "Techcombank tài trợ bao nhiêu tiền cho SEA Games?",
+  "gold_answer": "Không có trong báo cáo.",
+  "gold_printed_pages": [],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person. Topic absent from the full PDF text."
+ },
+ {
+  "id": "x-u-eth",
+  "category": "unanswerable",
+  "type": "refusal",
+  "answerable": false,
+  "question": "Techcombank đang nắm giữ bao nhiêu Ethereum?",
+  "gold_answer": "Không có trong báo cáo.",
+  "gold_printed_pages": [],
+  "verified": true,
+  "notes": "Written on 13 Oct 2026 after all tuning, frozen before its first run; gold checked by Claude against the PDF text of the cited page (calculations recomputed); not yet read by a person. Topic absent from the full PDF text."
+ }
+]
