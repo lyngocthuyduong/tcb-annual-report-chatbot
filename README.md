@@ -79,7 +79,7 @@ Secrets (key icon, **Notebook access** ON): `gh-token` (Contents read), `hf_toke
 !apt-get -qq update && apt-get -qq install -y poppler-utils
 import os; from google.colab import userdata
 os.environ["GH_TOKEN"] = userdata.get("gh-token")
-!git clone -q -b cont https://x-access-token:$GH_TOKEN@github.com/lyngocthuyduong/tcb-annual-report-chatbot /content/tcb
+!git clone -q -b main https://x-access-token:$GH_TOKEN@github.com/lyngocthuyduong/tcb-annual-report-chatbot /content/tcb
 %cd /content/tcb
 !pip install -q -e ".[dev]" && pip uninstall -y -q torchvision torchaudio
 ```
@@ -88,7 +88,7 @@ os.environ["GH_TOKEN"] = userdata.get("gh-token")
 import os; from google.colab import drive, files, userdata
 drive.mount("/content/drive")
 %cd /content/tcb
-!git pull -q origin cont && git log --oneline -1
+!git pull -q origin main && git log --oneline -1
 os.environ.update(TCB_MODELS_DIR="/content/models", HF_TOKEN=userdata.get("hf_token"),
                   JAX_PLATFORMS="cpu", XLA_PYTHON_CLIENT_PREALLOCATE="false")
 !python -m tcb.models download 2>&1 | tail -1
@@ -105,7 +105,7 @@ files.download("/content/build/idx.zip")
 !apt-get -qq update && apt-get -qq install -y poppler-utils
 import os; from google.colab import userdata
 os.environ["GH_TOKEN"] = userdata.get("gh-token")
-!git clone -q -b cont https://x-access-token:$GH_TOKEN@github.com/lyngocthuyduong/tcb-annual-report-chatbot /content/tcb
+!git clone -q -b main https://x-access-token:$GH_TOKEN@github.com/lyngocthuyduong/tcb-annual-report-chatbot /content/tcb
 %cd /content/tcb
 !pip install -q -e ".[dev]" && pip uninstall -y -q torchvision torchaudio
 ```
@@ -114,7 +114,7 @@ os.environ["GH_TOKEN"] = userdata.get("gh-token")
 import os; from google.colab import drive, userdata
 drive.mount("/content/drive")
 %cd /content/tcb
-!git pull -q origin cont && git log --oneline -1
+!git pull -q origin main && git log --oneline -1
 !mkdir -p /content/drive/MyDrive/tcb-out && rm -rf out && ln -s /content/drive/MyDrive/tcb-out out
 os.environ.update(TCB_MODELS_DIR="/content/models", HF_TOKEN=userdata.get("hf_token"),
                   ANTHROPIC_API_KEY=userdata.get("anthropic_key"), PROVIDER="anthropic", ANTHROPIC_MODEL="claude-haiku-5-5")
