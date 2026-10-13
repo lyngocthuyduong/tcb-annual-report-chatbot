@@ -1,4 +1,4 @@
-"""INTEGRATION on a TEST-HASH index built in tmp from the real PDF. The hash embedder is a stand-in: these tests check
+"""Integration on a TEST-HASH index built in tmp from the real PDF. The hash embedder is a stand-in: these tests check
 retrieval MECHANICS (lexical number matching, RRF, stage bookkeeping), not retrieval quality."""
 import json
 

@@ -1,4 +1,4 @@
-"""Evidence ids, citation construction and plan validation. Page numbers come ONLY from index metadata
+"""Evidence ids, citation construction and plan validation. Page numbers come only from index metadata
 (printed_page_number of the cited node); the LLM never supplies one."""
 from __future__ import annotations
 

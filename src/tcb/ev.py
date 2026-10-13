@@ -244,7 +244,7 @@ def summarize(rows: list[dict]) -> dict:
 # ------------------------------------------------------------------ runner
 def widen_gold(item: Item, nodes: dict) -> Item:
     """The report repeats many figures (p.5 KPI tile, p.52 review, p.297 statement). A citation is correct if the analyst
-    can read the figure on the cited page, so every page with one node holding ALL numeric gold facts counts as gold too.
+    can read the figure on the cited page, so every page with one node holding all numeric gold facts counts as gold too.
     Only for items whose facts are all numbers (a word-only fact could match unrelated text) and include at least one
     distinctive number (a decimal or 4+ digits)."""
     if not item.answerable or not item.gold_facts:

@@ -37,7 +37,7 @@ def test_schema_rules(tmp_path):
     with pytest.raises(ValueError, match="duplicate"): ev.load_items(p)
     p.write_text(json.dumps([{"id": "a", "question": "q", "type": "weird"}]))
     with pytest.raises(Exception): ev.load_items(p)
-    assert not ev.Item(id="a", question="q").verified              # default: NOT verified
+    assert not ev.Item(id="a", question="q").verified              # default: not verified
 
 
 def test_shipped_datasets_load():

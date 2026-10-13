@@ -1,4 +1,4 @@
-"""REGRESSION on the REAL parsed PDF (integration; no models): every published q10 gold fact must be present, as text,
+"""Regression on the real parsed PDF (integration; no models): every published q10 gold fact must be present, as text,
 in a node that carries the gold printed page. Guards page mapping + extraction, independent of retrieval/LLM."""
 import pytest
 

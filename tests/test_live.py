@@ -1,5 +1,7 @@
-"""LIVE tests: real models / real providers / shipped index. Opt-in:  pytest -m live  (or live_models / live_openai / live_ollama).
-A SKIP is not a pass. These have NOT been run in the authoring sandbox (no HF/PyTorch/Docker/Ollama/OpenAI access there)."""
+"""Live tests: real models, real providers, the shipped index. Opt-in: pytest -m live (or live_models, live_anthropic,
+live_openai, live_ollama); excluded from the default run, and a skip is not a pass. The path they cover with Anthropic
+(shipped index, BGE-M3 from the image, claude-haiku-5-5) is exercised end to end by smoke.sh and the eval runs in runs/;
+the OpenAI and Ollama calls have not been made against the real services."""
 import os
 from pathlib import Path
 
@@ -32,7 +34,7 @@ def test_real_openai_returns_valid_plan():
     assert g.plan.status == "answered" and not g.problems and any("40,4" in c.text_vi for c in g.plan.claims)
 
 
-@pytest.mark.live_openai
+@pytest.mark.live_anthropic
 def test_real_anthropic_returns_valid_plan():
     if not os.getenv("ANTHROPIC_API_KEY"):
         pytest.skip("ANTHROPIC_API_KEY not set")

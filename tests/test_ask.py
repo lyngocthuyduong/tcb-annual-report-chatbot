@@ -1,5 +1,5 @@
-"""INTEGRATION on the REAL parsed PDF (nodes/pages/figures are real), but retrieval is a fixed-node stand-in and the
-LLM is a scripted stand-in. Proves pipeline + citation + refusal + calculator wiring. It does NOT prove retrieval
+"""Integration on the real parsed PDF (nodes, pages and figures are real), with a fixed-node stand-in for retrieval and
+a scripted stand-in for the LLM. Proves pipeline, citation, refusal and calculator wiring. It does not prove retrieval
 quality, nor that any real LLM produces such plans (see tests/test_live.py and the eval runner)."""
 import pytest
 

@@ -18,7 +18,7 @@ stage() { # name, command...
   if bash -c "$*" >> "$LOG" 2>&1; then echo "PASS  $name"; RESULTS+=("PASS  $name"); return 0
   else echo "FAIL  $name  (see $LOG)"; RESULTS+=("FAIL  $name"); summary; exit 1; fi
 }
-summary() { echo; echo "---- summary ----"; printf '%s\n' "${RESULTS[@]}"; echo "not listed above = NOT executed"; }
+summary() { echo; echo "---- summary ----"; printf '%s\n' "${RESULTS[@]}"; echo "stages not listed above were not executed"; }
 
 stage "0 prerequisites"      'command -v docker && docker compose version && test -f data/ar.pdf && test -f idx/manifest.json'
 stage "1 docker build"       'docker compose build'

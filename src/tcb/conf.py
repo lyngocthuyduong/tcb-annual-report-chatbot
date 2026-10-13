@@ -1,4 +1,4 @@
-"""Fixed pipeline constants (NOT env-configurable) + env Settings for the LLM/runtime."""
+"""Fixed pipeline constants (not configurable by environment) and env Settings for the LLM and runtime."""
 from __future__ import annotations
 
 import os

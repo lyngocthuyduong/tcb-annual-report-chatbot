@@ -40,7 +40,7 @@ docker compose run --rm app tcb ask "Tỷ lệ CASA năm 2025?" --json
 | `pytest -m unit` | calculator, citations, refusal, retry, error mapping, API routing, scorers | any real model or provider works |
 | `pytest -m integ` | page mapping, extraction, golden figures, index build/validate (hash embedder in tmp), pipeline wiring with a scripted LLM | retrieval quality |
 | `pytest -m live_models` | BGE-M3 loads, dim and revision | answer quality |
-| `pytest -m "live_openai or live_ollama"` | one schema-constrained call returns a valid, grounded plan | quality at scale |
+| `pytest -m "live_anthropic or live_openai or live_ollama"` | one schema-constrained call returns a valid, grounded plan | quality at scale |
 | `pytest -m live` | shipped `idx/` + BGE-M3 + `PROVIDER` answer and refuse | |
 | `./smoke.sh` | Docker build, `tcb check`, validate, tests, HTTP answer/refusal | quality |
 | `tcb eval` | metrics on verified gold | |

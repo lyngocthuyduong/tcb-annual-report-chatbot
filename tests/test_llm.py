@@ -1,5 +1,5 @@
-"""UNIT (mocked SDK clients / httpx.MockTransport). Proves adapter + error-mapping + retry logic only.
-A pass here is NOT evidence that OpenAI, Anthropic or Ollama work with this code -- see tests/test_live.py."""
+"""Unit (mocked SDK clients / httpx.MockTransport). Proves adapter + error-mapping + retry logic only.
+A pass here is not evidence that OpenAI, Anthropic or Ollama work with this code; see tests/test_live.py."""
 import json
 from types import SimpleNamespace as NS
 

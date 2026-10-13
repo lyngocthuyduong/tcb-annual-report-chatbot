@@ -25,7 +25,7 @@ def load_retriever(index_dir=None, embedder=None, lenient: bool = False) -> find
 
 def load_engine(env=None, index_dir=None, embedder=None, provider=None) -> ask.Engine:
     """Order matters: cheap config errors first, then the index, then the (slow) model.
-    embedder/provider are injectable ONLY for tests; production passes none of them."""
+    embedder/provider are injectable only for tests; production passes none of them."""
     prov = provider or llm.get(env)
     rt = load_retriever(index_dir, embedder)
     return ask.Engine(rt, prov, llm.max_tokens(env))

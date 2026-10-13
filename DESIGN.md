@@ -21,7 +21,7 @@
 
 **Non-goals.** Multi-document support, an LLM judge, OCR of image-only content (inventoried but not read), streaming answers, authentication, multi-process serving, runtime fine-tuning.
 
-**Honesty rules baked into the project.** A mock pass is never reported as proof that a real model works. The hash embedder exists only in `tests/` and writes to a tmp dir; the production validator rejects any index not built with the pinned BGE-M3 revision. Eval items count only when `verified: true`, which in this repository means machine-checked: every gold fact was found in the PDF text of its page and every calculation recomputed (`tcb vset check`); the items and the q10, test and test2 answers were also reviewed by the author. The item notes say this.
+**Reporting rules.** A mock pass is never reported as proof that a real model works. The hash embedder exists only in `tests/` and writes to a tmp dir; the production validator rejects any index not built with the pinned BGE-M3 revision. Eval items count only when `verified: true`, which in this repository means machine-checked: every gold fact was found in the PDF text of its page and every calculation recomputed (`tcb vset check`); the items and the q10, test and test2 answers were also reviewed by the author. The item notes say this.
 
 ---
 
@@ -124,7 +124,7 @@ Invariant tested on the real PDF: for every node with printed page p, `pdf_page_
 ### 4.4 Financial-statement tables
 Tables are rebuilt **from coordinates**, not from text order: numeric words are anchored into columns by right edge (clustered within 14 pt), the first column is the label with indentation, a narrow column is the *Thuyết minh* note number, and wrapped labels are re-joined. Nil cells (`-`) become `None`; parentheses mean negative. Rows are chunked 12 per node and rendered as `label [TM n] | <header>: value; ...` so the text stays searchable and unit-bearing.
 
-Header handling (fixed this session after the income statement and cash flow were found to be mis-parsed) [verified by regression tests on the real PDF]:
+Header handling (reworked after the income statement and cash flow were found mis-parsed; covered by regression tests on the real PDF):
 - A first row whose cells are all years is promoted to headers `Năm 2025` / `Năm 2024`, and the column unit is appended (`Năm 2025 Triệu đồng`).
 - A unit-only row (`Triệu đồng Triệu đồng`) fills the unit list instead of leaking into the first label.
 - A repeated column-header row inside a table (dates, units, *Thuyết minh*, years) is dropped; a CAPS section title glued to it is dropped with it; a CAPS section title above a normal row becomes its own row with empty cells (e.g. `LƯU CHUYỂN TIỀN TỪ HOẠT ĐỘNG KINH DOANH`).
@@ -302,7 +302,7 @@ A question is treated as a follow-up only if there is history **and** it contain
 | `data/q10.json` | the 10 published sample questions (9 answerable, 1 not) | used to debug after batch runs (sq-07 led to page-title context, sq-03/sq-07 to the magnitude fixes); fixes are general and tested on other pages, but q10 is not an independent benchmark; additively annotated with `gold_facts`, `alt_pages` (e.g. 297 for total assets), `type`, `verified` |
 | `data/dev.json`, `data/val.json` | 70 + 34 items written by hand (statement tables, KPI tiles, narrative, segments, subsidiary, governance, investor relations, glossary, calculations, follow-ups, 19 unanswerable or ambiguous) | gold machine-checked against the PDF text of the cited page (`tcb vset check`), calculations recomputed; reviewed by the author. One page added after review: `n-equity` alt page 256 (the same equity printed as 179.501 tỷ đồng), rescored |
 | `data/test.json` | 22 items written after the last code change, on pages no other set uses, run once (test1) | its three failures led to the fixes in §4.1, §4.4 and §6.1, so after them it is no longer independent |
-| `data/test2.json` | 22 items written after those fixes, on pages no set above uses, frozen before its first run | the independent estimate for the submitted version; disjointness enforced by a test |
+| `data/test2.json` | 22 items written after those fixes, on pages no set above uses, frozen before its first run | the independent estimate (first run on `5c5f329`); disjointness enforced by a test |
 
 Unanswerable topics were chosen only if a full-text search of the report found no mention (Vietcombank, Campuchia, Bitcoin, Momo, Nasdaq, World Cup, 2027, MB Bank, Moody's; enforced by a test). Topics that **are** in the report (dividends, 2029/2030, remuneration, 2026 plan) are not used as "unanswerable". `tcb vset check` asserts every answerable item's gold facts are present, as text, on its gold pages (for calc items: the *inputs* are). The first table items were drafted by a generator from the statements; it and its CSV review loop were removed once the sets were checked, so they cannot be regenerated over by accident.
 
@@ -335,14 +335,14 @@ The runner *suggests* a decision by these rules and never edits `conf.py`. Order
 
 ---
 
-## 15. Test strategy (categories are kept honestly separate)
+## 15. Test strategy: what each category proves
 
 | Marker | Needs | Proves | Does not prove |
 |---|---|---|---|
 | `unit` | nothing | calculator, citation checks, refusal, retry, provider error mapping (mocked), API routing, scorers, experiment math | any real model/provider works |
 | `integ` | `data/ar.pdf`, poppler | page map, extraction, table golden figures, header regressions, gold-on-page for q10/dev/val, index build/validate with a hash embedder in tmp, vset round trip | retrieval quality; the submission index |
 | `live_models` | real model | BGE-M3 load, dim, revision | answer quality |
-| `live_openai`, `live_ollama` | key / running Ollama | one schema-constrained call returns a valid grounded plan | quality at scale |
+| `live_anthropic`, `live_openai`, `live_ollama` | key / running Ollama | one schema-constrained call returns a valid grounded plan | quality at scale |
 | `live` | `idx/` + models + provider | end-to-end answer and refusal | — |
 
 `pytest` default = unit + integ; live tests are excluded (a skip is not a pass). Default run: all unit and integration tests pass; the 5 live tests are deselected (not executed). Tests of note: golden B02/B03 figures; no header text in statement labels; production validator rejects the hash index and chunk-variant indexes; `check` catches a wrong gold fact; independent growth formula equals `calc`.
@@ -401,7 +401,7 @@ Data: `data/dev.json` + `data/val.json`, 85 answerable items with gold pages, 19
 | BM25 vs dense vs RRF vs RSF on the final index (E3, m7) | R@20 | BM25 0.929, dense 0.718, RRF 0.941, RSF 0.953 | keep RRF (RSF is one item better, the rule needs 5 pts) |
 | Glossary expansion (E5) | items lost / gained | none lost, none gained | keep (needed for abbreviations such as RBG, CASA) |
 | Weak-retrieval retry τ_low (E7) | F1 of flagging unanswerable by top rerank score | τ = 0.599 (on pool 30) | not enabled: the retry is a second full search and rerank on exactly the weak and unanswerable questions, and no experiment shows it recovers a page |
-| No cross-encoder at all | follows from E4: with N = k = 10 the reranker no longer selects blocks, it only orders them | recall unchanged by construction (0.882); removes ≈ 20 s per question on 2 CPU cores (val1 with the reranker at N = 10: p50 30.3 s) | **adopted 13 Oct 2026**: model, download, `tcb check` step, E4 grid and E7 removed; Docker image ≈ 2.2 GB smaller. Decided without the planned A/B eval because recall cannot change and the time saving is the whole rerank stage |
+| No cross-encoder at all | follows from E4: with N = k = 10 the reranker no longer selects blocks, it only orders them | recall unchanged by construction (0.882); removes ≈ 20 s per question on 2 CPU cores (val1 with the reranker at N = 10: p50 30.3 s) | **adopted 13 Oct 2026**: model, download, `tcb check` step, E4 grid and E7 removed; Docker image ≈ 2.2 GB smaller. Decided without an answer-level A/B run, because recall cannot change and the time saving is the whole rerank stage |
 | Vector database (FAISS / Chroma / Qdrant) instead of the LlamaIndex in-memory store | time of one top-40 dense search over 1,526 × 1,024 vectors (an earlier index), query vector given | LlamaIndex simple store 49 ms (median), numpy 0.17 ms, FAISS flat 0.30 ms; BM25 0.14 ms | not adopted: at most 0.05 s saved per question against a rerank of tens of seconds, and a DB server adds a service to Docker |
 | BGE-M3 sparse ("hybrid search" inside the model) instead of BM25 | the premise that keyword search puts the number's block at top 1 | 1 of 85 questions contains a number other than a year or date (the number is the answer, not the query); "2025" occurs in 572 of 1,526 chunks; BM25 R@1 = 0.565 | not adopted for speed: retrieval is already hybrid (BM25 + BGE-M3 dense + RRF), sparse weights come from the same forward pass so they save no time, and they need FlagEmbedding plus a re-index. A quality experiment for later |
 | Larger chunks (400 to 500 words, 50 to 100 words overlap) | current chunk shape | narrative median 176 words (cap 220), table chunks are whole rows with column header and unit repeated on every row, KPI tiles 19 words, glossary 7; 0 chunks cross a printed page | not adopted: 10 blocks of ~450 words is ~2.5× the prompt (slower and dearer LLM call; the 22,000-character evidence budget would keep only ~8 blocks), blocks over ~350 words exceed the reranker's 512 tokens, and overlap across pages breaks one-page citations. Chunk size for quality (E6) not run |

@@ -24,7 +24,7 @@ def peak_rss_mb() -> int | None:
 
 
 def cmd_check(a) -> int:
-    """M0 gate: load the fixed embedding model from the baked snapshot, embed two texts and one query, log time/RSS."""
+    """Model check: load the fixed embedding model from the baked snapshot, embed two texts and one query, log time/RSS."""
     out: dict = {"embed": conf.EMBED_MODEL}
     p = conf.MODELS_DIR / "bge-m3"
     if not p.exists():
