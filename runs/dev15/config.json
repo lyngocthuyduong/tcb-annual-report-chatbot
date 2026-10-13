@@ -20,7 +20,7 @@
  "top_dense": 40,
  "include_unverified": false,
  "submission_grade": true,
- "commit": "9891cdc",
+ "commit": "86d5252",
  "index_manifest_sha256": "c0d83538dd26b19a519e5a51a8f35a97c20a87cf4aea4b96014546890e447732",
  "hardware": {
   "cpu": "x86_64",

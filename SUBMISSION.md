@@ -6,7 +6,7 @@ An analyst pastes the answer into an email, so they must be able to check it in 
 - Clean machine: `mkdir -p out && cp .env.example .env`, put the key in `ANTHROPIC_API_KEY` (or choose another `PROVIDER`), then `docker compose up --build` → http://127.0.0.1:8000 (UI, `POST /chat`, `/docs`).
   - Prerequisites: Docker Compose v2, about 6 GB of RAM for Docker, internet for the first build. Creating `out/` first keeps it writable for the container's user.
   - Before serving, the app validates the shipped index and the PDF and exits with a named error (code 3) on any mismatch.
-  - The full path (build, model check, index validation, tests, answer, refusal, q10) passed `./smoke.sh` at commit `5bd7fbf` (`runs/smoke-5bd7fbf.txt`).
+  - The full path (build, model check, index validation, tests, answer, refusal, q10) passed `./smoke.sh` at commit `9ee2ce1` (`runs/smoke-9ee2ce1.txt`).
 - Different key or local model: set `PROVIDER=openai|anthropic|ollama` and the matching key or model in `.env`. There is no automatic fallback between providers.
   - Local model: run Ollama on the host (`ollama pull qwen2.5:7b`), set `PROVIDER=ollama`, then `docker compose up --build`; `tcb smoke` sends it one fixed question.
   - I planned a local run too, but on the machines I had (2 vCPU, no GPU) a 7B model needs minutes per answer at these prompt sizes, so the results below use claude-haiku-5-5 and the Ollama adapter is tested against a mocked server.
@@ -62,11 +62,11 @@ Other experiments (tokenizers, fusion parameters, chunk sizes, vector database, 
 | test | 22 | written after the last code change, on pages no other set uses, run once (test1); its failures drove the fixes below, so it no longer counts as independent |
 | test2 | 22 | written after those fixes, on pages no other set uses, frozen before its first run |
 
-- Results on the 10 published questions: 10/10 in each of three runs (9/9 facts, 9/9 pages, the unanswerable one refused). All sets at commit `9891cdc`, claude-haiku-5-5, 2 vCPU (`runs/dev15`, `val15`, `q10o` to `q10q`, `test2d`, `test2e`; earlier runs in `runs/history/`):
+- Results on the 10 published questions: 10/10 in each of three runs (9/9 facts, 9/9 pages, the unanswerable one refused). All sets at commit `86d5252`, claude-haiku-5-5, 2 vCPU (`runs/dev15`, `val15`, `q10o` to `q10q`, `test2d`, `test2e`; earlier runs in `runs/history/`):
 
 | Set | Pass | Fact correct | Page hit (declared pages only) | Unanswerable refused |
 |---|---|---|---|---|
-| **test2 (independent)** | **22/22** on its first run (`5c5f329`, `runs/test2r`); 21/22 in two later runs at `9891cdc`, the one miss a calculator bug fixed since (below) | 18/18; later 17/18 | 18/18 (18/18); later 17/18 | 4/4 |
+| **test2 (independent)** | **22/22** on its first run (`6d84763`, `runs/test2r`); 21/22 in two later runs at `86d5252`, the one miss a calculator bug fixed since (below) | 18/18; later 17/18 | 18/18 (18/18); later 17/18 | 4/4 |
 | q10 | 10/10 in each of three runs | 9/9 | 9/9 (8/9) | 1/1 |
 | val | 31/34 | 26/28 | 26/28 (26/28) | 5/5 |
 | dev | 68/70 | 55/57 | 57/57 (55/57) | 12/12 |
@@ -76,7 +76,7 @@ Other experiments (tokenizers, fusion parameters, chunk sizes, vector database, 
 - What the numbers made you change:
   - E4 set the evidence count (k = 12) and the reranker was removed (above).
   - Reading every answer, not only the scores, found the costly errors. On test1 an answer the scorer passed said "giảm 7%" where the page draws an up triangle: the direction exists only as a vector path, so extraction now reads those paths into markers (63 in the index). The same run gave provision expense for a question on credit cost (hence the KPI label ranking) and refused one note-table question because the note heading had replaced the sub-table caption (now kept as the table's first row).
-  - On the runs at `5c5f329`, an answer put `834.241.663 triệu đồng` next to `tương đương 776,5 nghìn tỷ đồng`: two different figures, both printed in the report, so every number check passed. Restated amounts are now compared after calculation.
+  - On the runs at `6d84763`, an answer put `834.241.663 triệu đồng` next to `tương đương 776,5 nghìn tỷ đồng`: two different figures, both printed in the report, so every number check passed. Restated amounts are now compared after calculation.
   - Gold changes after review are few and named in the item notes: two dev items gained an alternative page that prints the same figure (`n-equity`, `h-kpi-pbt`), and the scorer change above.
 
 ## Cost and latency

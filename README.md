@@ -131,7 +131,7 @@ os.environ.update(TCB_MODELS_DIR="/content/models", HF_TOKEN=userdata.get("hf_to
 !tcb exp data/dev.json data/val.json --label m8 2>&1 | tail -40
 ```
 ```python
-# B5: answer quality, latency, cost (a new --label each run). The index has not changed since 5c5f329: no rebuild
+# B5: answer quality, latency, cost (a new --label each run). The index has not changed since 6d84763: no rebuild
 !tcb eval data/dev.json --label dev15
 !tcb eval data/val.json --label val15
 !for l in q10o q10p q10q; do tcb eval data/q10.json --label $l; done          # three samples (the Anthropic API default sampling)

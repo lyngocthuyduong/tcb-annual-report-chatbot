@@ -20,7 +20,7 @@
  "top_dense": 40,
  "include_unverified": false,
  "submission_grade": true,
- "commit": "5c5f329",
+ "commit": "6d84763",
  "index_manifest_sha256": "c0d83538dd26b19a519e5a51a8f35a97c20a87cf4aea4b96014546890e447732",
  "hardware": {
   "cpu": "x86_64",
@@ -28,5 +28,5 @@
  },
  "seconds": 184.8,
  "rescored_from": "dev13",
- "scorer_commit": "42079ce"
+ "scorer_commit": "4d18d3f"
 }
