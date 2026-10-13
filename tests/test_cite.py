@@ -274,3 +274,18 @@ def test_restated_amount_must_be_the_same_amount():
 ])
 def test_remarks_about_the_report_layout_are_removed(text, shown):
     assert cite.render_claim(P.Claim.model_validate({"text_vi": text, "evidence": ["E1"]}), {}) == shown
+
+
+def test_a_year_after_another_figure_is_not_the_figures_year():
+    """dev14 n-cir-diff: '30,8% | 1,9% (▼) so với 32,7% trong năm 2024' -- 2024 is the year of 32,7%, not of 30,8%."""
+    tile = "Tỷ lệ chi phí/thu nhập | 30,8% | 1,9% (▼) so với 32,7% trong năm 2024"
+    assert not _lit(tile, "30,8%", "%", "2025", "CIR năm 2025 giảm bao nhiêu so với năm 2024?")[1]
+    assert not _lit(tile, "32,7%", "%", "2024", "")[1]
+    assert _lit(tile, "32,7%", "%", "2025", "")[1]
+
+
+def test_citation_keeps_the_first_block_and_the_blocks_that_print_the_figures():
+    evs = cite.evidence_from([node("a", "Đóng góp 231 tỷ đồng", 232), node("b", "Báo cáo phát triển bền vững", 20),
+                              node("c", "231 tỷ đồng gồm 100 tỷ đồng và 131 tỷ đồng", 266)])
+    cl = P.Claim.model_validate({"text_vi": "Đóng góp 231 tỷ đồng, gồm 100 tỷ đồng và 131 tỷ đồng.", "evidence": ["E1", "E2", "E3"]})
+    assert cite.source_ids(cl, evs) == ["E1", "E3"]

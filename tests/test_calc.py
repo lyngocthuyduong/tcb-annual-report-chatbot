@@ -137,3 +137,18 @@ def test_share_needs_the_same_date_not_only_the_same_year():
 def test_ratio_does_not_mix_a_balance_with_a_flow():
     with pytest.raises(calc.PeriodMismatch):
         calc.run("ratio", [Q("Q1", 10, kind="date"), Q("Q2", 5, kind="year")])
+
+
+def test_sum_rescaled_in_the_same_step():
+    """'to' on a sum replaces a second, chained convert step: 834.241.663 triệu đồng -> 834,242 nghìn tỷ đồng."""
+    a, b = Q("A", 618911535), Q("B", 215330128)
+    r = calc.run("sum", [a, b], "nghìn tỷ đồng")
+    assert r.text == "834,242 nghìn tỷ đồng" and r.inputs == ("A", "B")
+    with pytest.raises(calc.UnitMismatch):
+        calc.run("sum", [a, b], "%")
+
+
+def test_rescaled_amount_has_no_trailing_zero_decimals():
+    """val14 f-04 showed '27.538.000,000 triệu đồng'."""
+    assert calc.convert(Q("A", 27538, scale=10**9), "triệu đồng").text == "27.538.000 triệu đồng"
+    assert calc.convert(Q("A", 53391125), "nghìn tỷ đồng").text == "53,391 nghìn tỷ đồng"

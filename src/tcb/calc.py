@@ -30,6 +30,8 @@ class CalcResult:
     @property
     def text(self) -> str:
         n = fmt(self.value, self.digits)
+        if "->" in self.formula and "," in n:
+            n = n.rstrip("0").rstrip(",")                      # a rescaled amount: 27.538.000 triệu đồng, not 27.538.000,000
         return n + "%" if self.dim == "%" else f"{n} {unit_vi(self.dim, self.scale)}".strip()
 
 
@@ -160,6 +162,15 @@ def run(op: str, qs: list[Quantity], to: str | None = None) -> CalcResult:
         raise InvalidInput(f"unknown op {op!r}")
     if op != "sum" and len(qs) != arity[op]:
         raise InvalidInput(f"{op} needs {arity[op]} inputs, got {len(qs)}")
+    if op in ("sum", "diff") and to:                         # result rescaled in the same step, never by a second calculation
+        r = sum_(qs) if op == "sum" else run("diff", qs)
+        try:
+            dim, sc = scale_for(to)
+        except ValueError as e:
+            raise InvalidInput(str(e))
+        if dim != r.dim or dim not in ("VND", "USD"):
+            raise UnitMismatch(f"không đổi {r.dim} -> {dim}")
+        return CalcResult(r.op, r.value * r.scale / sc, dim, sc, 3, r.inputs, f"({r.formula}) -> {to}")
     if op == "sum": return sum_(qs)
     if op == "convert":
         if not to: raise InvalidInput("convert needs 'to'")

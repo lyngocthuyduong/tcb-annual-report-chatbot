@@ -1,0 +1,119 @@
+{
+ "n": 34,
+ "pass_rate": 0.9412,
+ "retrieval": {
+  "n_with_gold_pages": 28,
+  "recall@40_bm25": 1.0,
+  "recall@40_dense": 0.8929,
+  "recall@40_fused": 1.0,
+  "recall@12_final": 0.9643,
+  "recall@3_final": 0.8929,
+  "mrr_final": 0.8061
+ },
+ "answers": {
+  "fact_correct": 0.9643,
+  "fact_unscorable": 0,
+  "citation_valid": 1.0,
+  "page_hit": 0.9286,
+  "page_hit_declared": 0.9286,
+  "page_precision": 0.8929
+ },
+ "refusal": {
+  "precision": 1.0,
+  "recall": 1.0,
+  "n_unanswerable": 5,
+  "false_answer_rate": 0.0
+ },
+ "latency_s": {
+  "mean": 2.219,
+  "p50": 2.119,
+  "p95": 3.285
+ },
+ "tokens_in_total": 370609,
+ "tokens_out_total": 7133,
+ "cost_usd_total": 0.04063,
+ "cost_usd_per_question": 0.001195,
+ "stage_seconds_p50": {
+  "embed": 0.494,
+  "dense": 0.082,
+  "bm25": 0.001,
+  "llm": 1.493
+ },
+ "llm_calls_mean": 1.15,
+ "attribution": {
+  "pass": 32,
+  "retrieval:rank_drop": 1,
+  "citation:wrong_page": 1
+ },
+ "by_category": {
+  "ambiguous": {
+   "n": 1,
+   "pass_rate": 1.0
+  },
+  "conversation": {
+   "n": 4,
+   "pass_rate": 0.75
+  },
+  "digital": {
+   "n": 1,
+   "pass_rate": 1.0
+  },
+  "financial_statements": {
+   "n": 12,
+   "pass_rate": 1.0
+  },
+  "glossary": {
+   "n": 3,
+   "pass_rate": 1.0
+  },
+  "governance": {
+   "n": 1,
+   "pass_rate": 1.0
+  },
+  "human_capital": {
+   "n": 1,
+   "pass_rate": 1.0
+  },
+  "investor": {
+   "n": 2,
+   "pass_rate": 1.0
+  },
+  "key_figures": {
+   "n": 1,
+   "pass_rate": 1.0
+  },
+  "retail": {
+   "n": 2,
+   "pass_rate": 0.5
+  },
+  "subsidiary": {
+   "n": 1,
+   "pass_rate": 1.0
+  },
+  "unanswerable": {
+   "n": 5,
+   "pass_rate": 1.0
+  }
+ },
+ "by_type": {
+  "calc": {
+   "n": 5,
+   "pass_rate": 1.0
+  },
+  "followup": {
+   "n": 4,
+   "pass_rate": 0.75
+  },
+  "refusal": {
+   "n": 6,
+   "pass_rate": 1.0
+  },
+  "single": {
+   "n": 19,
+   "pass_rate": 0.9474
+  }
+ },
+ "items_run": 34,
+ "items_unverified_excluded": 0,
+ "submission_grade": true
+}

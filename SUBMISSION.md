@@ -22,7 +22,7 @@ Four layers, each responsible for one part of the check.
 
 | Risk | Check |
 |---|---|
-| Wrong page | pages are inserted from node metadata, only those of the cited blocks that print the sentence's figures; any page outside the retrieved evidence fails the answer |
+| Wrong page | pages are inserted from node metadata: the first block listed for the sentence and the blocks that print its figures; any page outside the retrieved evidence fails the answer |
 | Wrong figure, unit or sign | every figure must be printed in a cited block with the same magnitude, and with the same sign unless a word carries it (`lỗ`, `chi phí`); an amount restated as `tương đương` must be the same amount; numbers in the question are premises, not evidence. The check ties a figure to its block, not to a row or year inside it: the citation shows the analyst which |
 | Wrong arithmetic | a Decimal calculator; incompatible units or periods stop the calculation |
 | Invented calculation input | a copied figure is used only if the cited block prints it with the same sign, currency and magnitude, under the declared year (the year printed before it in the same sentence or cell, or `năm trước`); otherwise the calculation is refused and the answer says what is missing |
@@ -50,7 +50,7 @@ Other experiments (tokenizers, fusion parameters, chunk sizes, vector database, 
 | test | 22 | written after the last code change, on pages no other set uses, run once (test1); its failures drove the fixes below, so it no longer counts as independent |
 | test2 | 22 | written after those fixes, on pages no other set uses, frozen before its first run |
 
-- Results on the 10 published questions: 10/10 (9/9 facts, 9/9 pages, the one unanswerable question refused). All sets, code at commit `5c5f329`, claude-haiku-5-5, 2 vCPU (runs `dev13`, `val13`, `q10k`, `test1b`, `test2`; rescored copies end in `r`):
+- Results on the 10 published questions: 10/10 (9/9 facts, 9/9 pages, the one unanswerable question refused). All sets, code at commit `5c5f329`, claude-haiku-5-5, 2 vCPU (`runs/test2`, rescored `runs/test2r`; the others in `runs/history/`, rescored copies end in `r`):
 
 | Set | Pass | Fact correct | Page hit (declared pages only) | Unanswerable refused |
 |---|---|---|---|---|

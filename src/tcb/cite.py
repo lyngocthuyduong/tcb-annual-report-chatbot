@@ -197,16 +197,17 @@ _YR = re.compile(r"(?<!\d)(?:19|20)\d{2}(?!\d)")
 
 def _year_of(text: str, m) -> set[str]:
     """The year a number belongs to: the last year printed before it in the same segment (a table cell follows its column
-    header, 'Năm 2025 Triệu đồng: 3.503; Năm 2024 ...'; a tile its caption), else the first one after it, else the
-    closest one in the block; 'năm trước' / 'cùng kỳ' right after the number means the year before. Empty if no year."""
+    header, 'Năm 2025 Triệu đồng: 3.503; Năm 2024 ...'; a tile its caption), else the first one after it when no other
+    figure comes in between; 'năm trước' / 'cùng kỳ' right after the number means the year before. Empty if no year."""
     a = max(text.rfind(". ", 0, m.start()), text.rfind(";", 0, m.start())) + 1
     ends = [i for i in (text.find(". ", m.end()), text.find(";", m.end())) if i >= 0]
     seg_end = min(ends) if ends else len(text)
     before = [y.group(0) for y in _YR.finditer(text, a, m.start())]
-    after = [y.group(0) for y in _YR.finditer(text, m.end(), seg_end)]
-    ys = [y for y in _YR.finditer(text)]
-    y = before[-1] if before else after[0] if after else \
-        (min(ys, key=lambda z: abs(z.start() - m.start())).group(0) if ys else None)
+    nxt = next(_YR.finditer(text, m.end(), seg_end), None)
+    # a year after the number is its own only if no other figure comes between ('30,8% | 1,9% so với 32,7% trong năm
+    # 2024': 2024 belongs to 32,7%, not to 30,8%)
+    after = nxt.group(0) if nxt and not any(not _YR.fullmatch(x.group(0)) for x in _NUM.finditer(text, m.end(), nxt.start())) else None
+    y = before[-1] if before else after
     if y is None: return set()
     out = {y}
     if re.match(r"[^.;|]{0,40}?(?:năm trước|năm ngoái|cùng kỳ)", text[m.end():], re.I):
@@ -325,8 +326,8 @@ def equivalence_problems(claim_text: str) -> list[str]:
 
 
 def source_ids(claim, evs: list[Ev]) -> list[str]:
-    """The blocks a sentence's figures were copied from, so the analyst checks the page that prints them rather than
-    every page listed for the sentence: among the claim's evidence ids, those that print the most of its figures. A
+    """The blocks a sentence is cited to: the first block the model lists for it, plus the blocks that print the most of
+    its figures, so the analyst gets the page the figure was copied from rather than every page that repeats it. A
     sentence without figures keeps all its ids. The full list stays in the plan and the trace."""
     by = {e.eid: e for e in evs}
     ids = [e for e in claim.evidence if e in by]
@@ -334,7 +335,7 @@ def source_ids(claim, evs: list[Ev]) -> list[str]:
     if not ids or not figs: return ids
     score = {e: len(figs & num_tokens(by[e].text)) for e in ids}
     best = max(score.values())
-    return [e for e in ids if score[e] == best] if best else ids
+    return list(dict.fromkeys(ids[:1] + [e for e in ids if score[e] == best])) if best else ids
 
 
 def pages_of(claim, evs: list[Ev], plan, results: dict[str, CalcResult], quantities: dict[str, Quantity]) -> list[int]:

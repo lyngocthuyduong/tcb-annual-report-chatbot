@@ -113,11 +113,11 @@ os.environ.update(TCB_MODELS_DIR="/content/models", HF_TOKEN=userdata.get("hf_to
 !tcb exp data/dev.json data/val.json --label m8 2>&1 | tail -40
 ```
 ```python
-# B5: answer quality, latency, cost (a new --label each run). Index unchanged since 5c5f329: no rebuild needed
-!tcb eval data/dev.json --label dev14
-!tcb eval data/val.json --label val14
-!for l in q10l q10m q10n; do tcb eval data/q10.json --label $l; done          # three samples: the Anthropic adapter uses the API default sampling
-!for l in test2b test2c; do tcb eval data/test2.json --label $l; done         # test2 again at the submitted commit (first run: test2)
-!cd out/runs/eval && zip -rq /content/runs.zip dev14 val14 q10l q10m q10n test2b test2c
+# B5: answer quality, latency, cost (a new --label each run). The index has not changed since 5c5f329: no rebuild
+!tcb eval data/dev.json --label dev15
+!tcb eval data/val.json --label val15
+!for l in q10o q10p q10q; do tcb eval data/q10.json --label $l; done          # three samples (the Anthropic API default sampling)
+!for l in test2d test2e; do tcb eval data/test2.json --label $l; done         # test2 at the submitted commit (first run: test2)
+!cd out/runs/eval && zip -rq /content/runs.zip dev15 val15 q10o q10p q10q test2d test2e
 from google.colab import files; files.download("/content/runs.zip")
 ```

@@ -1,0 +1,133 @@
+{
+ "n": 70,
+ "pass_rate": 0.9429,
+ "retrieval": {
+  "n_with_gold_pages": 57,
+  "recall@40_bm25": 1.0,
+  "recall@40_dense": 0.8947,
+  "recall@40_fused": 1.0,
+  "recall@12_final": 1.0,
+  "recall@3_final": 0.8772,
+  "mrr_final": 0.7466
+ },
+ "answers": {
+  "fact_correct": 0.9649,
+  "fact_unscorable": 0,
+  "citation_valid": 1.0,
+  "page_hit": 0.9649,
+  "page_hit_declared": 0.9298,
+  "page_precision": 0.9048
+ },
+ "refusal": {
+  "precision": 0.9231,
+  "recall": 1.0,
+  "n_unanswerable": 12,
+  "false_answer_rate": 0.0
+ },
+ "latency_s": {
+  "mean": 2.634,
+  "p50": 2.207,
+  "p95": 6.359
+ },
+ "tokens_in_total": 840096,
+ "tokens_out_total": 19062,
+ "cost_usd_total": 0.09355,
+ "cost_usd_per_question": 0.001336,
+ "stage_seconds_p50": {
+  "embed": 0.507,
+  "dense": 0.083,
+  "bm25": 0.001,
+  "llm": 1.522
+ },
+ "llm_calls_mean": 1.19,
+ "attribution": {
+  "pass": 66,
+  "citation:wrong_page": 1,
+  "generation:wrong_or_missing_fact": 1,
+  "refusal:over_refusal": 1,
+  "calc:error": 1
+ },
+ "by_category": {
+  "ambiguous": {
+   "n": 1,
+   "pass_rate": 1.0
+  },
+  "conversation": {
+   "n": 6,
+   "pass_rate": 0.8333
+  },
+  "customer": {
+   "n": 3,
+   "pass_rate": 0.6667
+  },
+  "digital": {
+   "n": 1,
+   "pass_rate": 1.0
+  },
+  "financial_review": {
+   "n": 5,
+   "pass_rate": 0.8
+  },
+  "financial_statements": {
+   "n": 24,
+   "pass_rate": 1.0
+  },
+  "glossary": {
+   "n": 4,
+   "pass_rate": 1.0
+  },
+  "governance": {
+   "n": 2,
+   "pass_rate": 1.0
+  },
+  "human_capital": {
+   "n": 2,
+   "pass_rate": 1.0
+  },
+  "investor": {
+   "n": 2,
+   "pass_rate": 0.5
+  },
+  "key_figures": {
+   "n": 4,
+   "pass_rate": 1.0
+  },
+  "network": {
+   "n": 1,
+   "pass_rate": 1.0
+  },
+  "retail": {
+   "n": 2,
+   "pass_rate": 1.0
+  },
+  "subsidiary": {
+   "n": 1,
+   "pass_rate": 1.0
+  },
+  "unanswerable": {
+   "n": 12,
+   "pass_rate": 1.0
+  }
+ },
+ "by_type": {
+  "calc": {
+   "n": 11,
+   "pass_rate": 0.9091
+  },
+  "followup": {
+   "n": 6,
+   "pass_rate": 0.8333
+  },
+  "refusal": {
+   "n": 13,
+   "pass_rate": 1.0
+  },
+  "single": {
+   "n": 40,
+   "pass_rate": 0.95
+  }
+ },
+ "items_run": 70,
+ "items_unverified_excluded": 0,
+ "submission_grade": true
+}

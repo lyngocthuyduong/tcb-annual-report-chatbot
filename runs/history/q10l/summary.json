@@ -1,0 +1,81 @@
+{
+ "n": 10,
+ "pass_rate": 1.0,
+ "retrieval": {
+  "n_with_gold_pages": 9,
+  "recall@40_bm25": 1.0,
+  "recall@40_dense": 1.0,
+  "recall@40_fused": 1.0,
+  "recall@12_final": 1.0,
+  "recall@3_final": 1.0,
+  "mrr_final": 0.8148
+ },
+ "answers": {
+  "fact_correct": 1.0,
+  "fact_unscorable": 0,
+  "citation_valid": 1.0,
+  "page_hit": 1.0,
+  "page_hit_declared": 0.7778,
+  "page_precision": 0.8889
+ },
+ "refusal": {
+  "precision": 1.0,
+  "recall": 1.0,
+  "n_unanswerable": 1,
+  "false_answer_rate": 0.0
+ },
+ "latency_s": {
+  "mean": 2.121,
+  "p50": 2.057,
+  "p95": 3.185
+ },
+ "tokens_in_total": 91285,
+ "tokens_out_total": 2047,
+ "cost_usd_total": 0.01015,
+ "cost_usd_per_question": 0.001015,
+ "stage_seconds_p50": {
+  "embed": 0.495,
+  "dense": 0.084,
+  "bm25": 0.001,
+  "llm": 1.511
+ },
+ "llm_calls_mean": 1.1,
+ "attribution": {
+  "pass": 10
+ },
+ "by_category": {
+  "company_profile": {
+   "n": 2,
+   "pass_rate": 1.0
+  },
+  "key_figures": {
+   "n": 4,
+   "pass_rate": 1.0
+  },
+  "segment_performance": {
+   "n": 1,
+   "pass_rate": 1.0
+  },
+  "terminology": {
+   "n": 2,
+   "pass_rate": 1.0
+  },
+  "unanswerable": {
+   "n": 1,
+   "pass_rate": 1.0
+  }
+ },
+ "by_type": {
+  "refusal": {
+   "n": 1,
+   "pass_rate": 1.0
+  },
+  "single": {
+   "n": 9,
+   "pass_rate": 1.0
+  }
+ },
+ "items_run": 10,
+ "items_unverified_excluded": 0,
+ "submission_grade": true
+}
