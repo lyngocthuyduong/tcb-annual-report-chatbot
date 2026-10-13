@@ -434,8 +434,8 @@ Integer differences now print without a decimal (857, not 857,0).
 | test2 | 22/22 (21/22) | none after rescoring; `y-visaeco` was a scorer false negative ("hơn 1 triệu" for `1.000.000`) |
 | test1b | 22/22 | none; the three test1 failure modes are fixed (not independent) |
 | q10k | 10/10 | none |
-| val13 | 33/34 (32/34) | `f-04` retrieval:rank_drop (a follow-up; p.257 gave the same profit rounded to tỷ) |
-| dev13 | 68/70 | `n-mktcap` generation (rounded to nghìn tỷ when tỷ was asked); `n-cir-diff` over-refusal (percentage points, fixed after the run, §8) |
+| val13 | 33/34 (32/34) | `f-04`: a follow-up answered from p.257 with the same profit rounded to tỷ; the statement page ranked outside the 12 blocks |
+| dev13 | 68/70 | `n-mktcap`: 247,3 nghìn tỷ for 247.310 tỷ, right value and page, a miss under the precision rule; `n-cir-diff`: a correct percentage-point answer dropped by the magnitude check, fixed after the run (§8) |
 
 The answers also cite every page that repeats a figure (page precision 0.72 to 0.87) and, on test2, repeated the arrow marker after a verb (`tăng 24% (▲)`). The magnitude change (§8) was replayed on the 143 saved sentences of the five runs: only `n-cir-diff` changes. The marker change touches no figure or page.
 
