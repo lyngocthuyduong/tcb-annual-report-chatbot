@@ -180,3 +180,12 @@ def test_pages_are_not_widened_on_a_short_integer():
              "b": {"text": "Tổng tài sản 1.192 nghìn tỷ đồng", "printed_page_number": 52}}
     assert ev.widen_gold(item(gold_answer="100 triệu đồng", gold_facts=["100"]), nodes).alt_pages == []
     assert ev.widen_gold(item(gold_answer="1.192 nghìn tỷ đồng", gold_facts=["1.192"]), nodes).alt_pages == [52]
+
+
+def test_gold_figure_at_another_rounding_or_unit_counts():
+    it = item(gold_answer="53,4 nghìn tỷ đồng.", gold_facts=["53,4"])
+    assert ev.facts_ok(it, "Tổng thu nhập hoạt động đạt 53.391 tỷ đồng [tr. 256].")[0] is True
+    assert ev.facts_ok(it, "Tổng thu nhập hoạt động đạt 53.391.125 triệu đồng [tr. 300].")[0] is True
+    assert ev.facts_ok(it, "Tổng thu nhập hoạt động đạt 52.391 tỷ đồng [tr. 256].")[0] is False
+    assert ev.facts_ok(item(gold_answer="16,0%.", gold_facts=["16"]), "ROE đạt 16 nghìn tỷ.")[0] is False
+    assert ev.facts_ok(item(gold_answer="CASA 40,4%.", gold_facts=["40,4"]), "CASA khoảng 40% [tr. 5].")[0] is False

@@ -202,3 +202,12 @@ def test_literal_unit_and_period_are_checked_against_the_block(lit, ok):
     pl = plan(literals=[{"lid": "L1", "evidence": "E1", **lit}])
     got, probs = cite.literal_quantities(pl, evs, "Lợi nhuận?")
     assert ("L1" in got) == ok, probs
+
+
+def test_a_parenthetical_is_not_a_negative_sign():
+    evs = cite.evidence_from([node("a", "Thu nhập | Năm 2025 Triệu đồng: 39.201; Năm 2024 Triệu đồng: 64.561", 300)])
+    cl = {"text_vi": "Thu nhập đạt 39.201 triệu đồng (năm 2024: 64.561 triệu đồng).", "evidence": ["E1"]}
+    assert cite.check(plan(claims=[cl]), evs, {}, "").ok
+    neg = cite.evidence_from([node("b", "Lãi/(lỗ) | Năm 2025 Triệu đồng: (8); Năm 2024 Triệu đồng: 102", 369)])
+    assert cite.check(plan(claims=[{"text_vi": "Lỗ (8) triệu đồng.", "evidence": ["E1"]}]), neg, {}, "").ok
+    assert not cite.check(plan(claims=[{"text_vi": "Lỗ (102) triệu đồng.", "evidence": ["E1"]}]), neg, {}, "").ok

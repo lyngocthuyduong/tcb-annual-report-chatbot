@@ -298,7 +298,7 @@ Unanswerable topics were chosen only if a full-text search of the report found n
 Item types: `single`, `multi`, `calc`, `followup`, `refusal`; `expect_status: ambiguous` marks questions whose right behaviour is a clarifying question; these are excluded from refusal precision/recall.
 
 ### 14.2 Scorers (deterministic, no LLM judge)
-- **Fact present:** every `gold_facts` entry must appear in the answer; `a | b` = either alternative; numbers compared in canonical form.
+- **Fact present:** every `gold_facts` entry must appear in the answer; `a | b` = either alternative; numbers compared in canonical form and with the magnitude the gold prints (`100 tỷ` does not satisfy `100 triệu`). The gold figure stated more precisely or in another unit also counts (`53.391 tỷ` for `53,4 nghìn tỷ`, within half a unit of the gold's last digit); a less precise one does not (`40%` for `40,4%`). Re-scoring runs dev11/val11/q10i with this rule changed two items (sq-06, n-equity), both correct answers stated in another unit.
 - **Citation valid:** every cited page belongs to the evidence retrieved for that question.
 - **Page hit / precision:** cited pages vs `gold_printed_pages ∪ alt_pages`.
 - **Refusal:** precision and recall over unanswerable items, plus false-answer rate.

@@ -81,11 +81,19 @@ def facts_ok(item: Item, answer: str) -> tuple[bool | None, str]:
         return ok, method
     an, af = cite.num_tokens(answer), _fold(answer)
     a_sc, g_sc = _scales(answer), _scales(item.gold_answer)
+    a_fig = cite.figures(answer)
+
+    def same_value(t: str) -> bool:
+        """The gold figure stated more precisely or in another unit: '53,4 nghìn tỷ' ≈ '53.391 tỷ' (within half a unit of
+        the gold's last digit). An answer less precise than the gold ('40%' for '40,4%') does not count, and a gold
+        without a magnitude only matches exactly."""
+        g = [f for f in cite.figures(item.gold_answer, keep=t) if f[2] != cite.Decimal("0.5")]
+        return any(f[0] == x[0] and abs(f[1] - x[1]) <= f[2] for f in g for x in a_fig)
 
     def has(f: str) -> bool:
         fn = {t for t in cite.num_tokens(f) if not cite._trivial(t)}
-        if fn:   # the digits must be there, and with the gold's magnitude when the gold prints one (100 tỷ is not 100 triệu)
-            return all(t in an and (not g_sc.get(t) or g_sc[t] & a_sc.get(t, set())) for t in fn)
+        if fn:   # the digits with the gold's magnitude (100 tỷ is not 100 triệu), or the same value at another rounding
+            return all((t in an and (not g_sc.get(t) or g_sc[t] & a_sc.get(t, set()))) or same_value(t) for t in fn)
         return _fold(f) in af
     return all(any(has(alt.strip()) for alt in f.split(" | ")) for f in facts), method
 

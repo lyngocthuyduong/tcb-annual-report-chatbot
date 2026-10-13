@@ -36,7 +36,7 @@ def _scale_at(text: str, start: int, end: int) -> str | None:
 _MULT = {"nghìn tỷ": 10**12, "tỷ": 10**9, "triệu": 10**6, "nghìn": 10**3, None: 1}
 
 
-def figures(text: str) -> list[tuple[str, Decimal, Decimal]]:
+def figures(text: str, keep: str | None = None) -> list[tuple[str, Decimal, Decimal]]:
     """Figures a claim states, as (kind, value, rounding half-unit) in base units: '1.192 nghìn tỷ' and '1.192.344 tỷ'
     both land near 1.192e15, '53,4 nghìn tỷ' carries a half-unit of 0.05e12. Years and small integers are left out."""
     text = vi.nfc(text)
@@ -45,6 +45,7 @@ def figures(text: str) -> list[tuple[str, Decimal, Decimal]]:
         t = m.group(0)
         if _trivial(t) or _YEAR.match(t): continue
         c = vi.canon_num(t).rstrip("%")
+        if keep is not None and c != keep: continue
         try: v = Decimal(c)
         except Exception: continue
         s = _scale_at(text, m.start(), m.end())
@@ -135,12 +136,14 @@ def question_numbers(question: str) -> set[str]:
 
 
 def sign_problems(claim_text: str, cited_text: str) -> list[str]:
-    """A figure written negative ('-100', '(100)') must be printed negative in the evidence."""
-    neg_ev = {vi.canon_num(m.group(1)) for m in re.finditer(r"(?:(?<![\d\w])-\s?|\()(\d+(?:[.,]\d+)*)\)?", vi.nfc(cited_text))}
+    """A figure written negative ('-100', or accounting style '(100)' closed right after the number) must be printed
+    negative in the evidence. A parenthetical such as '(64.561 triệu đồng)' is not a sign."""
+    neg = r"(?:(?<![\d\w%])-\s?(\d+(?:[.,]\d+)*)|\((\d+(?:[.,]\d+)*)\))"
+    neg_ev = {vi.canon_num(m.group(1) or m.group(2)) for m in re.finditer(neg, vi.nfc(cited_text))}
     out = []
-    for m in re.finditer(r"(?<![\d\w%])(?:-\s?|\()(\d+(?:[.,]\d+)*)", vi.nfc(claim_text)):
-        if vi.canon_num(m.group(1)) not in neg_ev:
-            out.append(f"{m.group(0).strip()} is negative but the evidence prints it positive")
+    for m in re.finditer(neg, vi.nfc(claim_text)):
+        if vi.canon_num(m.group(1) or m.group(2)) in neg_ev: continue
+        out.append(f"{m.group(0).strip()} is negative but the evidence prints it positive")
     return out
 
 
