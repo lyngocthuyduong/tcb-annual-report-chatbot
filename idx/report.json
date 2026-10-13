@@ -5,7 +5,8 @@
   "conflicts": [],
   "pdf_pages": 197,
   "halves": 393,
-  "straddle_words": 4
+  "straddle_words": 4,
+  "direction_arrows": 63
  },
  "images": {
   "images": 428,
@@ -262,9 +263,9 @@
  },
  "glossary_terms": 163,
  "seconds": {
-  "ingest": 20.5,
-  "embed": 82.4,
-  "bm25": 1.0
+  "ingest": 48.2,
+  "embed": 79.4,
+  "bm25": 1.2
  },
  "hardware": {
   "cpu": "x86_64",

@@ -1,6 +1,6 @@
 {
  "index_format_version": 1,
- "built_at": "2026-10-13T11:18:47Z",
+ "built_at": "2026-10-13T14:16:48Z",
  "source": {
   "document_id": "tcb-ar-2025",
   "filename": "ar.pdf",
@@ -21,7 +21,7 @@
   "unit": "half-page",
   "narrative_max_words": 220,
   "table_rows_per_chunk": 12,
-  "context": "chapter>heading;flow2;fs2",
+  "context": "chapter>heading;flow2;fs2;arrows",
   "glossary": "one-per-term"
  },
  "bm25": {
@@ -50,21 +50,21 @@
   "transformers": "5.19.0"
  },
  "files": {
-  "bm25/data.csc.index.npy": "2084849ed4c2fa6b76dacb774f8966cad8c14b4eb5e65d493aac4e232982bf94",
+  "bm25/data.csc.index.npy": "2b3f6f06bca0b15d18f5ba33864be5383903d6a1bc8e6c59d1d3c5a5bb9e0423",
   "bm25/ids.json": "79794767ebedb98b007839c1fd079663830e3324614dd5ce93bc8db03acce741",
-  "bm25/indices.csc.index.npy": "4d50a0e3392c2220ccf530254d6fbd60434fa486bfc58ddca7d7f7e2f89ba94f",
-  "bm25/indptr.csc.index.npy": "38b0359fecd4020f68842ef4c24d3b29782b0f02abdcca63fed71d283905e872",
+  "bm25/indices.csc.index.npy": "a0e1928fa42da161de2147bab6d685bae011505798084af2bce344f33f71a77a",
+  "bm25/indptr.csc.index.npy": "0981ec0c2c5709d58b7ccfb203998640d4a979bcaaa1cfb0019e44890b4178b6",
   "bm25/params.index.json": "ed2900402221ef592dec05159d3306bcce380c3166c4f5ea9a34c336bee2a6ec",
-  "bm25/vocab.index.json": "fcda15d5905643085e82d23b211f68ed209854d4d90153c0fa70e83f0303cb56",
+  "bm25/vocab.index.json": "4ce90ad5237ea71b4ae21c1440294a9f5875d22e83465e8c7d7f2acf27199292",
   "gloss.json": "2f5eb083e9c1cb965cd00d5d2775db03d535be461119cf5bd0f03b547bc15ac8",
-  "llamaindex/default__vector_store.json": "f15e9ee7dcc1aa6819b0a8701d998fba356563973ecda4d159bc04390df0a3e1",
-  "llamaindex/docstore.json": "cd57451e19ac055f576c368c47b6cd883b0c65e72226609395d12bffb7a0db44",
+  "llamaindex/default__vector_store.json": "b69a96f0d10ffa5687e165370ee791fe5cfe1c85829d0dd7aeb781d748d152e9",
+  "llamaindex/docstore.json": "f65799c35e77d86c877a66db32d1a6fdb1f7e6c1d269505e32d1d4882699531e",
   "llamaindex/graph_store.json": "8e0a77744010862225c69da83c585f4f8a42fd551b044ce530dbb1eb6e16742c",
   "llamaindex/image__vector_store.json": "d17ed74c1649a438e518a8dc56a7772913dfe1ea7a7605bce069c63872431455",
-  "llamaindex/index_store.json": "0718ee3c136529e1c28b8e2e411e276137ce05be595e7e90c8a8219f52d5e9a8",
-  "nodes.jsonl": "f3084520745ef500656b64f5fc94b518f50db724d0ac54aabf919f871663b174",
+  "llamaindex/index_store.json": "0137988e7e5ce1301415e2b27c54a4f253056b615de3126ebc88cb8df5692da5",
+  "nodes.jsonl": "4bd9e2d97e61f3519a7ec36eb724e5bbdb2be9c8cfb5b870b43673208a502ced",
   "pages.json": "de8c127e71f13845a0d4302fe3864b748a4759a2b00e9f1b38e34b0d3bde8aa6",
-  "report.json": "cbdd6aa2ebe072e9d3e1a3619eca516efc76231a9d5d21aa92a887a90c59e267",
-  "tables.jsonl": "ef8f234b19982ce04ec2ab02f8fa60f5f99324008a3588940f3d13a483080a82"
+  "report.json": "333b53699fc14c4e984bba167946d5715b208e08c059516181378ba715fdb133",
+  "tables.jsonl": "a78a7df91c95f445dbe88e67fe7127f7ed7991cd3cbf729c13e509029a1553ce"
  }
 }
